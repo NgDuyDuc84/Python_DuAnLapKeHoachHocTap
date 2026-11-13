@@ -13,12 +13,13 @@
             <div><dt>Vai trò</dt><dd>{% if user.is_staff %}Quản trị viên{% else %}Người dùng{% endif %}</dd></div>
         </dl>
         <div class="profile-actions">
-            <a class="button" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
+            <a class="button" href="{% url 'studies:task_list' %}">Vào không gian học tập</a>
+            <a class="text-link" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
             {% if user.is_staff %}
                 <a class="text-link" href="{% url 'admin:index' %}">Mở trang quản trị</a>
             {% endif %}
         </div>
-        <p class="availability-note">Các tính năng môn học và lập lịch sẽ xuất hiện ở các bản cập nhật tiếp theo.</p>
+        <p class="availability-note">Quản lý môn học, công việc và tài liệu trong không gian học tập của bạn.</p>
     </div>
 </section>
 {% endblock %}

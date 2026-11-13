@@ -1,0 +1,24 @@
+{% extends "studies/base.html" %}
+
+{% block study_content %}
+<div class="study-toolbar">
+    <p>Tổ chức các môn đang học. Lưu trữ môn cũ để giữ lại công việc và tài liệu.</p>
+    <a class="button" href="{% url 'studies:subject_create' %}">Thêm môn học</a>
+</div>
+{% include "studies/filters.html" %}
+<div class="study-grid">
+    {% for subject in object_list %}
+        <article class="study-card subject-card" style="--subject-color: {{ subject.color }};">
+            <h2>{{ subject.name }}</h2>
+            <p class="study-meta">{{ subject.semester|default:"Chưa ghi học kỳ" }}</p>
+            <span class="badge">{% if subject.is_archived %}Đã lưu trữ{% else %}Đang học{% endif %}</span>
+            <div class="card-actions">
+                <a class="text-link" href="{% url 'studies:subject_update' subject.pk %}">Sửa môn học<span class="sr-only"> {{ subject.name }}</span></a>
+                <a class="delete-link" href="{% url 'studies:subject_delete' subject.pk %}">Xóa<span class="sr-only"> {{ subject.name }}</span></a>
+            </div>
+        </article>
+    {% empty %}
+        <p class="empty-state">Chưa có môn học trong danh sách này. Hãy thêm môn mới hoặc đổi bộ lọc.</p>
+    {% endfor %}
+</div>
+{% endblock %}

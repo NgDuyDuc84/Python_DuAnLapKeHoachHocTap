@@ -28,6 +28,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 01:** đã hoàn thành tài liệu thiết kế và phần khởi tạo local của nền Django; trang chủ, template chung, static CSS, cấu hình `.env` và SQLite. Người dùng đã cho phép chuyển sang mốc 02.
 
-**Mốc 02 hiện tại:** đăng ký, đăng nhập bằng username, đăng xuất qua POST, đổi mật khẩu và xem thông tin tài khoản riêng. Dùng Django Admin để quản lý và khóa/mở tài khoản; có kiểm thử quyền, CSRF và phiên đăng nhập. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 02:** đã hoàn thành tài khoản và phân quyền. Người dùng đã cho phép chuyển sang mốc 03.
 
-Chưa triển khai online hoặc tạo model học tập. Các module học tập được tạo khi đến mốc cần dùng. Đưa PostgreSQL và bản online vào sớm sau luồng tài khoản, trước khi mở rộng các tính năng học tập.
+**Mốc 03 hiện tại:** theo lựa chọn của người dùng, ưu tiên môn học, công việc và tài liệu để có chức năng học tập dùng được. Đã có model, migration, thêm/sửa/xóa, lưu trữ môn, tìm kiếm/lọc, kiểm tra dữ liệu và bảo vệ theo chủ sở hữu. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 04 dự kiến:** lịch bận, tùy chọn thời gian học và lịch tuần. Sau đó mới triển khai thuật toán tự xếp lịch.
+
+PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

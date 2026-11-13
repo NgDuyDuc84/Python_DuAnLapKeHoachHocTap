@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ view.page_title }} — Nhịp Học{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/studies.css' %}">{% endblock %}
+{% block content %}
+<section class="study-shell" aria-labelledby="study-title">
+    <p class="eyebrow">KHÔNG GIAN HỌC TẬP</p>
+    <h1 id="study-title">{{ view.page_title }}</h1>
+    <nav class="section-tabs" aria-label="Nội dung học tập">
+        <a href="{% url 'studies:subject_list' %}" {% if 'subject' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Môn học</a>
+        <a href="{% url 'studies:task_list' %}" {% if 'task' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Công việc</a>
+        <a href="{% url 'studies:material_list' %}" {% if 'material' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Tài liệu</a>
+    </nav>
+    {% block study_content %}{% endblock %}
+</section>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "studies/base.html" %}
+
+{% block study_content %}
+<div class="study-toolbar">
+    <p>Ghi việc cần làm, theo dõi hạn nộp và cập nhật thời gian còn lại.</p>
+    <a class="button" href="{% url 'studies:task_create' %}">Thêm công việc</a>
+</div>
+{% include "studies/filters.html" %}
+<div class="study-list">
+    {% for task in object_list %}
+        <article class="study-card">
+            <div class="card-heading">
+                <h2>{{ task.title }}</h2>
+                <div class="badges">
+                    <span class="badge priority-{{ task.priority }}">Ưu tiên {{ task.get_priority_display|lower }}</span>
+                    <span class="badge">{{ task.get_status_display }}</span>
+                    {% if task.is_overdue %}<span class="badge badge-danger">Quá hạn</span>{% endif %}
+                </div>
+            </div>
+            <p class="study-meta">{{ task.subject|default:"Chưa gắn môn học" }} · Hạn: {{ task.deadline|date:"d/m/Y H:i" }}</p>
+            <p class="study-meta">Ước tính {{ task.estimated_minutes }} phút · Còn lại {{ task.remaining_minutes }} phút · {% if task.can_split %}Có thể chia buổi{% else %}Làm liên tục{% endif %}</p>
+            {% if task.description %}<p class="card-description">{{ task.description|linebreaksbr }}</p>{% endif %}
+            <div class="card-actions">
+                <a class="text-link" href="{% url 'studies:task_update' task.pk %}">Sửa công việc<span class="sr-only"> {{ task.title }}</span></a>
+                <a class="delete-link" href="{% url 'studies:task_delete' task.pk %}">Xóa<span class="sr-only"> {{ task.title }}</span></a>
+            </div>
+        </article>
+    {% empty %}
+        <p class="empty-state">Chưa có công việc trong danh sách này. Hãy thêm việc mới hoặc đổi bộ lọc.</p>
+    {% endfor %}
+</div>
+{% endblock %}

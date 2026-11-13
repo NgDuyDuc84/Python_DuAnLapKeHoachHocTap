@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu thiết kế, chưa phải danh sách model đã được triển khai. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai bộ khung ở mốc 01 và luồng tài khoản ở mốc 02; các model học tập vẫn là thiết kế dự kiến.
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02) và quản lý môn học/công việc/tài liệu (mốc 03).
 
 1. **Phân chia trách nhiệm**
 
@@ -15,7 +15,7 @@ Tài liệu thiết kế, chưa phải danh sách model đã được triển kh
    | config | Settings, URL, WSGI/ASGI | Đã tạo cho local |
    | core | Trang chủ và giao diện chung | Đã tạo |
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
-   | studies | Môn, công việc, tài liệu | Chưa triển khai |
+   | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Chưa triển khai |
    | focus | Pomodoro, nhật ký học | Chưa triển khai |
    | notifications | Nhắc việc và email | Chưa triển khai |
@@ -45,6 +45,14 @@ Tài liệu thiết kế, chưa phải danh sách model đã được triển kh
    Ở mốc 02, tài khoản mới được tạo qua `UserCreationForm` mở rộng với email bắt buộc. Đăng nhập bằng username; email phục vụ thông tin hồ sơ, chưa có xác minh hoặc khôi phục mật khẩu qua email. Username là định danh duy nhất; không áp dụng ràng buộc email duy nhất ở mốc này.
 
    Trang thông tin lấy user trực tiếp từ phiên đăng nhập, không nhận ID người khác để xem. Đăng xuất dùng POST có CSRF. `is_staff` cho phép vào khu vực Admin; quyền xem/sửa người dùng được Django kiểm tra riêng. Tài khoản tạo bằng `createsuperuser` có đầy đủ quyền quản trị. Form đăng ký không cho người dùng tự đặt `is_staff`, `is_superuser` hoặc nhóm quyền.
+
+   Mốc 03 đã triển khai `Subject`, `Task`, `Material`; các đối tượng học tập khác trong bảng vẫn là dự kiến. Mọi danh sách, trang sửa/xóa và lựa chọn liên kết đều giới hạn theo user đang đăng nhập. Không nhận owner từ POST. Model validation kiểm tra quyền sở hữu liên kết; form chỉ cho chọn môn/công việc của mình.
+
+   Thời lượng ước tính phải lớn hơn 0. Công việc mới lấy thời lượng còn lại bằng ước tính; chọn Hoàn thành đưa còn lại về 0. Công việc chưa hoàn thành phải còn thời lượng dương, có thể lớn hơn ước tính nếu phát sinh thêm. Database có constraint cho thời lượng, mức ưu tiên và trạng thái/thời lượng còn lại. Cho phép ghi công việc đã quá hạn; bộ lọc Quá hạn loại công việc đã hoàn thành.
+
+   Lưu trữ môn chỉ ẩn khỏi danh sách Đang học, không gỡ các liên kết. Xóa môn đặt liên kết môn của công việc/tài liệu về rỗng; xóa công việc gỡ liên kết công việc của tài liệu. Không xóa dây chuyền các dữ liệu đó. Xóa tài liệu chỉ xóa liên kết trong ứng dụng, không tác động tệp ở website gốc.
+
+   Tài liệu ở mốc này là URL HTTP/HTTPS; có thể độc lập hoặc gắn các môn/công việc mình sở hữu. Không yêu cầu môn gắn trực tiếp trên tài liệu phải giống môn của công việc được gắn, để hỗ trợ tài liệu dùng chung. Không tải tệp lên hoặc đọc nội dung đường dẫn từ máy chủ.
 
 4. **Quy tắc lịch**
 

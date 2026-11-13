@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 02 — tài khoản và phân quyền**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 03 — môn học, công việc và tài liệu**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -131,7 +131,7 @@ Phạm vi đã làm: tài liệu thiết kế, cấu hình Django, trang chủ N
 
 **Mốc 02 — Tài khoản và phân quyền**
 
-Trạng thái: chờ người dùng kiểm thử và push GitHub.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 03. Giữ các kết quả và checklist dưới đây làm lịch sử.
 
 Phạm vi: đăng ký với username/email/mật khẩu; đăng nhập bằng username; đăng xuất; đổi mật khẩu; trang thông tin tài khoản riêng; giao diện điều hướng theo trạng thái đăng nhập; quản lý người dùng bằng Django Admin. Dùng User mặc định và cơ sở dữ liệu đang có; không đổi model User hoặc tạo lại database. Chưa có xác minh email, khôi phục mật khẩu qua email, sửa hồ sơ hay dữ liệu học tập.
 
@@ -240,3 +240,107 @@ Phạm vi: đăng ký với username/email/mật khẩu; đăng nhập bằng us
    Lệnh push dùng nhánh `main` như khi bắt đầu mốc. Nếu bạn đã đổi nhánh thì thay bằng nhánh tương ứng. Xem file đã stage trước commit; `.env`, `.venv` và `db.sqlite3` tiếp tục bị ignore. Agent không chạy stage/commit/push thay bạn.
 
    Nếu có lỗi, gửi ID test cùng thao tác và kết quả thực tế. Khi bạn xác nhận mốc 02 đạt và đã push, mới thực hiện mốc tiếp theo.
+
+---
+
+**Mốc 03 — Quản lý môn học, công việc và tài liệu**
+
+Trạng thái: chờ người dùng kiểm thử và push GitHub. Người dùng đã chọn ưu tiên chức năng học tập ở mốc này; PostgreSQL/triển khai online giữ cho mốc sau.
+
+Phạm vi: môn học (màu, học kỳ, lưu trữ); công việc (deadline, ưu tiên, thời lượng, cho chia buổi, trạng thái); tài liệu dạng liên kết; thêm/sửa/xóa, tìm kiếm/lọc và quyền dữ liệu riêng. Chưa có lịch bận/lịch tuần, tự xếp lịch, nhắc việc, Pomodoro hay AI.
+
+1. **Cập nhật database, chạy test và mở web**
+
+   Mốc này có migration `studies/0001_initial.py` tạo ba bảng và constraint; không xóa hoặc thay model tài khoản. Agent đã áp dụng trên máy hiện tại, đồng thời tạo bản sao lưu cục bộ `db.sqlite3-before-m03` trước khi migrate. Database, bản sao lưu và môi trường ảo đều bị ignore, không push lên GitHub.
+
+   Khi lấy mã về hoặc trước khi kiểm thử:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies --noinput
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi: migration `studies.0001_initial` là OK hoặc không còn migration cần chạy; check không có lỗi; **37 tests / OK** (16 tài khoản + 21 học tập). Môi trường và thư viện giữ nguyên từ mốc 02. Nếu server đang chạy từ mốc cũ, dừng và chạy lại để nạp module mới.
+
+   Kiểm thử tự động dùng database trong bộ nhớ. Kiểm tra trình duyệt của agent dùng database tạm riêng ở cổng 8001; dữ liệu mẫu đó không được thêm vào database của bạn. Server kiểm tra tạm được dừng khi bàn giao.
+
+2. **Điểm vào và dữ liệu nên chuẩn bị**
+
+   Đăng nhập bằng tài khoản mốc 02, chọn **Học tập** trên menu hoặc **Vào không gian học tập** từ trang tài khoản.
+
+   | Trang | URL local |
+   |---|---|
+   | Môn học | http://127.0.0.1:8000/studies/subjects/ |
+   | Công việc | http://127.0.0.1:8000/studies/tasks/ |
+   | Tài liệu | http://127.0.0.1:8000/studies/materials/ |
+
+   Dùng hai tài khoản A/B của bạn và hai cửa sổ thường/ẩn danh. Ở A tạo môn Python, một việc cần 180 phút có hạn trong tương lai và một liên kết tài liệu. Ở B tạo dữ liệu tên khác để kiểm tra quyền. Có thể tạo thêm một việc hạn hôm qua và một việc đã hoàn thành để kiểm tra bộ lọc.
+
+3. **Checklist môn học và công việc**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M03-TC01 | Chưa đăng nhập, mở ba danh sách hoặc URL thêm/sửa/xóa | Chuyển tới đăng nhập; không xem được dữ liệu học tập | Chưa kiểm thử |
+   | M03-TC02 | Thêm môn Python, học kỳ, chọn màu; sửa lại các thông tin | Lưu thành công; thẻ môn có tên/học kỳ/màu mới | Chưa kiểm thử |
+   | M03-TC03 | Bỏ trống tên môn rồi lưu | Báo lỗi; không tạo môn rỗng | Chưa kiểm thử |
+   | M03-TC04 | Sửa môn, chọn Lưu trữ; lọc Đã lưu trữ; bỏ lưu trữ lại | Môn ẩn khỏi Đang học, xuất hiện ở Đã lưu trữ; khôi phục được, các liên kết vẫn còn | Chưa kiểm thử |
+   | M03-TC05 | Thêm việc cần 180 phút, ưu tiên cao, chọn môn, hạn 2 ngày tới và giờ cụ thể | Danh sách hiển thị đúng môn, ưu tiên, giờ Việt Nam; còn lại mặc định 180 phút | Chưa kiểm thử |
+   | M03-TC06 | Nhập thời lượng ước tính 0, số âm hoặc bỏ trống | Trình duyệt/form báo lỗi; không tạo việc; không xuất hiện lỗi 500 | Chưa kiểm thử |
+   | M03-TC07 | Sửa thời gian còn lại thành 120, trạng thái Đang thực hiện; sau đó tăng còn lại lên 240 | Lưu được các thay đổi; cho phép công việc phát sinh vượt ước tính | Chưa kiểm thử |
+   | M03-TC08 | Chọn Hoàn thành trong form sửa, giữ nguyên số phút đang có rồi lưu | Trạng thái Hoàn thành, còn lại tự về 0 | Chưa kiểm thử |
+   | M03-TC09 | Mở lại việc hoàn thành, chuyển Chưa bắt đầu/Đang thực hiện nhưng vẫn để còn lại 0 | Báo cần thời lượng dương; nhập 30 phút rồi lưu thì mở lại được | Chưa kiểm thử |
+   | M03-TC10 | Tạo việc có hạn hôm qua; lọc Quá hạn; hoàn thành việc đó rồi lọc lại | Việc chưa xong có nhãn Quá hạn; việc đã hoàn thành không nằm trong Quá hạn | Chưa kiểm thử |
+   | M03-TC11 | Kết hợp từ khóa, môn, ưu tiên và trạng thái rồi bấm Lọc; bấm Xóa bộ lọc | Kết quả đáp ứng đồng thời các điều kiện; xóa bộ lọc trả về danh sách đầy đủ của mình | Chưa kiểm thử |
+   | M03-TC12 | Bật/tắt Cho phép chia thành nhiều buổi rồi lưu | Danh sách thể hiện Có thể chia buổi hoặc Làm liên tục; chưa sinh lịch tự động | Chưa kiểm thử |
+
+4. **Checklist tài liệu, xóa và quyền sở hữu**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M03-TC13 | Thêm tài liệu có tên, URL HTTPS, chọn môn và/hoặc công việc; sửa ghi chú | Lưu được; hiển thị đúng các liên kết và ghi chú | Chưa kiểm thử |
+   | M03-TC14 | Bấm Mở tài liệu | Mở đường dẫn ở tab mới; trang Nhịp Học vẫn giữ nguyên | Chưa kiểm thử |
+   | M03-TC15 | Nhập URL sai định dạng hoặc dùng `javascript:`/`ftp:` | Trình duyệt/form từ chối; chỉ nhận HTTP/HTTPS | Chưa kiểm thử |
+   | M03-TC16 | Tìm tài liệu theo từ khóa, môn và công việc | Chỉ hiện tài liệu phù hợp của người đang đăng nhập | Chưa kiểm thử |
+   | M03-TC17 | Bấm Xóa ở một đối tượng rồi chọn Hủy, giữ lại | Có trang xác nhận và cảnh báo đúng loại; chỉ mở trang xóa không xóa dữ liệu | Chưa kiểm thử |
+   | M03-TC18 | Xác nhận xóa một môn thử có công việc/tài liệu | Chỉ môn bị xóa; công việc và tài liệu còn, liên kết môn được bỏ trống | Chưa kiểm thử |
+   | M03-TC19 | Xác nhận xóa một công việc thử có tài liệu | Công việc bị xóa; tài liệu còn, không còn gắn công việc; liên kết môn của tài liệu vẫn giữ nếu môn còn | Chưa kiểm thử |
+   | M03-TC20 | Xóa một liên kết tài liệu thử | Chỉ liên kết trong Nhịp Học bị xóa; môn/công việc và tệp ở website gốc không bị tác động | Chưa kiểm thử |
+   | M03-TC21 | Ở B sao chép URL sửa/xóa một đối tượng, mở URL đó trong cửa sổ A | Trả 404; không thấy dữ liệu B, không sửa/xóa được | Chưa kiểm thử |
+   | M03-TC22 | Ở A mở danh sách và các ô chọn môn/công việc trong form | Không có dữ liệu B trong danh sách hoặc lựa chọn liên kết | Chưa kiểm thử |
+   | M03-TC23 | Thay ID môn/công việc trong URL bộ lọc bằng ID thuộc B hoặc chuỗi không hợp lệ | Báo lựa chọn không hợp lệ, danh sách trống; không lộ dữ liệu và không lỗi 500 | Chưa kiểm thử |
+   | M03-TC24 | Thu hẹp màn hình 375/320 px; dùng Tab qua bộ lọc và form | Không cuộn ngang cả trang; các ô dùng được; focus rõ ràng | Chưa kiểm thử |
+   | M03-TC25 | Khởi động lại server, đăng nhập và mở lại dữ liệu đã tạo | Dữ liệu vẫn được lưu; đăng nhập/đăng xuất/đổi mật khẩu của mốc 02 vẫn hoạt động | Chưa kiểm thử |
+
+   Để kiểm tra URL bộ lọc, có thể dùng `/studies/tasks/?subject=ID_B` hoặc `/studies/materials/?task=ID_B`. ID thật lấy từ URL sửa của đối tượng bên B; không cần đoán. URL với ID người khác trả 404 ở trang sửa/xóa là hành vi bảo vệ quyền.
+
+   Xóa chỉ thực hiện trên dữ liệu thử bạn đồng ý bỏ. Nếu muốn ẩn môn và giữ nguyên các liên kết, dùng Lưu trữ. Môn đã lưu trữ vẫn có thể được chọn khi quản lý công việc/tài liệu; việc lưu trữ chỉ thay đổi danh sách môn đang học.
+
+5. **Kết quả xác minh của agent**
+
+   - `manage.py check`: PASS.
+   - `manage.py test accounts studies --noinput`: **37/37 PASS**, bao gồm các kiểm thử tài khoản cũ.
+   - `makemigrations --check --dry-run` và `migrate --check`: PASS; migration mới đã được tạo và áp dụng.
+   - Đã kiểm tra tạo/cập nhật/xóa, archive/khôi phục, thời lượng sai, hoàn thành/mở lại, deadline theo múi giờ Việt Nam, lọc quá hạn, tìm kiếm kết hợp, URL tài liệu, quan hệ liên kết và dữ liệu còn lại sau xóa.
+   - Đã kiểm tra GET/POST với ID người khác bị từ chối; owner giả trong POST bị bỏ qua; không gắn được môn/công việc của người khác; CSRF bảo vệ các thao tác ghi; constraint database chặn dữ liệu thời lượng/ưu tiên/trạng thái mâu thuẫn.
+   - Trình duyệt trên database tạm: đăng nhập → tạo môn → tạo việc → thêm tài liệu liên quan → sửa số phút còn lại/trạng thái → lọc kết hợp thành công. Biểu mẫu/danh sách ở 320/375 px không tràn ngang.
+   - Dữ liệu trong ảnh kiểm tra là dữ liệu mẫu trên database tạm, không phải dữ liệu được thêm vào tài khoản của bạn.
+
+6. **Commit và push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m03
+   git add studies config/settings.py config/urls.py templates/base.html templates/accounts/profile.html templates/core/home.html templates/studies static/css/studies.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: manage subjects tasks and study materials"
+   git push origin main
+   ```
+
+   Giữ file migration `studies/migrations/0001_initial.py` trong commit. Không thêm database, bản sao lưu hoặc `.env`. Nhánh khi bắt đầu mốc là `main`; nếu bạn đã đổi nhánh thì thay tên nhánh khi push. Agent không stage/commit/push thay bạn.
+
+   Khi có lỗi, gửi ID test, thao tác và kết quả thực tế. Chỉ tiếp tục mốc sau khi bạn xác nhận mốc 03 đạt và đã push GitHub. Mốc 04 dự kiến làm lịch bận, tùy chọn học và lịch tuần.

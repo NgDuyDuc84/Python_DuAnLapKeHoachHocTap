@@ -1,0 +1,25 @@
+{% extends "studies/base.html" %}
+
+{% block study_content %}
+<div class="study-form-card">
+    <form class="study-form" method="post">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+            <div class="form-field">
+                {% if field.field.widget.input_type == 'checkbox' %}
+                    <div class="checkbox-row">{{ field }}{{ field.label_tag }}</div>
+                {% else %}
+                    {{ field.label_tag }}{{ field }}
+                {% endif %}
+                {{ field.errors }}
+                {% if field.help_text %}<div class="field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <div class="form-actions">
+            <button class="button" type="submit">Lưu thay đổi</button>
+            <a class="text-link" href="{{ view.success_url }}">Hủy</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

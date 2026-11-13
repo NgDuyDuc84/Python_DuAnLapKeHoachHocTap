@@ -7,6 +7,7 @@
     <meta name="description" content="Nhịp Học — không gian lập kế hoạch học tập cá nhân, sắp xếp thời gian và theo dõi tiến độ.">
     <title>{% block title %}Nhịp Học — Kế hoạch học tập cá nhân{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <a class="skip-link" href="#noi-dung">Đến nội dung chính</a>
@@ -19,6 +20,7 @@
                 <a href="{% url 'core:home' %}">Trang chủ</a>
                 <a href="{% url 'core:home' %}#cach-su-dung">Cách sử dụng</a>
                 {% if user.is_authenticated %}
+                    <a href="{% url 'studies:task_list' %}">Học tập</a>
                     <a href="{% url 'accounts:profile' %}">Tài khoản</a>
                     {% if user.is_staff %}
                         <a href="{% url 'admin:index' %}">Quản trị</a>

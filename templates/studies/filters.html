@@ -1,0 +1,13 @@
+<form class="study-filters" method="get" aria-label="Tìm kiếm và lọc">
+    {% for field in filter_form %}
+        <div class="form-field">
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+        </div>
+    {% endfor %}
+    <div class="filter-actions">
+        <button class="button" type="submit">Lọc</button>
+        <a class="text-link" href="{{ request.path }}">Xóa bộ lọc</a>
+    </div>
+</form>

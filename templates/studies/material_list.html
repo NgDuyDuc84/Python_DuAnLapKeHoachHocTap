@@ -1,0 +1,27 @@
+{% extends "studies/base.html" %}
+
+{% block study_content %}
+<div class="study-toolbar">
+    <p>Lưu liên kết bài giảng và tài liệu theo môn học hoặc công việc.</p>
+    <a class="button" href="{% url 'studies:material_create' %}">Thêm tài liệu</a>
+</div>
+{% include "studies/filters.html" %}
+<div class="study-grid">
+    {% for material in object_list %}
+        <article class="study-card">
+            <h2>{{ material.title }}</h2>
+            <p class="study-meta">{{ material.subject|default:"Chưa gắn môn học" }}</p>
+            {% if material.task %}<p class="study-meta">Công việc: {{ material.task }}</p>{% endif %}
+            <p class="material-url">{{ material.url }}</p>
+            {% if material.description %}<p class="card-description">{{ material.description|linebreaksbr }}</p>{% endif %}
+            <div class="card-actions">
+                <a class="text-link" href="{{ material.url }}" target="_blank" rel="noopener noreferrer">Mở tài liệu<span class="sr-only"> {{ material.title }} (tab mới)</span> ↗</a>
+                <a class="text-link" href="{% url 'studies:material_update' material.pk %}">Sửa<span class="sr-only"> {{ material.title }}</span></a>
+                <a class="delete-link" href="{% url 'studies:material_delete' material.pk %}">Xóa<span class="sr-only"> {{ material.title }}</span></a>
+            </div>
+        </article>
+    {% empty %}
+        <p class="empty-state">Chưa có tài liệu trong danh sách này. Hãy lưu một liên kết mới hoặc đổi bộ lọc.</p>
+    {% endfor %}
+</div>
+{% endblock %}
