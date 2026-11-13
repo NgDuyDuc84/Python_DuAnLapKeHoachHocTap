@@ -1,0 +1,67 @@
+{% extends "planner/base.html" %}
+
+{% block planner_content %}
+<div class="week-toolbar">
+    <form class="week-picker" method="get">
+        <div class="form-field">{{ week_form.week.label_tag }}{{ week_form.week }}{{ week_form.week.errors }}</div>
+        <button class="button" type="submit">Xem tuần</button>
+    </form>
+    <a class="button" href="{% url 'planner:busy_create' %}">Thêm lịch bận</a>
+</div>
+{% if days %}
+    <div class="week-heading">
+        <h2>{{ week_start|date:"d/m/Y" }} – {{ week_end|date:"d/m/Y" }}</h2>
+        <nav class="week-navigation" aria-label="Chuyển tuần">
+            <a class="text-link" href="?week={{ previous_week }}">← Tuần trước</a>
+            <a class="text-link" href="{% url 'planner:week' %}">Tuần này</a>
+            <a class="text-link" href="?week={{ next_week }}">Tuần sau →</a>
+        </nav>
+    </div>
+    <div class="calendar-note">
+        <p>Khung học {{ preferences.study_start|time:"H:i" }}–{{ preferences.study_end|time:"H:i" }} trong các ngày đã chọn · tối đa {{ preferences.max_daily_minutes }} phút/ngày · mỗi buổi mong muốn {{ preferences.session_minutes }} phút · nghỉ {{ preferences.break_minutes }} phút.</p>
+        {% if not preferences.pk %}<p>Đang dùng tùy chọn mặc định. <a class="text-link" href="{% url 'planner:preferences' %}">Điều chỉnh giờ học</a> theo thời gian của bạn.</p>{% endif %}
+        <p>Khoảng trống tính từ hiện tại, chưa phải buổi học được đặt. Deadline là mốc nhắc hạn, không chiếm thời gian trên lịch.</p>
+    </div>
+    <div class="calendar-legend" aria-label="Chú giải lịch">
+        <span class="legend-busy">Lịch bận</span><span class="legend-deadline">Deadline</span><span class="legend-free">Khoảng trống</span>
+    </div>
+    <div class="week-grid">
+        {% for day in days %}
+            <article class="day-column{% if day.is_today %} day-today{% endif %}" aria-labelledby="day-{{ day.date|date:'Ymd' }}">
+                <header class="day-heading">
+                    <h3 id="day-{{ day.date|date:'Ymd' }}">{{ day.label }}</h3>
+                    <time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"d/m" }}</time>
+                    {% if day.is_today %}<span class="badge">Hôm nay</span>{% endif %}
+                </header>
+                <div class="day-items">
+                    {% for item in day.items %}
+                        {% if item.kind == 'busy' %}
+                            <div class="calendar-item calendar-busy">
+                                <span class="item-time">{{ item.start_label }}–{{ item.end_label }}</span>
+                                <a href="{% url 'planner:busy_update' item.event.pk %}">{{ item.event.title }}</a>
+                                <small>{% if item.event.repeat_weekly %}Bận · lặp{% else %}Lịch bận{% endif %}</small>
+                            </div>
+                        {% else %}
+                            <div class="calendar-item calendar-deadline{% if item.task.status == 'done' %} deadline-done{% endif %}">
+                                <span class="item-time">{{ item.start_label }}</span>
+                                <a href="{% url 'studies:task_update' item.task.pk %}">{{ item.task.title }}</a>
+                                <small>{% if item.task.status == 'done' %}Đã hoàn thành{% else %}Hạn hoàn thành{% endif %}</small>
+                            </div>
+                        {% endif %}
+                    {% empty %}<p class="day-empty">Không có lịch bận hoặc deadline.</p>{% endfor %}
+                </div>
+                <div class="day-availability">
+                    {% if day.free %}
+                        <p class="capacity">Có thể bố trí tối đa {{ day.capacity_minutes }} phút</p>
+                        <details>
+                            <summary>Khoảng trống ({{ day.free|length }})</summary>
+                            <ul>{% for slot in day.free %}<li>{{ slot.start_label }}–{{ slot.end_label }} <small>({{ slot.minutes }} phút)</small></li>{% endfor %}</ul>
+                        </details>
+                    {% elif day.is_past %}<p class="day-empty">Ngày đã qua.</p>
+                    {% else %}<p class="day-empty">Không có khoảng trống trong khung giờ đã chọn.</p>{% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

@@ -21,6 +21,7 @@
                 <a href="{% url 'core:home' %}#cach-su-dung">Cách sử dụng</a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'studies:task_list' %}">Học tập</a>
+                    <a href="{% url 'planner:week' %}">Lịch tuần</a>
                     <a href="{% url 'accounts:profile' %}">Tài khoản</a>
                     {% if user.is_staff %}
                         <a href="{% url 'admin:index' %}">Quản trị</a>

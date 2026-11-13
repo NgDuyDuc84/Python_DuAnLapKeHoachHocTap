@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ view.page_title }} — Nhịp Học{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+<link rel="stylesheet" href="{% static 'css/planner.css' %}">
+{% endblock %}
+{% block content %}
+<section class="study-shell" aria-labelledby="planner-title">
+    <p class="eyebrow">THỜI GIAN CỦA BẠN</p>
+    <h1 id="planner-title">{{ view.page_title }}</h1>
+    <nav class="section-tabs" aria-label="Quản lý lịch">
+        <a href="{% url 'planner:week' %}" {% if request.resolver_match.url_name == 'week' %}aria-current="page"{% endif %}>Lịch tuần</a>
+        <a href="{% url 'planner:busy_list' %}" {% if 'busy' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Lịch bận</a>
+        <a href="{% url 'planner:preferences' %}" {% if request.resolver_match.url_name == 'preferences' %}aria-current="page"{% endif %}>Giờ học</a>
+    </nav>
+    {% block planner_content %}{% endblock %}
+</section>
+{% endblock %}

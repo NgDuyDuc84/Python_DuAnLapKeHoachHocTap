@@ -30,8 +30,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 02:** đã hoàn thành tài khoản và phân quyền. Người dùng đã cho phép chuyển sang mốc 03.
 
-**Mốc 03 hiện tại:** theo lựa chọn của người dùng, ưu tiên môn học, công việc và tài liệu để có chức năng học tập dùng được. Đã có model, migration, thêm/sửa/xóa, lưu trữ môn, tìm kiếm/lọc, kiểm tra dữ liệu và bảo vệ theo chủ sở hữu. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 03:** đã hoàn thành quản lý môn học, công việc và tài liệu theo lựa chọn của người dùng. Người dùng đã cho phép chuyển sang mốc 04.
 
-**Mốc 04 dự kiến:** lịch bận, tùy chọn thời gian học và lịch tuần. Sau đó mới triển khai thuật toán tự xếp lịch.
+**Mốc 04 hiện tại:** lịch bận một lần/lặp hằng tuần, ca qua đêm, tùy chọn ngày/giờ học và lịch tuần. Python tính các lần lặp, gộp khoảng bận, tìm khoảng trống và hiển thị deadline. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 05 dự kiến:** dùng dữ liệu lịch bận và tùy chọn học để tự sinh kế hoạch tuần, trả phần chưa xếp được, cho xem trước và áp dụng các buổi học. Khoảng trống ở mốc 04 chưa phải buổi học đã được xếp.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

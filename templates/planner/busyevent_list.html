@@ -1,0 +1,29 @@
+{% extends "planner/base.html" %}
+
+{% block planner_content %}
+<div class="study-toolbar">
+    <p>Lịch lên lớp, ca làm và hoạt động cá nhân. Các lịch chồng nhau được gộp khi tính khoảng trống.</p>
+    <a class="button" href="{% url 'planner:busy_create' %}">Thêm lịch bận</a>
+</div>
+<div class="study-list">
+    {% for event in object_list %}
+        <article class="study-card">
+            <h2>{{ event.title }}</h2>
+            <p class="study-meta">{{ event.starts_at|date:"d/m/Y H:i" }} → {{ event.ends_at|date:"d/m/Y H:i" }}</p>
+            {% if event.repeat_weekly %}
+                <span class="badge">Lặp hằng tuần</span>
+                <p class="study-meta">{% if event.repeat_until %}Lặp tới hết {{ event.repeat_until|date:"d/m/Y" }} (theo ngày bắt đầu mỗi lần).{% else %}Chưa ấn định ngày dừng lặp.{% endif %}</p>
+            {% else %}
+                <span class="badge">Một lần</span>
+            {% endif %}
+            <div class="card-actions">
+                <a class="text-link" href="{% url 'planner:busy_update' event.pk %}">Sửa<span class="sr-only"> {{ event.title }}</span></a>
+                <a class="delete-link" href="{% url 'planner:busy_delete' event.pk %}">Xóa<span class="sr-only"> {{ event.title }}</span></a>
+                <a class="text-link" href="{% url 'planner:week' %}?week={{ event.starts_at|date:'Y-m-d' }}">Xem tuần bắt đầu<span class="sr-only"> {{ event.title }}</span></a>
+            </div>
+        </article>
+    {% empty %}
+        <p class="empty-state">Chưa có lịch bận. Thêm lịch lên lớp hoặc ca làm để xác định thời gian có thể học.</p>
+    {% endfor %}
+</div>
+{% endblock %}

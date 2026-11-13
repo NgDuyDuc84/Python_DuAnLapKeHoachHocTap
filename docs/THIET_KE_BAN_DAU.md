@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02) và quản lý môn học/công việc/tài liệu (mốc 03).
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04).
 
 1. **Phân chia trách nhiệm**
 
@@ -16,7 +16,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | core | Trang chủ và giao diện chung | Đã tạo |
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
-   | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Chưa triển khai |
+   | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn và lịch tuần; tự sinh kế hoạch ở mốc sau |
    | focus | Pomodoro, nhật ký học | Chưa triển khai |
    | notifications | Nhắc việc và email | Chưa triển khai |
    | insights | Thống kê, AI | Chưa triển khai |
@@ -27,10 +27,10 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | Đối tượng | Nội dung và quan hệ |
    |---|---|
    | User | Dùng User mặc định Django; username, email, mật khẩu băm, trạng thái, quyền staff/superuser |
-   | StudyPreference | Thuộc user; khung giờ học theo ngày, múi giờ, phút tối đa/ngày, độ dài buổi, phút nghỉ |
+   | StudyPreference | Một bản ghi/user; ngày được học, một khung giờ chung, phút tối đa/ngày, độ dài buổi, phút nghỉ |
    | Subject | Thuộc user; tên môn, màu, học kỳ, trạng thái lưu trữ |
    | Task | Thuộc user, có thể gắn môn; deadline, ưu tiên, phút ước tính/còn lại, cho phép chia nhỏ, trạng thái |
-   | BusyEvent | Thuộc user; lịch một lần hoặc mẫu lặp hằng tuần, giờ bắt đầu/kết thúc, khoảng ngày hiệu lực |
+   | BusyEvent | Thuộc user; thời điểm bắt đầu/kết thúc của lần đầu, cờ lặp hằng tuần, ngày dừng lặp tùy chọn |
    | StudyPlan | Thuộc user; tuần, trạng thái nháp/áp dụng |
    | StudySession | Thuộc công việc; thời gian, trạng thái, nguồn thủ công/tự động, cờ khóa và kế hoạch nếu có |
    | StudyLog | Nhật ký thực tế; công việc, phút học, ghi chú, buổi học nếu có |
@@ -53,6 +53,14 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    Lưu trữ môn chỉ ẩn khỏi danh sách Đang học, không gỡ các liên kết. Xóa môn đặt liên kết môn của công việc/tài liệu về rỗng; xóa công việc gỡ liên kết công việc của tài liệu. Không xóa dây chuyền các dữ liệu đó. Xóa tài liệu chỉ xóa liên kết trong ứng dụng, không tác động tệp ở website gốc.
 
    Tài liệu ở mốc này là URL HTTP/HTTPS; có thể độc lập hoặc gắn các môn/công việc mình sở hữu. Không yêu cầu môn gắn trực tiếp trên tài liệu phải giống môn của công việc được gắn, để hỗ trợ tài liệu dùng chung. Không tải tệp lên hoặc đọc nội dung đường dẫn từ máy chủ.
+
+   Mốc 04 thêm `StudyPreference` và `BusyEvent`. `StudyPreference.study_days` là danh sách số nguyên 0–6 (thứ Hai–Chủ nhật) trong JSONField, được kiểm tra không trùng hoặc ngoài phạm vi. Cho phép bỏ chọn toàn bộ ngày. Một khung giờ trong cùng ngày áp dụng cho các ngày đã chọn; múi giờ dùng cấu hình chung `Asia/Ho_Chi_Minh`. Độ dài buổi phải nằm trong khung giờ và không vượt giới hạn phút/ngày. Đọc tùy chọn mặc định không tạo bản ghi; chỉ ghi khi người dùng lưu.
+
+   Lịch lặp giữ thứ và giờ địa phương của lần đầu, không sinh trước ngày bắt đầu. Ngày dừng tính theo ngày bắt đầu mỗi lần, bao gồm ngày dừng; một ca qua đêm có thể kết thúc sau ngày đó. Mỗi lần lặp ngắn hơn 7 ngày. Một lịch chỉ lặp ở một thứ; bận nhiều thứ thì nhập các lịch riêng. Sửa/xóa lịch lặp tác động cả chuỗi; chưa có ngoại lệ cho từng lần.
+
+   `planner/services/availability.py` xử lý mở rộng lịch lặp và trừ hợp các khoảng bận theo quy ước [bắt đầu, kết thúc). Ca qua đêm/nhiều ngày được cắt theo từng ngày để hiển thị. Khoảng trống nằm trong ngày/giờ được học và từ hiện tại trở đi, làm tròn lên phút kế tiếp nếu đang có giây lẻ. Quỹ ngày là giá trị nhỏ hơn giữa tổng phút trống và giới hạn phút/ngày. Đây là giới hạn trên, chưa bảo đảm xếp được số buổi mong muốn hoặc đã chừa thời gian nghỉ giữa các buổi.
+
+   Lịch tuần hiển thị các mốc deadline của user trong tuần (kể cả việc hoàn thành), nhưng không coi deadline là khoảng bận. Các ngày đã qua không có khoảng trống tương lai. Các buổi tự học, trạng thái thực hiện và thuật toán phân bổ chưa triển khai ở mốc 04.
 
 4. **Quy tắc lịch**
 

@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 03 — môn học, công việc và tài liệu**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 04 — lịch bận, tùy chọn học và lịch tuần**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -245,7 +245,7 @@ Phạm vi: đăng ký với username/email/mật khẩu; đăng nhập bằng us
 
 **Mốc 03 — Quản lý môn học, công việc và tài liệu**
 
-Trạng thái: chờ người dùng kiểm thử và push GitHub. Người dùng đã chọn ưu tiên chức năng học tập ở mốc này; PostgreSQL/triển khai online giữ cho mốc sau.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 04. Giữ kết quả và checklist mốc 03 làm lịch sử. PostgreSQL/triển khai online giữ cho mốc sau.
 
 Phạm vi: môn học (màu, học kỳ, lưu trữ); công việc (deadline, ưu tiên, thời lượng, cho chia buổi, trạng thái); tài liệu dạng liên kết; thêm/sửa/xóa, tìm kiếm/lọc và quyền dữ liệu riêng. Chưa có lịch bận/lịch tuần, tự xếp lịch, nhắc việc, Pomodoro hay AI.
 
@@ -344,3 +344,115 @@ Phạm vi: môn học (màu, học kỳ, lưu trữ); công việc (deadline, ư
    Giữ file migration `studies/migrations/0001_initial.py` trong commit. Không thêm database, bản sao lưu hoặc `.env`. Nhánh khi bắt đầu mốc là `main`; nếu bạn đã đổi nhánh thì thay tên nhánh khi push. Agent không stage/commit/push thay bạn.
 
    Khi có lỗi, gửi ID test, thao tác và kết quả thực tế. Chỉ tiếp tục mốc sau khi bạn xác nhận mốc 03 đạt và đã push GitHub. Mốc 04 dự kiến làm lịch bận, tùy chọn học và lịch tuần.
+
+---
+
+**Mốc 04 — Lịch bận, tùy chọn học và lịch tuần**
+
+Trạng thái: chờ người dùng kiểm thử và push GitHub.
+
+Phạm vi: tạo/sửa/xóa lịch bận một lần hoặc lặp hằng tuần, ca qua đêm; lưu các ngày được học và một khung giờ học chung; giới hạn phút/ngày, độ dài buổi mong muốn và thời gian nghỉ. Lịch tuần từ thứ Hai đến Chủ nhật hiển thị lịch bận, deadline và các khoảng trống từ hiện tại. Chưa tự sinh hoặc lưu buổi tự học; đó là mốc 05.
+
+1. **Cập nhật database và chạy**
+
+   Mốc này có migration `planner/0001_initial.py`, tạo hai bảng mới, không xóa dữ liệu các mốc trước. Agent đã tạo bản sao lưu cục bộ `db.sqlite3-before-m04` trước khi áp dụng migration trên máy hiện tại. File database và bản sao lưu bị ignore.
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies planner --noinput
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi: migration mới là OK hoặc không còn migration cần áp dụng; check không có lỗi; **60 tests / OK** (37 cũ + 23 mới). Không cần cài thêm thư viện. Nếu server cũ đang chạy, dừng và chạy lại để nạp module planner.
+
+   Các kiểm thử tự động dùng database trong bộ nhớ. Kiểm tra trình duyệt dùng database tạm cùng cookie riêng trên cổng 8001, không thêm lịch mẫu vào tài khoản/database của bạn. Server kiểm tra tạm được dừng trước khi bàn giao.
+
+2. **URL và dữ liệu mẫu tự nhập**
+
+   Đăng nhập, chọn **Lịch tuần** trên menu:
+
+   | Trang | URL |
+   |---|---|
+   | Lịch tuần | http://127.0.0.1:8000/planner/ |
+   | Danh sách lịch bận | http://127.0.0.1:8000/planner/busy/ |
+   | Thêm lịch bận | http://127.0.0.1:8000/planner/busy/add/ |
+   | Giờ học | http://127.0.0.1:8000/planner/preferences/ |
+
+   Chọn một tuần tương lai, ký hiệu ngày thứ Hai là D. Trong Giờ học, chọn thứ Hai/Tư/Sáu, khung 18:00–22:00, tối đa 120 phút/ngày, buổi mong muốn 50 phút, nghỉ 10 phút.
+
+   Tạo lịch **Lớp Python** vào D, 19:00–20:00, lặp hằng tuần tới D+14 ngày. Thêm **Ca qua đêm** từ thứ Ba 22:00 đến thứ Tư 02:00, một lần. Từ phần Học tập, tạo công việc có deadline thứ Tư 21:00 cùng tuần. Dùng A/B ở hai cửa sổ để kiểm tra quyền dữ liệu.
+
+3. **Checklist lịch bận**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M04-TC01 | Chưa đăng nhập, mở lịch tuần, giờ học hoặc URL lịch bận | Chuyển tới đăng nhập; không xem được dữ liệu | Chưa kiểm thử |
+   | M04-TC02 | Thêm lịch bận một lần rồi mở tuần tương ứng | Hiển thị đúng ngày và giờ Việt Nam; tuần khác không lặp lại | Chưa kiểm thử |
+   | M04-TC03 | Tạo Lớp Python theo mẫu, xem D, D+7 và D+14 | Đúng thứ Hai 19:00–20:00 ở cả ba tuần; không xuất hiện trước D hoặc ở D+21 | Chưa kiểm thử |
+   | M04-TC04 | Tạo lịch lặp không có ngày dừng, xem một tuần xa hơn | Lịch vẫn hiện đúng thứ/giờ; không cần lưu hàng loạt bản ghi lặp | Chưa kiểm thử |
+   | M04-TC05 | Tạo Ca qua đêm theo mẫu | Thứ Ba hiện 22:00–24:00, thứ Tư hiện 00:00–02:00 | Chưa kiểm thử |
+   | M04-TC06 | Tạo ca Chủ nhật 22:00 → thứ Hai 02:00, xem tuần bắt đầu thứ Hai | Phần 00:00–02:00 vẫn hiện dù ca bắt đầu ở tuần trước | Chưa kiểm thử |
+   | M04-TC07 | Nhập kết thúc bằng/trước bắt đầu; lịch lặp dài từ 7 ngày; ngày dừng trước lần đầu | Form báo lỗi, không tạo lịch sai và không lỗi 500 | Chưa kiểm thử |
+   | M04-TC08 | Sửa tên/giờ lịch lặp, sau đó bỏ Lặp hằng tuần rồi lưu | Thay đổi áp dụng cho cả chuỗi; bỏ lặp chuyển thành một lần và xóa ngày dừng chuỗi đã lưu | Chưa kiểm thử |
+   | M04-TC09 | Mở trang Xóa rồi Hủy; sau đó xóa một lịch thử | Mở trang không xóa ngay; xác nhận xóa gỡ lịch/chuỗi, không xóa công việc hoặc tài liệu | Chưa kiểm thử |
+   | M04-TC10 | Ở A mở URL sửa/xóa lịch lấy từ tài khoản B | Trả 404; dữ liệu B giữ nguyên | Chưa kiểm thử |
+
+   Một lịch lặp dùng đúng thứ của lần đầu; bận nhiều thứ thì nhập các lịch riêng. Với ca qua đêm, ngày dừng xét ngày bắt đầu mỗi lần, nên phần kết thúc có thể sang ngày hôm sau. Sửa/xóa tác động toàn chuỗi, chưa hỗ trợ ngoại lệ riêng từng lần.
+
+4. **Checklist giờ học và tính khoảng trống**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M04-TC11 | Tài khoản chưa lưu Giờ học, mở/xem lại lịch và tùy chọn | Dùng mặc định 08:00–22:00, tất cả ngày, 240 phút/ngày, buổi 50, nghỉ 10; chỉ xem không tự ghi tùy chọn | Chưa kiểm thử |
+   | M04-TC12 | Lưu tùy chọn theo dữ liệu mẫu; tải lại | Giữ đúng thứ Hai/Tư/Sáu, giờ và số phút; ngày không chọn không có khoảng trống | Chưa kiểm thử |
+   | M04-TC13 | Mở Khoảng trống ở thứ Hai D có Lớp Python 19:00–20:00 | Có 18:00–19:00 (60 phút), 20:00–22:00 (120 phút); quỹ bố trí tối đa vẫn là 120 phút/ngày | Chưa kiểm thử |
+   | M04-TC14 | Thêm lịch bận chồng 19:30–20:30 ở D | Khoảng bận gộp thành 19:00–20:30; còn 18:00–19:00 và 20:30–22:00, tổng 150 phút, không trừ hai lần | Chưa kiểm thử |
+   | M04-TC15 | Tạo hai lịch tiếp nhau 18:00–19:00 và 19:00–20:00 | Không có khoảng trống giả ở 19:00; phần trống tiếp theo từ 20:00 | Chưa kiểm thử |
+   | M04-TC16 | Bỏ chọn tất cả ngày rồi lưu | Lưu được; không có khoảng trống, lịch bận và deadline vẫn hiển thị | Chưa kiểm thử |
+   | M04-TC17 | Nhập khung kết thúc ≤ bắt đầu, giới hạn/buổi bằng 0, phút nghỉ âm hoặc số phút >1440 | Form từ chối và hiển thị lỗi; cấu hình cũ không bị thay | Chưa kiểm thử |
+   | M04-TC18 | Nhập độ dài buổi lớn hơn giới hạn ngày hoặc dài hơn toàn khung học | Báo lỗi ở độ dài buổi | Chưa kiểm thử |
+   | M04-TC19 | Xem tuần đã qua và ngày hiện tại | Ngày đã qua không có khoảng trống tương lai; hôm nay không đưa ra giờ trước hiện tại | Chưa kiểm thử |
+   | M04-TC20 | A/B lưu tùy chọn khác nhau; đổi cửa sổ và tải lại | Mỗi người giữ tùy chọn riêng; không đổi được tùy chọn B bằng query/owner giả | Chưa kiểm thử |
+
+   Khung học hiện dùng chung cho các ngày đã chọn và nằm trong cùng ngày; ca qua đêm được hỗ trợ ở Lịch bận. Quỹ phút là giới hạn trên theo khoảng trống và mức tối đa mỗi ngày. Độ dài buổi/thời gian nghỉ được lưu để dùng ở mốc tự xếp lịch; chưa có buổi tự học nên không khấu trừ nghỉ giữa các buổi trong quỹ này.
+
+5. **Checklist lịch tuần và hồi quy**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M04-TC21 | Chọn một ngày giữa tuần, bấm Xem tuần; dùng Tuần trước/Tuần sau/Tuần này | Luôn hiện thứ Hai–Chủ nhật, ngày và liên kết điều hướng đúng | Chưa kiểm thử |
+   | M04-TC22 | Xem công việc có deadline thứ Tư 21:00; đánh dấu hoàn thành rồi xem lại | Mốc hạn hiện đúng 21:00, đổi nhãn hoàn thành; không bị tính là khoảng bận | Chưa kiểm thử |
+   | M04-TC23 | A/B có lịch bận và deadline tên khác nhau | Lịch tuần, danh sách lịch bận chỉ hiện dữ liệu của người đang đăng nhập | Chưa kiểm thử |
+   | M04-TC24 | Mở `/planner/?week=bad-date` hoặc ngày không hợp lệ | Có lỗi ở ô chọn ngày, không lỗi 500 hoặc lộ dữ liệu | Chưa kiểm thử |
+   | M04-TC25 | Xem lịch và Giờ học ở 375/320 px; dùng Tab, mở Khoảng trống | Không tràn ngang; lịch chuyển thành các ngày xếp một cột; các ô/nút và mục mở rộng dùng được | Chưa kiểm thử |
+   | M04-TC26 | Khởi động lại server và xem lại; kiểm tra tài khoản/môn/công việc/tài liệu | Lịch và tùy chọn còn nguyên; chức năng các mốc cũ vẫn dùng được | Chưa kiểm thử |
+
+   Native date/time picker có thể hiển thị định dạng theo ngôn ngữ trình duyệt. Nội dung lịch dùng ngày/tháng và giờ Việt Nam. Chọn tuần tương lai để kiểm tra khoảng trống đầy đủ, vì các giờ đã qua được bỏ khỏi kết quả.
+
+6. **Kết quả xác minh của agent**
+
+   - `manage.py check`: PASS; `manage.py test accounts studies planner --noinput`: **60/60 PASS**.
+   - 23 kiểm thử mới bao phủ lịch một lần/lặp, trước lần đầu, ngày dừng tính bao gồm, ca qua đêm qua ranh giới tuần, lịch nhiều ngày, trừ hợp khoảng bận, ngày được học, giới hạn ngày và loại thời gian đã qua.
+   - Đã kiểm tra ranh giới deadline/tuần, công việc hoàn thành, ngày chọn sai, mặc định không ghi dữ liệu qua GET, CRUD, owner giả, quyền A/B, CSRF và constraint database.
+   - Migration `planner.0001_initial` đã áp dụng; `makemigrations --check --dry-run` và `migrate --check`: PASS.
+   - Trình duyệt với database/cookie riêng: lưu tùy chọn → tạo lịch lặp → ca qua đêm → xem deadline/khoảng trống → chuyển tuần và chọn ngày thành công.
+   - Đã kiểm tra lịch ở 375 px và biểu mẫu ở 320 px không tràn ngang; điều hướng bàn phím tới nội dung chính hoạt động. Các dữ liệu mẫu không được thêm vào database của bạn.
+
+7. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m04
+   git add planner config/settings.py config/urls.py templates/base.html templates/planner static/css/planner.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: add busy schedules study preferences and weekly calendar"
+   git push origin main
+   ```
+
+   Giữ migration trong commit; không đưa database/bản sao lưu/`.env` lên GitHub. Nhánh khi bắt đầu mốc là `main`; nếu bạn đổi nhánh thì thay tên khi push. Agent không stage/commit/push thay bạn.
+
+   Gửi ID test và kết quả thực tế nếu có lỗi. Sau khi bạn xác nhận mốc 04 đạt và đã push, mốc 05 mới triển khai thuật toán tự xếp lịch.

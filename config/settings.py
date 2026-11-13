@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "core.apps.CoreConfig",
     "accounts.apps.AccountsConfig",
     "studies.apps.StudiesConfig",
+    "planner.apps.PlannerConfig",
 ]
 
 MIDDLEWARE = [
