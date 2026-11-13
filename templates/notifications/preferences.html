@@ -1,0 +1,11 @@
+{% extends "notifications/base.html" %}
+{% block notification_content %}
+<p class="notification-note">{{ email_mode }}</p>
+<p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. Cần dịch vụ nền hoạt động để xử lý nhắc.</p>
+<div class="study-form-card"><form method="post" class="study-form">{% csrf_token %}
+    {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}<div class="form-field">{% if field.field.widget.input_type == 'checkbox' %}<div class="checkbox-row">{{ field }}{{ field.label_tag }}</div>{% else %}{{ field.label_tag }}{{ field }}{% endif %}{{ field.errors }}</div>{% endfor %}
+    <button class="button" type="submit">Lưu tùy chọn nhắc</button>
+</form></div>
+<p class="notification-note">Tắt kênh sẽ chặn nhắc chưa gửi; lịch sử đã nhận vẫn được giữ. Thay giờ deadline/buổi sẽ có nhắc cho thời điểm mới; đổi độ nhắc sớm không gửi lại một nhắc đã xử lý cho cùng thời điểm.</p>
+{% endblock %}

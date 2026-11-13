@@ -1,0 +1,18 @@
+{% extends "notifications/base.html" %}
+{% block notification_content %}
+<p class="notification-note">{{ email_mode }}</p>
+<p class="notification-note">Email lỗi được tự thử tối đa 3 lần, cách nhau ít nhất 1 phút. Kết quả chưa xác nhận không được tự gửi lại: hãy kiểm tra hộp thư để tránh nhận trùng. Mỗi lần yêu cầu gửi lại sẽ được kiểm tra theo dữ liệu và tùy chọn hiện tại.</p>
+<div class="study-list">
+{% for reminder in reminders %}
+<article class="study-card">
+    <div class="card-heading"><h2>{{ reminder.title }}</h2><span class="badge">{{ reminder.delivery_label }}</span></div>
+    <p class="study-meta">Tạo {{ reminder.created_at|date:"d/m/Y H:i" }} · Thời điểm {{ reminder.target_at|date:"d/m/Y H:i" }} · {{ reminder.attempts }} lần thử trong lượt này</p>
+    <p class="card-description">{{ reminder.message|linebreaksbr }}</p>
+    {% if reminder.delivered_at %}<p class="study-meta">Bàn giao {{ reminder.delivered_at|date:"d/m/Y H:i" }}</p>{% endif %}
+    {% if reminder.last_error %}<p class="notification-warning">{{ reminder.last_error }}</p>{% endif %}
+    {% if reminder.can_retry %}<form method="post" action="{% url 'notifications:retry_email' reminder.pk %}" class="form-actions">{% csrf_token %}<button class="button" type="submit">Đã kiểm tra hộp thư, yêu cầu gửi lại</button></form>{% endif %}
+</article>
+{% empty %}<p class="empty-state">Chưa có email nhắc. Bật email trong Tùy chọn nhắc và chờ dịch vụ nền xử lý việc/buổi đến thời điểm nhắc.</p>{% endfor %}
+</div>
+{% include "notifications/pagination.html" %}
+{% endblock %}

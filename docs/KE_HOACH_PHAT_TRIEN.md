@@ -38,8 +38,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 06:** đã hoàn thành chỉnh/khóa buổi, ghi nhận, cập nhật tiến độ, xem trước/xếp lại và cảnh báo. Người dùng đã cho phép chuyển sang mốc 07.
 
-**Mốc 07 hiện tại:** Pomodoro 25/5 có lưu trạng thái chạy/tạm dừng/tiếp tục/kết thúc/hủy; ghi nhật ký phút học một lần, nhật ký nhập tay, sửa/xóa và lọc ngày. Thống kê tổng phút, số bản ghi/ngày học, trung bình, theo ngày/môn/nguồn bằng Python. Nhật ký giữ lịch sử sau khi xóa việc, không tự trừ tiến độ. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 07:** đã hoàn thành Pomodoro 25/5, nhật ký nhập tay/từ đồng hồ, lọc/sửa/xóa và thống kê bằng Python. Người dùng đã cho phép chuyển sang mốc 08.
 
-**Mốc 08 dự kiến:** thông báo và email nhắc bằng tác vụ nền. Mốc 07 chỉ báo hết giờ trên trang Pomodoro đang mở; chưa có gửi email, chuông hay thông báo của trình duyệt.
+**Mốc 08 hiện tại:** thông báo trong web và email nhắc deadline/buổi đã áp dụng, tùy chọn theo user, hộp đã đọc/chưa đọc và lịch sử email. Worker Python dùng hàng đợi database, kiểm tra hiệu lực trước gửi, chống tạo trùng, thử lại có giới hạn và xử lý kết quả email không chắc chắn. Email local dùng console, có cấu hình SMTP qua môi trường. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 09 dự kiến:** đồng bộ một chiều buổi học từ ứng dụng sang Google Calendar. Việc cấp quyền/kết nối dịch vụ ngoài sẽ được xử lý khi đến mốc đó. Worker mốc 08 chạy bằng management command trên Windows, chưa yêu cầu Redis/Celery; cấu hình vận hành online nằm ở mốc triển khai.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

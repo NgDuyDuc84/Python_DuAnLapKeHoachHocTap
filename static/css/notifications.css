@@ -1,0 +1,4 @@
+.notification-note { margin: 18px 0; color: var(--muted); font-size: 14px; }
+.notification-unread { border-left: 4px solid var(--accent); background: #f4f9ef; }
+.notification-warning { padding: 12px; border-radius: 8px; background: #fff3de; color: #765313; font-size: 13px; }
+.notification-link { padding: 0; border: 0; color: var(--accent); background: transparent; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }

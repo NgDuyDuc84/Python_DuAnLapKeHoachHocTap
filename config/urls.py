@@ -7,5 +7,6 @@ urlpatterns = [
     path("studies/", include("studies.urls")),
     path("planner/", include("planner.urls")),
     path("focus/", include("focus.urls")),
+    path("notifications/", include("notifications.urls")),
     path("", include("core.urls")),
 ]

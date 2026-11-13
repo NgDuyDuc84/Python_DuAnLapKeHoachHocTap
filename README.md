@@ -6,7 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 
-Hiện tại: **mốc 07 — Pomodoro, nhật ký học và thống kê**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 08 — thông báo, email nhắc và worker nền**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -40,6 +40,8 @@ Các trang chính:
 - [Tập trung](http://127.0.0.1:8000/focus/): Pomodoro 25 phút học/5 phút nghỉ, tạm dừng/tiếp tục, lưu sớm hoặc hủy.
 - [Nhật ký](http://127.0.0.1:8000/focus/logs/): phút học từ Pomodoro và nhập tay, lọc ngày, sửa/xóa.
 - [Thống kê](http://127.0.0.1:8000/focus/statistics/): tổng phút, ngày có học, trung bình và phân bổ theo ngày/môn/nguồn, xử lý bằng Python.
+- [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email.
+- [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật riêng từng kênh, chọn thời gian nhắc trước hạn/buổi.
 - [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
 
 Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsuperuser`, nhập thông tin trực tiếp trong terminal. Đăng xuất qua nút trên giao diện dùng POST, không mở URL đăng xuất bằng GET.
@@ -47,7 +49,7 @@ Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsu
 Chạy kiểm thử tự động:
 
 ```powershell
-& .\.venv\Scripts\python.exe manage.py test accounts studies planner focus --noinput
+& .\.venv\Scripts\python.exe manage.py test accounts studies planner focus notifications --noinput
 ```
 
 Các kiểm thử dùng database riêng trong bộ nhớ, không sửa tài khoản đang lưu ở `db.sqlite3`. Xem checklist đầy đủ và cách kiểm tra khóa/mở tài khoản trong `HD_Test.md`.
@@ -68,4 +70,18 @@ Mốc 07 thêm app `focus` và migration `focus/0001_initial.py`. Mỗi tài kho
 
 Nhật ký không tự giảm thời lượng công việc hoặc đánh dấu buổi trên lịch đã học; tiếp tục dùng Cập nhật tiến độ/Ghi nhận buổi của mốc 06. Nhật ký nhập tay được sửa ngày/phút/việc/ghi chú; nhật ký Pomodoro chỉ sửa ghi chú. Xóa nhật ký giảm thống kê và không được tự tạo lại khi kết thúc lại cùng phiên. Xóa công việc giữ nhật ký/Pomodoro với tên việc và môn đã chụp lúc ghi nhận.
 
-Nhật ký/thống kê mặc định xem 7 ngày gần nhất, hỗ trợ khoảng 1–366 ngày đã qua. Pomodoro quy toàn bộ phút vào ngày bắt đầu phiên theo giờ Việt Nam, không chia ở nửa đêm. Môn nhóm theo nhãn trong nhật ký; đổi nhãn có thể tách nhóm lịch sử. Chưa có tự lặp chu kỳ, nghỉ dài, chuông/thông báo nền hoặc tự xác nhận đã học. Xem checklist mốc 07 ở cuối `HD_Test.md`.
+Nhật ký/thống kê mặc định xem 7 ngày gần nhất, hỗ trợ khoảng 1–366 ngày đã qua. Pomodoro quy toàn bộ phút vào ngày bắt đầu phiên theo giờ Việt Nam, không chia ở nửa đêm. Môn nhóm theo nhãn trong nhật ký; đổi nhãn có thể tách nhóm lịch sử. Chưa có tự lặp chu kỳ, nghỉ dài, chuông/Pomodoro push hoặc tự xác nhận đã học.
+
+Mốc 08 thêm app `notifications` và migration `notifications/0001_initial.py`. Mặc định nhận thông báo trong web, email tắt; nhắc deadline trước 24 giờ, buổi học trước 15 phút. Chọn được deadline 1/3/24 giờ và buổi học 5/15/30 phút. Email lấy từ tài khoản, phải bật chủ động. Web chỉ xem/lưu tùy chọn/đánh dấu đã đọc hoặc yêu cầu gửi lại; tạo/gửi nhắc chạy trong worker Python riêng dùng hàng đợi database.
+
+Sau khi migrate và mở web, mở terminal thứ hai tại thư mục dự án:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py process_reminders --watch
+```
+
+Worker kiểm tra mỗi 60 giây, Ctrl+C để dừng. Muốn kiểm thử một lượt: `manage.py process_reminders` không có `--watch`. Không cần Redis/Celery ở mốc local này; có thể gọi lệnh một lượt bằng bộ lập lịch khi triển khai. Worker phải hoạt động để tạo/gửi nhắc, kể cả khi trình duyệt đã đóng.
+
+Email mặc định dùng console backend, nội dung xuất hiện trong terminal worker. SMTP thật cấu hình bằng các biến `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `SITE_URL` trong `.env` theo `.env.example`; chưa thử gửi qua nhà cung cấp thật trong mốc này. Không ghi đè `.env` đang dùng hoặc đưa thông tin đăng nhập SMTP lên GitHub.
+
+Mỗi đối tượng/thời điểm/kênh có một bản nhắc; đổi độ nhắc sớm không gửi lại bản đã xử lý. Đổi deadline/giờ buổi tạo nhắc cho thời điểm mới. Trước gửi kiểm tra lại tài khoản, kênh nhận, công việc, buổi và thời điểm; bỏ nhắc cũ/đã quá giờ. Email bị từ chối được tự thử tối đa 3 lần, cách ít nhất 1 phút; mất kết nối/kẹt khi gửi chuyển Chưa xác nhận và cần người dùng kiểm tra hộp thư trước khi yêu cầu gửi lại. Hệ thống SMTP không bảo đảm thư đã vào inbox hoặc tuyệt đối không trùng khi kết quả gửi không xác định. Xem checklist và cấu hình kiểm thử mốc 08 ở cuối `HD_Test.md`.

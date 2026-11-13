@@ -2,7 +2,7 @@
 
 {% block planner_content %}
 <div class="calendar-note">
-    <p>Cảnh báo tính từ dữ liệu hiện tại: mọi việc quá hạn, việc đến hạn và buổi sắp diễn ra trong 7 ngày tới (đến {{ horizon|date:"d/m/Y H:i" }}). Đây là cảnh báo trong ứng dụng, chưa gửi email.</p>
+    <p>Cảnh báo tính từ dữ liệu hiện tại: mọi việc quá hạn, việc đến hạn và buổi sắp diễn ra trong 7 ngày tới (đến {{ horizon|date:"d/m/Y H:i" }}). Nhắc deadline/buổi học qua web và email được bật riêng tại <a class="text-link" href="{% url 'notifications:preferences' %}">Tùy chọn nhắc</a>.</p>
     <p>“Chưa đủ lịch” là phần thời lượng chưa có buổi tương lai trước deadline, không phải kết luận không thể xếp đủ. Hãy cập nhật tiến độ, xử lý xung đột rồi xem trước phương án xếp lại.</p>
 </div>
 <h2 class="plan-section-title">Deadline cần chú ý</h2>

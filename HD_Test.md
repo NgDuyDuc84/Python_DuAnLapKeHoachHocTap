@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 07 — Pomodoro, nhật ký học và thống kê**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 08 — thông báo, email nhắc và worker nền**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -749,7 +749,7 @@ Phạm vi đã làm: chỉnh giờ/độ dài buổi tương lai; khóa/mở kh�
 
 **Mốc 07 — Pomodoro, nhật ký học và thống kê**
 
-Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng ở mốc 07.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 08. Giữ checklist và kết quả mốc 07 làm lịch sử.
 
 Phạm vi: Pomodoro 25 phút học/5 phút nghỉ; tạm dừng, tiếp tục, kết thúc sớm và hủy; lưu nhật ký phút học một lần; nhật ký nhập tay có sửa/xóa/lọc ngày; thống kê bằng Python theo ngày, môn và nguồn. JavaScript chỉ vẽ/đồng bộ đồng hồ, không quyết định số phút được lưu.
 
@@ -891,3 +891,186 @@ Phạm vi: Pomodoro 25 phút học/5 phút nghỉ; tạm dừng, tiếp tục, k
    Nhánh lúc bắt đầu mốc là `main`; thay tên nếu bạn đã đổi nhánh. Giữ migration trong commit; không đưa `.env`, `.venv`, SQLite hoặc bản sao lưu lên GitHub. Agent không stage/commit/push thay bạn.
 
    Nếu có lỗi, gửi ID test và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi triển khai mốc 08 (thông báo và email nhắc bằng tác vụ nền).
+
+---
+
+**Mốc 08 — Thông báo, email nhắc và worker nền**
+
+Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng ở mốc 08.
+
+Phạm vi: nhắc deadline và buổi học sắp bắt đầu, hộp thông báo đọc/chưa đọc, lịch sử email, tùy chọn mỗi người; worker Python/hàng đợi database, chống tạo trùng, kiểm tra dữ liệu sống, thử lại có giới hạn và xử lý email chưa chắc kết quả. Không yêu cầu cài thêm thư viện/broker ở mốc local này.
+
+1. **Khởi động và kiểm tra kỹ thuật**
+
+   Dừng server cũ bằng Ctrl+C. Terminal thứ nhất:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies planner focus notifications --noinput
+   & .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+   & .\.venv\Scripts\python.exe manage.py migrate --check
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi **181/181 tests PASS**, không lỗi system check hoặc migration thiếu. Migration mới: `notifications.0001_initial`. Trên máy này agent đã tạo SQLite backup `db.sqlite3-before-m08` trước migrate, không ghi đè bản sao lưu cũ. Không xóa database để kiểm thử lại.
+
+   Kiểm thử local giữ email backend mặc định `django.core.mail.backends.console.EmailBackend`; nếu bạn đã tự đặt `EMAIL_BACKEND` khác trong `.env`, chuyển về console trước các ca thử mẫu. Chỉ thêm/sửa các biến cần thiết, không chép đè `.env` hiện tại từ file mẫu. Chế độ email hiển thị ngay trên trang Tùy chọn/Lịch sử email.
+
+   Terminal thứ hai, cùng thư mục dự án:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   # Chạy một lượt để đối chiếu số lượng, chưa cần bật vòng lặp.
+   & .\.venv\Scripts\python.exe manage.py process_reminders
+   # Khi cần chạy liên tục, dùng lệnh dưới; Ctrl+C để dừng.
+   & .\.venv\Scripts\python.exe manage.py process_reminders --watch
+   ```
+
+   `--watch` kiểm tra mỗi 60 giây; có thể dùng `--watch --interval 5` để thử nhanh, giá trị hợp lệ 1–3600 giây. Không cần Redis/Celery. Đây là worker nội bộ của web, chạy tách khỏi server; mở web không tự bật worker. Trên bản online cần tiến trình worker riêng hoặc bộ lập lịch gọi lệnh một lượt.
+
+   - [Thông báo](http://127.0.0.1:8000/notifications/): chỉ các nhắc trong web đã xử lý thành công.
+   - [Lịch sử email](http://127.0.0.1:8000/notifications/email/): chờ/đang xử lý/đã bàn giao/lỗi/bỏ qua/chưa xác nhận.
+   - [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật kênh và chọn số phút nhắc trước.
+
+2. **Dữ liệu mẫu — tạo đúng thứ tự để đối chiếu**
+
+   Dùng tài khoản thử A mới, có email đúng định dạng khi đăng ký. Dùng B cho ca phân quyền. Để worker tắt trong lúc tạo dữ liệu. Không dùng email hoặc tài liệu thật trong ca thử local.
+
+   1. Tạo công việc **Ôn cấu trúc dữ liệu**, 30 phút, cho chia buổi, deadline sau 3 ngày. Đây là công việc duy nhất lúc tạo kế hoạch.
+   2. Trong Giờ học, chọn ngày hiện tại; khung học bắt đầu khoảng **10–14 phút nữa**, kết thúc đủ cho buổi 30 phút trong cùng ngày; tối đa ngày 60, buổi 30, nghỉ 5. Nếu sắp nửa đêm, thực hiện lúc còn đủ khung trong ngày hoặc chọn một thời điểm phù hợp khác.
+   3. Tạo và áp dụng kế hoạch cho tuần chứa ngày đó. Kiểm tra có **một buổi 30 phút** bắt đầu sau 10–14 phút. Không ghi nhận hoặc hủy buổi này.
+   4. Sau khi đã áp dụng buổi trên, mới tạo công việc **Nộp bài Python**, còn 45 phút, deadline khoảng **40 phút nữa**; chưa cần xếp lịch công việc này.
+   5. Tại Tùy chọn nhắc: bật Trong web và Email, deadline **1 giờ**, buổi **15 phút**. Dùng chế độ email console.
+
+   Chạy worker một lượt khi buổi vẫn còn trong tương lai và cách hiện tại không quá 15 phút. Mong đợi:
+
+   | Nội dung | Kết quả |
+   |---|---|
+   | Thông báo trong web | 2 bản: một deadline, một buổi học; ban đầu đều chưa đọc |
+   | Email console | 2 thư trong terminal worker, đúng email của A, nội dung đúng đối tượng/giờ/phút còn lại |
+   | Lịch sử email | 2 bản Đã bàn giao email; mỗi bản 1 lần thử |
+   | Kết quả lệnh lần đầu | Tạo 4 nhắc; xử lý thành công 4 nhắc |
+   | Chạy lại cùng dữ liệu/thời điểm | Tạo 0; xử lý 0; không thêm thông báo hoặc email |
+
+   Email có liên kết mở việc/kế hoạch và đường dẫn tới tùy chọn thay/tắt email. Tiêu đề MIME trong terminal có thể được mã hóa UTF-8; phần thân vẫn đọc được. Không có thư tới inbox thật trong chế độ console. Nếu còn công việc/buổi khác cũng đến ngưỡng nhắc, tổng sẽ lớn hơn bảng mẫu; dùng tài khoản mới hoặc kiểm tra theo đúng tên mẫu.
+
+3. **Checklist tùy chọn và hộp thông báo**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M08-TC01 | Tài khoản chưa lưu tùy chọn, chỉ mở/tải lại trang | Mặc định web bật, email tắt, deadline 24 giờ, buổi 15 phút; GET không tạo bản ghi tùy chọn | Chưa kiểm thử |
+   | M08-TC02 | Lưu tùy chọn mẫu rồi tải lại | Giữ đúng hai kênh/1 giờ/15 phút và email của tài khoản A | Chưa kiểm thử |
+   | M08-TC03 | Chưa chạy worker, mở web rồi chờ/tải lại | GET không tự tạo hoặc gửi nhắc; các trang học tập vẫn dùng được | Chưa kiểm thử |
+   | M08-TC04 | Chạy worker một lượt theo dữ liệu mẫu | Đúng 4 nhắc xử lý: 2 trong web + 2 email console | Chưa kiểm thử |
+   | M08-TC05 | Chạy lại vài lượt hoặc bật watch | Cùng đối tượng/thời điểm/kênh không được nhân bản; không gửi lại bản đã xử lý | Chưa kiểm thử |
+   | M08-TC06 | Xem hộp thông báo rồi tải lại, chưa bấm đã đọc | Vẫn 2 chưa đọc; chỉ xem không tự đánh dấu | Chưa kiểm thử |
+   | M08-TC07 | Đánh dấu một bản đã đọc; chọn Chưa đọc và lọc | Số chưa đọc còn 1, chỉ còn bản chưa đọc trong bộ lọc | Chưa kiểm thử |
+   | M08-TC08 | Bấm Đánh dấu tất cả đã đọc, lọc Chưa đọc | Số chưa đọc bằng 0, danh sách lọc trống; Tất cả vẫn giữ lịch sử | Chưa kiểm thử |
+   | M08-TC09 | Mở nội dung liên quan từ nhắc deadline/buổi | Tới đúng công việc hoặc kế hoạch, vẫn qua kiểm tra quyền sở hữu | Chưa kiểm thử |
+   | M08-TC10 | Chọn thời gian nhắc không hợp lệ bằng request giả hoặc bật email trên tài khoản có email rỗng/sai | Form từ chối, cấu hình trước đó giữ nguyên; email hiện có lấy từ thông tin tài khoản | Chưa kiểm thử |
+
+4. **Checklist hàng đợi và dữ liệu thay đổi**
+
+   Dùng dữ liệu thử độc lập cho các ca dưới, dừng watch trước khi thay đổi để quan sát dễ hơn. Các trường hợp dữ liệu đổi giữa lúc đã xếp hàng và lúc gửi được kiểm thử tự động bằng đồng hồ cố định, không cần chờ hoặc gửi SMTP thật.
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M08-TC11 | Tắt một kênh trước khi worker phát nhắc | Kênh tắt không phát nhắc mới; bản chờ ở kênh đó bị bỏ qua; lịch sử đã phát giữ nguyên | Chưa kiểm thử |
+   | M08-TC12 | Web đã nhắc, sau đó mới bật email khi đối tượng vẫn đủ điều kiện | Chỉ thêm nhắc email một lần, không nhân đôi thông báo web | Chưa kiểm thử |
+   | M08-TC13 | Đổi mức nhắc sớm sau khi một sự kiện đã xử lý | Không gửi lại cùng sự kiện chỉ vì đổi lead; nếu bản còn chờ và lead mới chưa tới thì hoãn đến ngưỡng mới | Chưa kiểm thử |
+   | M08-TC14 | Đổi deadline sang thời điểm mới còn trong ngưỡng nhắc | Nhắc cũ chưa phát bị bỏ qua; thời điểm mới có một nhắc mới mỗi kênh; lịch sử đã phát không bị xóa | Chưa kiểm thử |
+   | M08-TC15 | Chỉnh giờ, hủy hoặc ghi nhận buổi trước khi nhắc được phát | Không gửi nhắc cho giờ cũ/buổi đã hủy/đã ghi nhận; giờ mới chỉ nhắc khi đến ngưỡng và còn trong tương lai | Chưa kiểm thử |
+   | M08-TC16 | Hoàn thành/xóa việc hoặc xóa buổi trước khi worker phát nhắc | Không gửi nhắc lỗi thời; lịch sử được giữ với liên kết rỗng nếu đối tượng đã xóa | Chưa kiểm thử |
+   | M08-TC17 | Khóa tài khoản A trong Admin trước khi worker phát nhắc | Không tạo/phát nhắc cho tài khoản khóa; mở khóa chỉ nhắc đối tượng vẫn còn hiệu lực | Chưa kiểm thử |
+   | M08-TC18 | Worker dừng qua ngưỡng nhắc rồi mở lại trước khi đến hạn/bắt đầu | Gửi bù một lần nếu thời điểm đích vẫn ở tương lai; không phát nhắc cho deadline đã qua hoặc buổi đã bắt đầu | Chưa kiểm thử |
+   | M08-TC19 | Có buổi thuộc bản xem trước chưa áp dụng, buổi done/cancelled hoặc việc done | Không tạo nhắc cho các đối tượng này | Chưa kiểm thử |
+
+5. **Checklist email và vận hành**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M08-TC20 | Xem Lịch sử email sau lượt mẫu console | Hai bản Đã bàn giao email, một lần thử/bản; có dòng chỉ rõ email thử ở terminal, không kết luận inbox thật đã nhận | Chưa kiểm thử |
+   | M08-TC21 | Mô phỏng SMTP từ chối/cấu hình sai trong test tự động | Trạng thái Gửi lỗi, thử tối đa 3 lần và giãn ít nhất 1 phút; quá số lượt không tự gửi tiếp | Chưa kiểm thử |
+   | M08-TC22 | Mô phỏng mất kết nối sau khi bắt đầu gửi | Chưa xác nhận kết quả; không tự retry; lịch sử yêu cầu kiểm tra hộp thư trước gửi lại | Chưa kiểm thử |
+   | M08-TC23 | Trên bản Gửi lỗi/Chưa xác nhận, bấm Đã kiểm tra hộp thư, yêu cầu gửi lại | Chỉ xếp hàng một lượt mới, chưa gửi trong request; worker kiểm tra lại dữ liệu/kênh và tối đa 3 lần cho lượt này | Chưa kiểm thử |
+   | M08-TC24 | Mô phỏng worker gián đoạn khi đang claim, chạy lại sau 5 phút | Nhắc web có thể đưa về chờ; email sang Chưa xác nhận, không tự gửi lại có nguy cơ trùng; worker cũ không ghi đè claim đã thu hồi | Chưa kiểm thử |
+   | M08-TC25 | Chạy watch, để có sự kiện đến ngưỡng hoặc thay dữ liệu; Ctrl+C | Các lượt chạy theo interval, dữ liệu hàng đợi tồn tại sau restart; Ctrl+C dừng gọn | Chưa kiểm thử |
+   | M08-TC26 | Dùng `--interval 0` hoặc mô phỏng SQLite tạm khóa | Interval sai bị từ chối; watch báo database bận rồi tiếp tục lượt sau; lệnh một lượt trả thất bại để người vận hành chạy lại | Chưa kiểm thử |
+
+   Có thể chạy riêng các ca lỗi email/claim mà không cần tài khoản SMTP:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py test notifications.tests.ReminderTests.test_rejected_email_retries_three_times_one_minute_apart notifications.tests.ReminderTests.test_disconnect_is_uncertain_and_not_automatically_retried notifications.tests.ReminderTests.test_live_claim_cannot_be_claimed_twice_and_stale_claim_recovery notifications.tests.ReminderTests.test_manual_retry_queues_only_failed_or_uncertain_without_sending_in_request --noinput
+   ```
+
+   Các test dùng backend trong bộ nhớ và giả lập phản hồi, không gửi thư thật. Không cần cố tình nhập sai mật khẩu SMTP để tái hiện lỗi.
+
+6. **Checklist quyền, giao diện và hồi quy**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M08-TC27 | Chưa đăng nhập mở các trang/thao tác mới | Chuyển Đăng nhập, không lộ lịch sử | Chưa kiểm thử |
+   | M08-TC28 | B mở lịch sử của mình, gửi POST đánh dấu/gửi lại với ID của A; giả owner khi lưu tùy chọn | Không thấy/sửa dữ liệu A; ID người khác trả 404; tùy chọn vẫn chỉ lưu cho người đăng nhập | Chưa kiểm thử |
+   | M08-TC29 | GET URL đánh dấu/gửi lại, hoặc POST thiếu CSRF | GET thao tác trả 405; POST thiếu CSRF bị từ chối; không tự gửi mail hoặc đánh dấu bằng GET | Chưa kiểm thử |
+   | M08-TC30 | Có >20 thông báo hoặc email, chuyển trang; nhập bộ lọc lạ | Phân trang tối đa 20; giữ bộ lọc chưa đọc; bộ lọc sai có lỗi và không lộ dữ liệu | Chưa kiểm thử |
+   | M08-TC31 | Xem hộp thông báo 375 px, tùy chọn 320 px; dùng Tab | Không tràn ngang, nút/chọn/checkbox và nhãn dùng được | Chưa kiểm thử |
+   | M08-TC32 | Khởi động lại server/worker, thử tài khoản, lịch, Pomodoro và nhật ký | Nhắc/đã đọc/tùy chọn còn nguyên, không phát lại bản đã xử lý; mốc 02–07 vẫn hoạt động | Chưa kiểm thử |
+
+7. **SMTP thật — cấu hình khi bạn sẵn sàng thử gửi**
+
+   Trong `.env` đang được Git bỏ qua, chỉnh các biến theo nhà cung cấp của bạn, không ghi thông tin đăng nhập vào source hoặc tài liệu:
+
+   ```dotenv
+   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+   EMAIL_HOST=smtp.ten-nha-cung-cap-cua-ban
+   EMAIL_PORT=587
+   EMAIL_USE_TLS=true
+   EMAIL_USE_SSL=false
+   EMAIL_HOST_USER=tai-khoan-gui-cua-ban
+   EMAIL_HOST_PASSWORD=mat-khau-ung-dung-cua-ban
+   DEFAULT_FROM_EMAIL=Nhịp Học <dia-chi-gui-duoc-nha-cung-cap-cho-phep>
+   SITE_URL=http://127.0.0.1:8000
+   ```
+
+   Đây là giá trị minh họa, cần thay bằng cấu hình hợp lệ; một số nhà cung cấp yêu cầu mật khẩu ứng dụng/quyền gửi riêng. Nếu dùng SSL cổng 465 thì TLS=false, SSL=true; không bật đồng thời. Khởi động lại cả web và worker sau đổi môi trường. Khi deploy, SITE_URL phải là URL thật của web. Tham khảo [Django 5.2 email](https://docs.djangoproject.com/en/5.2/topics/email/) cho các thiết lập gửi.
+
+   Chỉ bật email cho tài khoản nhận mà bạn muốn thử, tạo một sự kiện mới để kiểm tra, kiểm tra Inbox/Spam và trạng thái tại nhà cung cấp. Chế độ console/locmem đã được kiểm thử trong mốc này; SMTP qua nhà cung cấp thật chưa được xác minh vì chưa có cấu hình của bạn. Sau thử, có thể tắt email trong Tùy chọn nhắc hoặc chuyển lại console.
+
+8. **Quy tắc và giới hạn**
+
+   - Nhắc deadline/buổi học trong web/email, chưa có push notification, chuông thiết bị hoặc email báo hết Pomodoro. Cảnh báo trực tiếp ở planner vẫn là tính năng riêng, không tự đồng nghĩa đã gửi nhắc.
+   - Worker phải chạy độc lập; mặc định kiểm tra mỗi 60 giây, nên nhắc có độ trễ theo interval và thời gian xử lý. Không bảo đảm đúng từng giây hoặc gửi bù khi đối tượng đã quá hạn/bắt đầu.
+   - Mỗi loại đối tượng/ID/thời điểm/kênh có một bản nhắc. Đổi thời điểm đích tạo phiên bản mới; lịch sử đã gửi vẫn được giữ. Đổi lead không gửi lại cùng sự kiện. Bản bỏ qua có thể hoạt động lại khi đối tượng/kênh hợp lệ và còn lượt.
+   - Nhắc kiểm tra trạng thái ngay trước phát; thay đổi xảy ra trong khi SMTP đang gửi không thể thu hồi một thư đã bàn giao. SMTP chấp nhận cũng không bảo đảm đã vào inbox. Khi kết quả không xác định, kiểm tra hộp thư trước gửi lại vì có thể nhận trùng.
+   - Gửi lại thủ công reset một lượt tối đa 3 lần; gửi lặp nút không reset bản đang chờ/đang xử lý/đã gửi. Lịch sử hiển thị số lần trong lượt hiện tại, chưa có nhật ký từng lần thử riêng.
+   - Recipient luôn lấy từ email tài khoản hiện tại; email phải đúng định dạng. Mốc này chưa thêm xác minh email hay thay email tự phục vụ; tài khoản quản trị thiếu email có thể cập nhật trong Admin.
+   - Lịch sử và thời điểm dùng giờ Việt Nam; lưu địa chỉ nhận/chế độ tại lần thử, nên đổi backend sang SMTP không biến thư console cũ thành thư đã gửi thật. Lỗi hiển thị được chuẩn hóa để không đưa nội dung exception SMTP/thông tin xác thực vào web. Giao diện lịch sử không cho sửa recipient hoặc nội dung gửi bằng POST giả.
+   - Giữ `.env`, SQLite/bản sao lưu ngoài Git. Tự khởi động worker khi đăng nhập Windows hoặc vận hành trên host online chưa được cấu hình tự động ở mốc local này; các lệnh đã sẵn để chạy thủ công/bộ lập lịch.
+
+9. **Kết quả xác minh của agent**
+
+   - **31 test mới**, tổng `manage.py test accounts studies planner focus notifications --noinput`: **181/181 PASS**.
+   - Bao phủ ngưỡng giờ, kênh, đã hoàn thành/nháp/hủy/xóa, sửa thời điểm/lead, tài khoản khóa, dữ liệu sống lúc phát, khóa trùng database, claim, thử lại, mất kết nối, gián đoạn worker, đọc/chưa đọc, quyền A/B, owner giả, CSRF và worker watch/database bận.
+   - `manage.py check`, kiểm tra migration, SQLite integrity và diff whitespace: PASS. Migration `notifications.0001_initial` đã áp dụng, bản sao lưu `db.sqlite3-before-m08` được Git bỏ qua.
+   - Worker với database riêng và console backend: lượt đầu tạo/xử lý 4 nhắc (2 web + 2 email), lượt thứ hai 0/0. Không gửi thư ra ngoài.
+   - Trình duyệt: thấy hai thông báo → đánh dấu một còn 1 → lọc Chưa đọc → tất cả đã đọc còn 0 → lịch sử email rõ chế độ console/đã bàn giao → đổi/lưu kênh và lead thành công. Hộp thông báo 375 px và tùy chọn 320 px không tràn ngang.
+   - Server/fixture QA riêng đã dừng và dọn; không thêm dữ liệu mẫu vào `db.sqlite3` của bạn. SMTP thật chưa được kiểm tra.
+
+10. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m08
+   git add notifications config/settings.py config/urls.py .env.example templates/base.html templates/planner/alerts.html templates/notifications static/css/notifications.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: add queued study reminders inbox and email delivery"
+   git push origin main
+   ```
+
+   Nhánh lúc bắt đầu là `main`; thay tên nếu bạn đã đổi nhánh. Giữ migration và `.env.example` trong commit, không đưa `.env` thật hoặc database lên GitHub. Agent không stage/commit/push thay bạn.
+
+   Nếu có lỗi, gửi ID test và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi chuyển mốc 09 — đồng bộ một chiều sang Google Calendar.

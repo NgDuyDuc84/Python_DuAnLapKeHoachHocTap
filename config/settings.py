@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "studies.apps.StudiesConfig",
     "planner.apps.PlannerConfig",
     "focus.apps.FocusConfig",
+    "notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -96,3 +97,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:profile"
 LOGOUT_REDIRECT_URL = "core:home"
+
+# Console email makes the local checkpoint testable without sending real messages.
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Nhịp Học <noreply@example.test>")
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").strip().lower() in {"true", "1", "yes"}
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").strip().lower() in {"true", "1", "yes"}
+EMAIL_TIMEOUT = 10
+SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000").rstrip("/")

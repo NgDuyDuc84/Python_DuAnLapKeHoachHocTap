@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–06 (nền Django, tài khoản, học tập, lịch và xếp lịch), cùng Pomodoro/nhật ký/thống kê ở mốc 07.
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–07 và nhắc deadline/buổi học qua thông báo/email ở mốc 08.
 
 1. **Phân chia trách nhiệm**
 
@@ -18,7 +18,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
    | focus | Pomodoro, nhật ký và thống kê thời gian học | Đã có đồng hồ bền qua tải lại, thao tác trạng thái, nhật ký và thống kê bằng Python |
-   | notifications | Nhắc việc và email | Chưa triển khai |
+   | notifications | Nhắc việc và email | Đã có tùy chọn, hàng đợi, worker, hộp thông báo và lịch sử email |
    | insights | Phân tích thói quen, AI | Chưa triển khai; thống kê thời gian cơ bản hiện đặt ở focus |
    | integrations | Kết nối lịch bên ngoài | Chưa triển khai |
 
@@ -36,7 +36,8 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | StudyLog | Đã có: owner, công việc tùy chọn, tên việc/nhãn môn lịch sử, ngày học, phút, ghi chú, nguồn manual/pomodoro, liên kết một-một tới FocusSession nếu có |
    | FocusSession | Đã có: owner, việc tùy chọn, tên/nhãn môn lịch sử, phase work/break, trạng thái, thời lượng/giây tích lũy và mốc bắt đầu/tiếp tục/kết thúc; liên kết một-một tới phiên học trước cho giờ nghỉ |
    | Material | Thuộc user; tên, URL, mô tả, môn/công việc liên quan |
-   | Reminder | Đối tượng, kênh, thời điểm, phiên bản và trạng thái gửi |
+   | ReminderPreference | Đã có: một bản/user, bật web/email, chọn số phút trước deadline/buổi |
+   | Reminder | Đã có: owner, việc/buổi, kênh, khóa sự kiện/thời điểm, lịch nhắc, nội dung lịch sử, trạng thái, lần thử, mốc thử lại/claim/gửi/đọc |
    | CalendarConnection | User, lịch đích, thông tin cấp quyền được bảo vệ và trạng thái |
    | CalendarEventMapping | Buổi học, ID sự kiện bên ngoài và trạng thái đồng bộ |
 
@@ -85,6 +86,14 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    StudyLog nhập tay có ngày không vượt hiện tại, 1–1440 phút/bản và ghi chú tối đa 1000 ký tự; UUID theo biểu mẫu tránh ghi lặp cùng lần gửi. Nhật ký nhập tay được sửa ngày/phút/việc/ghi chú; nhật ký Pomodoro chỉ sửa ghi chú để giữ số đo đồng hồ. Có trang xác nhận xóa qua POST: xóa làm giảm thống kê, không tự đổi tiến độ hoặc lịch. Foreign key Task dùng SET_NULL cho FocusSession/StudyLog; tên việc và nhãn môn được chụp khi bắt đầu Pomodoro hoặc nhập/sửa nhật ký tay để giữ lịch sử sau đổi/xóa dữ liệu gốc. Nhãn môn không chứa trạng thái lưu trữ.
 
    Thời gian nhật ký độc lập với ước lượng công việc: không tự giảm Task.remaining_minutes hoặc tự ghi nhận StudySession. Người dùng cập nhật tiến độ và trạng thái buổi bằng mốc 06. Pomodoro gắn công việc, chưa gắn trực tiếp từng buổi lịch. Thống kê chỉ tổng hợp các StudyLog còn lưu, không cộng FocusSession riêng để tránh tính hai lần. Mặc định 7 ngày, chọn được 1–366 ngày; dữ liệu theo ngày có cả ngày 0 phút, theo nhãn môn và nguồn; trung bình chia cho toàn bộ số ngày đã chọn. Pomodoro gán toàn bộ phút vào ngày bắt đầu phiên ở Asia/Ho_Chi_Minh, chưa chia phiên qua nửa đêm. Đổi nhãn môn rồi ghi thêm có thể tạo nhóm lịch sử khác.
+
+   Mốc 08 tạo app notifications. Mỗi lượt worker tìm công việc chưa xong và buổi planned đã áp dụng, thời điểm còn ở tương lai nhưng đã tới ngưỡng nhắc của user. Tùy chọn mặc định web bật/email tắt, deadline 1440 phút, buổi 15 phút; GET mặc định không tự tạo preference. Không gửi bù đối tượng đã quá hạn/bắt đầu. Hàng đợi dùng unique(owner, channel, dedup_key), với khóa băm từ loại đối tượng, ID và thời điểm đích; nhắc web/email độc lập, đổi lead không tạo lại sự kiện đã xử lý, đổi thời điểm đích tạo phiên bản mới.
+
+   Worker `process_reminders` mặc định một lượt, `--watch` lặp mỗi 60 giây, `--interval` cho phép 1–3600 giây. Đây là tiến trình Python nền riêng với web, không tạo/gửi trong GET hoặc request lưu form. Bản local dùng database và management command để chạy trực tiếp trên Windows; không thêm broker/dependency. Chế độ watch tiếp tục sau lỗi database tạm khóa; lỗi một lượt trả thất bại để người vận hành chạy lại. Worker kiểm tra dữ liệu sống trước mỗi lần phát nhắc: tài khoản active, kênh bật, owner khớp, công việc chưa xong, buổi chưa ghi nhận/hủy và thời điểm không đổi/chưa qua. Nếu lead mới chưa đến, hoãn next_attempt_at. Bản bỏ qua có thể được kích hoạt lại khi đối tượng/kênh hợp lệ và còn lượt; bản đã gửi không tự gửi lại.
+
+   Mỗi bản được claim bằng UPDATE có điều kiện và token riêng trước gửi, không giữ transaction qua SMTP. Web chuyển sent/delivered_at, chỉ các bản web sent mới xuất hiện ở hộp thông báo. Đánh dấu đọc/tất cả đã đọc bằng POST theo owner. Email tăng attempts, SMTP trả chấp nhận mới ghi sent; không cam kết vào inbox. Bị từ chối rõ ràng hoặc cấu hình/địa chỉ sai thì failed và tối đa 3 lần, giãn ít nhất một phút. Mất kết nối không xác nhận chuyển uncertain, không tự retry. Claim email treo quá 5 phút cũng uncertain; claim web có thể đưa lại pending. Token ngăn worker muộn ghi đè kết quả đã thu hồi. Người dùng kiểm tra hộp thư rồi POST yêu cầu gửi lại failed/uncertain, reset một lượt tối đa 3 lần, vẫn kiểm tra hiệu lực trước gửi. Email SMTP không hỗ trợ cam kết tuyệt đối gửi đúng một lần khi kết nối bị gián đoạn.
+
+   Nội dung email chỉ gồm tên việc, thời điểm, phút còn lại và liên kết nội bộ với SITE_URL cấu hình, kèm đường dẫn thay/tắt nhắc. Email nhận lấy từ tài khoản hiện tại, không lấy recipient/owner từ POST. Lịch sử lưu cả địa chỉ nhận và chế độ thử nghiệm/máy chủ tại lần thử để không nhầm thư console cũ sau khi đổi sang SMTP. Mặc định console backend để kiểm thử local; SMTP và thông tin xác thực qua môi trường. Lỗi lưu vào lịch sử dùng thông báo cố định, không chép exception SMTP có thể chứa thông tin riêng. Foreign key việc/buổi dùng SET_NULL giữ lịch sử; bản chưa phát được bỏ qua sau xóa. Cảnh báo trực tiếp ở planner vẫn độc lập với lịch sử nhắc này. Chưa có push notification/chuông hoặc email báo hết Pomodoro.
 
 4. **Quy tắc lịch**
 
