@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+        <p class="eyebrow">KHÔNG GIAN HỌC TẬP CỦA BẠN</p>
+        <h1 id="hero-title">Học có kế hoạch.<br><span>Tiến bộ mỗi ngày.</span></h1>
+        <p class="hero-description">Dành chỗ cho những điều quan trọng: môn học, bài tập và cả thời gian cho bản thân. Bắt đầu từ một kế hoạch vừa sức với bạn.</p>
+        <a class="button" href="#cach-su-dung">Khám phá cách sử dụng <span aria-hidden="true">↗</span></a>
+        <p class="availability-note">Các tính năng quản lý và lập lịch đang được hoàn thiện.</p>
+    </div>
+    <aside class="note-card" aria-labelledby="note-title">
+        <span class="note-label">MỘT THÓI QUEN NHỎ</span>
+        <h2 id="note-title">Cho việc học<br>một khoảng thời gian.</h2>
+        <p>Biết mình cần làm gì, khi nào nên bắt đầu và lúc nào cần nghỉ.</p>
+        <ul class="note-list">
+            <li>Chọn điều cần ưu tiên</li>
+            <li>Dành thời gian phù hợp</li>
+            <li>Nhìn lại và điều chỉnh</li>
+        </ul>
+        <span class="note-footer">Đều đặn hơn, nhẹ nhàng hơn.</span>
+    </aside>
+</section>
+
+<section id="cach-su-dung" class="guide" aria-labelledby="guide-title">
+    <p class="eyebrow">TỪNG BƯỚC MỘT</p>
+    <h2 id="guide-title">Một kế hoạch bắt đầu từ đâu?</h2>
+    <div class="steps">
+        <article class="step">
+            <span class="step-number">01</span>
+            <h3>Ghi lại việc cần làm</h3>
+            <p>Chuẩn bị danh sách môn học, bài tập, hạn nộp và thời gian dự kiến cho mỗi việc.</p>
+        </article>
+        <article class="step">
+            <span class="step-number">02</span>
+            <h3>Hiểu thời gian của bạn</h3>
+            <p>Xác định lịch lên lớp, ca làm và những khoảng trống thực sự có thể dành cho việc học.</p>
+        </article>
+        <article class="step">
+            <span class="step-number">03</span>
+            <h3>Học và điều chỉnh</h3>
+            <p>Theo dõi những gì đã làm được, dành thời gian nghỉ và điều chỉnh kế hoạch khi cần.</p>
+        </article>
+    </div>
+</section>
+{% endblock %}
