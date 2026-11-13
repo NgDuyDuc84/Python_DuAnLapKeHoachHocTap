@@ -6,7 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 
-Hiện tại: **mốc 06 — chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 07 — Pomodoro, nhật ký học và thống kê**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -37,6 +37,9 @@ Các trang chính:
 - [Cảnh báo](http://127.0.0.1:8000/planner/alerts/): việc quá hạn, thiếu lịch trước hạn, buổi xung đột và buổi đã kết thúc chưa ghi nhận.
 - [Lịch bận](http://127.0.0.1:8000/planner/busy/): một lần/lặp hằng tuần, hỗ trợ qua đêm.
 - [Giờ học](http://127.0.0.1:8000/planner/preferences/): ngày được học, khung giờ chung, giới hạn phút/ngày, độ dài buổi và nghỉ.
+- [Tập trung](http://127.0.0.1:8000/focus/): Pomodoro 25 phút học/5 phút nghỉ, tạm dừng/tiếp tục, lưu sớm hoặc hủy.
+- [Nhật ký](http://127.0.0.1:8000/focus/logs/): phút học từ Pomodoro và nhập tay, lọc ngày, sửa/xóa.
+- [Thống kê](http://127.0.0.1:8000/focus/statistics/): tổng phút, ngày có học, trung bình và phân bổ theo ngày/môn/nguồn, xử lý bằng Python.
 - [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
 
 Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsuperuser`, nhập thông tin trực tiếp trong terminal. Đăng xuất qua nút trên giao diện dùng POST, không mở URL đăng xuất bằng GET.
@@ -44,7 +47,7 @@ Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsu
 Chạy kiểm thử tự động:
 
 ```powershell
-& .\.venv\Scripts\python.exe manage.py test accounts studies planner --noinput
+& .\.venv\Scripts\python.exe manage.py test accounts studies planner focus --noinput
 ```
 
 Các kiểm thử dùng database riêng trong bộ nhớ, không sửa tài khoản đang lưu ở `db.sqlite3`. Xem checklist đầy đủ và cách kiểm tra khóa/mở tài khoản trong `HD_Test.md`.
@@ -59,4 +62,10 @@ Mốc 06 thêm migration `planner/0003_studyplan_mode_studyplan_replacement_ids_
 
 Chế độ Xếp lại chỉ thay buổi tự động chưa bắt đầu trong tuần được chọn, giữ buổi khóa, đã chỉnh tay, đang học, đã học và các tuần khác. Xem trước chỉ đọc các đặt chỗ cũ; khi áp dụng mới hủy buổi cũ và thêm buổi mới trong cùng transaction. Buổi bị hủy giữ dấu vết, không còn chiếm lịch/quỹ ngày. Bổ sung vẫn giữ mọi buổi đã áp dụng.
 
-Thay đổi đầu vào chưa tự chạy xếp lại; cần chọn Xếp lại và kiểm tra bản xem trước. Buổi khóa hoặc chỉnh tay có xung đột cần xử lý trực tiếp. Cảnh báo trong ứng dụng xét mọi việc quá hạn, việc đến hạn/buổi sắp diễn ra trong 7 ngày và tối đa 20 buổi chưa ghi nhận gần nhất. Chưa gửi email hoặc ghi nhật ký thời gian học/Pomodoro. Thuật toán chưa bảo đảm tối ưu toàn cục. Xem dữ liệu mẫu, giới hạn và checklist mốc 06 ở cuối `HD_Test.md`.
+Thay đổi đầu vào chưa tự chạy xếp lại; cần chọn Xếp lại và kiểm tra bản xem trước. Buổi khóa hoặc chỉnh tay có xung đột cần xử lý trực tiếp. Cảnh báo trong ứng dụng xét mọi việc quá hạn, việc đến hạn/buổi sắp diễn ra trong 7 ngày và tối đa 20 buổi chưa ghi nhận gần nhất. Chưa gửi email. Thuật toán chưa bảo đảm tối ưu toàn cục.
+
+Mốc 07 thêm app `focus` và migration `focus/0001_initial.py`. Mỗi tài khoản chỉ có một phiên học/nghỉ đang chạy hoặc tạm dừng. Thời gian tính ở Python, JavaScript chỉ hiển thị/đồng bộ đồng hồ. Tải lại hoặc đóng trang không làm mất phiên. Hết giờ vẫn cần bấm Lưu và kết thúc; phút học bị giới hạn tối đa 25, nghỉ/tạm dừng không cộng. Kết thúc sớm chỉ ghi phút tròn, dưới một phút không tạo nhật ký. Hủy không ghi nhật ký; gửi lặp thao tác kết thúc không ghi hai lần.
+
+Nhật ký không tự giảm thời lượng công việc hoặc đánh dấu buổi trên lịch đã học; tiếp tục dùng Cập nhật tiến độ/Ghi nhận buổi của mốc 06. Nhật ký nhập tay được sửa ngày/phút/việc/ghi chú; nhật ký Pomodoro chỉ sửa ghi chú. Xóa nhật ký giảm thống kê và không được tự tạo lại khi kết thúc lại cùng phiên. Xóa công việc giữ nhật ký/Pomodoro với tên việc và môn đã chụp lúc ghi nhận.
+
+Nhật ký/thống kê mặc định xem 7 ngày gần nhất, hỗ trợ khoảng 1–366 ngày đã qua. Pomodoro quy toàn bộ phút vào ngày bắt đầu phiên theo giờ Việt Nam, không chia ở nửa đêm. Môn nhóm theo nhãn trong nhật ký; đổi nhãn có thể tách nhóm lịch sử. Chưa có tự lặp chu kỳ, nghỉ dài, chuông/thông báo nền hoặc tự xác nhận đã học. Xem checklist mốc 07 ở cuối `HD_Test.md`.

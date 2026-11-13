@@ -1,0 +1,45 @@
+{% extends "focus/base.html" %}
+{% load static %}
+{% block focus_content %}
+{% if action_error %}<div class="form-errors" role="alert">{{ action_error }}</div>{% endif %}
+<div class="timer-card">
+    <p class="eyebrow">{% if session.phase == 'work' %}HỌC 25 PHÚT{% else %}NGHỈ 5 PHÚT{% endif %}</p>
+    <h2>{{ session.task_title }}</h2>
+    <p>{{ session.subject_label|default:"Chưa gắn môn" }} · <span id="timer-status">{{ session.get_status_display }}</span></p>
+    <div id="focus-timer" class="timer-clock" role="timer" aria-label="Thời gian còn lại" data-state-url="{% url 'focus:state' session.pk %}">{{ remaining_label }}</div>
+    <p id="timer-message" role="status">{% if session.is_active %}Hết giờ, hãy bấm lưu/kết thúc để xác nhận. Tải lại trang vẫn khôi phục được phiên.{% endif %}</p>
+    <p id="timer-sync" role="status"></p>
+    <a class="text-link" href="{% url 'focus:session' session.pk %}">Tải lại trạng thái phiên</a>
+    {% if session.is_active %}
+    <div class="form-actions timer-actions">
+        {% if session.status == 'running' %}<form method="post" action="{% url 'focus:pause' session.pk %}">{% csrf_token %}<button class="button" type="submit">Tạm dừng</button></form>
+        {% else %}<form method="post" action="{% url 'focus:resume' session.pk %}">{% csrf_token %}<button class="button" type="submit">Tiếp tục</button></form>{% endif %}
+        <form method="post" action="{% url 'focus:cancel' session.pk %}">{% csrf_token %}<button class="button button-danger" type="submit">Hủy phiên, không lưu</button></form>
+    </div>
+    {% endif %}
+</div>
+{% if session.is_active %}
+<div class="study-form-card finish-card">
+    <h2>{% if session.phase == 'work' %}Lưu kết quả phiên học{% else %}Kết thúc giờ nghỉ{% endif %}</h2>
+    <form method="post" action="{% url 'focus:finish' session.pk %}" class="study-form">{% csrf_token %}
+        {% if session.phase == 'work' %}<div class="form-field">{{ finish_form.notes.label_tag }}{{ finish_form.notes }}{{ finish_form.notes.errors }}</div>{% endif %}
+        <p class="field-help">{% if session.phase == 'work' %}Lưu số phút tròn đã học, tối đa 25 phút. Dưới 1 phút không tạo nhật ký. Không tự trừ thời lượng công việc còn lại.{% else %}Thời gian nghỉ không ghi vào nhật ký học.{% endif %}</p>
+        <button class="button" type="submit">{% if session.phase == 'work' %}Lưu và kết thúc phiên học{% else %}Kết thúc nghỉ{% endif %}</button>
+    </form>
+</div>
+{% elif session.status == 'finished' %}
+<div class="study-card finish-card">
+    {% if study_log %}<h2>Đã lưu {{ study_log.minutes }} phút học</h2><p>Ngày học {{ study_log.studied_on|date:"d/m/Y" }}, theo ngày bắt đầu phiên. {% if study_log.notes %}{{ study_log.notes }}{% endif %}</p>
+    {% elif session.phase == 'work' %}<p>Không có nhật ký cho phiên này: chưa đủ một phút hoặc bản ghi đã được bạn xóa. Kết thúc lại phiên không tạo lại nhật ký.</p>
+    {% else %}<p>Đã kết thúc giờ nghỉ, không cộng vào thời gian học.</p>{% endif %}
+    {% if session.phase == 'work' %}<form method="post" action="{% url 'focus:break' session.pk %}">{% csrf_token %}<button class="button" type="submit">Nghỉ 5 phút</button></form>{% endif %}
+</div>
+{% endif %}
+<p class="focus-note">Nhật ký chỉ ghi thời gian. Cập nhật số phút công việc còn cần bằng chức năng tiến độ; phiên Pomodoro không tự đánh dấu buổi trong lịch là đã học.</p>
+<div class="form-actions">
+    {% if session.task_id %}<a class="text-link" href="{% url 'studies:task_progress' session.task_id %}">Cập nhật tiến độ công việc</a>{% endif %}
+    <a class="text-link" href="{% url 'focus:home' %}">Chọn phiên học mới</a><a class="text-link" href="{% url 'focus:logs' %}">Xem nhật ký</a>
+</div>
+{{ timer_state|json_script:"timer-state" }}
+<script src="{% static 'js/focus_timer.js' %}" defer></script>
+{% endblock %}

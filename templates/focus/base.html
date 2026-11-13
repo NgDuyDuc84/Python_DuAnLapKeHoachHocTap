@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ view.page_title }} — Nhịp Học{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+<link rel="stylesheet" href="{% static 'css/focus.css' %}">
+{% endblock %}
+{% block content %}
+<section class="study-shell" aria-labelledby="focus-title">
+    <p class="eyebrow">TỪ KẾ HOẠCH ĐẾN THỰC HÀNH</p>
+    <h1 id="focus-title">{{ view.page_title }}</h1>
+    <nav class="section-tabs" aria-label="Tập trung và nhật ký">
+        <a href="{% url 'focus:home' %}" {% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'session' %}aria-current="page"{% endif %}>Pomodoro</a>
+        <a href="{% url 'focus:logs' %}" {% if 'log' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Nhật ký</a>
+        <a href="{% url 'focus:statistics' %}" {% if request.resolver_match.url_name == 'statistics' %}aria-current="page"{% endif %}>Thống kê</a>
+    </nav>
+    {% block focus_content %}{% endblock %}
+</section>
+{% endblock %}

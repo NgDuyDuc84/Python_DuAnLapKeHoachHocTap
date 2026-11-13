@@ -1,0 +1,8 @@
+{% extends "focus/base.html" %}
+{% block focus_content %}
+<div class="study-form-card">
+    <h2>{{ object.task_title }}</h2><p>{{ object.studied_on|date:"d/m/Y" }} · {{ object.minutes }} phút · {{ object.get_source_display }}</p>
+    <p>Xóa nhật ký sẽ giảm số liệu thống kê, không đổi tiến độ hoặc lịch học. Không thể hoàn tác trong ứng dụng. Với Pomodoro, kết thúc lại phiên sẽ không tạo lại nhật ký đã xóa.</p>
+    <form class="form-actions" method="post">{% csrf_token %}<button class="button button-danger" type="submit">Xác nhận xóa nhật ký</button><a class="text-link" href="{% url 'focus:logs' %}">Hủy, giữ lại</a></form>
+</div>
+{% endblock %}

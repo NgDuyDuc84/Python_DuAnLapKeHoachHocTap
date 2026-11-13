@@ -1,0 +1,5 @@
+<form class="study-filters" method="get">
+    {{ range_form.non_field_errors }}
+    {% for field in range_form %}<div class="form-field">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+    <div class="filter-actions"><button class="button" type="submit">Xem kết quả</button></div>
+</form>

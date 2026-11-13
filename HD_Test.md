@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 06 — chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 07 — Pomodoro, nhật ký học và thống kê**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -601,7 +601,7 @@ Phạm vi: thuật toán Python xếp deadline gần trước, cùng hạn thì 
 
 **Mốc 06 — Chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**
 
-Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng sau mốc 06.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 07. Giữ checklist và kết quả mốc 06 làm lịch sử.
 
 Phạm vi đã làm: chỉnh giờ/độ dài buổi tương lai; khóa/mở khóa; ghi nhận Đã học hoặc Hủy/bỏ qua; cập nhật tiến độ công việc; xem trước và áp dụng xếp lại đúng các buổi được phép; cảnh báo deadline, xung đột và buổi chưa ghi nhận. Nghiệp vụ xử lý bằng Python/Django, không thêm thư viện.
 
@@ -744,3 +744,150 @@ Phạm vi đã làm: chỉnh giờ/độ dài buổi tương lai; khóa/mở kh�
    Nhánh khi bắt đầu mốc là `main`; thay tên nếu bạn đổi nhánh. Giữ migration trong commit, không đưa `.env`, `.venv`, SQLite hoặc bản sao lưu lên GitHub. Agent không stage/commit/push thay bạn.
 
    Gửi ID test và kết quả thực tế nếu có lỗi. Sau khi bạn kiểm thử và xác nhận, mốc 07 mới làm Pomodoro, nhật ký và thống kê.
+
+---
+
+**Mốc 07 — Pomodoro, nhật ký học và thống kê**
+
+Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng ở mốc 07.
+
+Phạm vi: Pomodoro 25 phút học/5 phút nghỉ; tạm dừng, tiếp tục, kết thúc sớm và hủy; lưu nhật ký phút học một lần; nhật ký nhập tay có sửa/xóa/lọc ngày; thống kê bằng Python theo ngày, môn và nguồn. JavaScript chỉ vẽ/đồng bộ đồng hồ, không quyết định số phút được lưu.
+
+1. **Khởi động và kiểm tra kỹ thuật**
+
+   Dừng server cũ bằng Ctrl+C rồi chạy:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies planner focus --noinput
+   & .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+   & .\.venv\Scripts\python.exe manage.py migrate --check
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi: **150/150 tests PASS**; system check và kiểm tra migration không có lỗi. Không thêm thư viện vào `requirements.txt`. Migration mới `focus.0001_initial` đã áp dụng trên máy hiện tại sau khi tạo SQLite backup `db.sqlite3-before-m07`, không ghi đè bản sao lưu cũ.
+
+   - [Pomodoro](http://127.0.0.1:8000/focus/): bắt đầu và mở 10 phiên gần nhất.
+   - Chi tiết phiên: `/focus/sessions/<id>/`; đọc trạng thái JSON: GET `/focus/sessions/<id>/state/`.
+   - Thao tác phiên: POST `/focus/sessions/<id>/pause/`, `resume/`, `finish/`, `cancel/`, `break/` qua nút có CSRF; GET các URL thao tác trả 405.
+   - [Nhật ký](http://127.0.0.1:8000/focus/logs/): thêm tại `logs/add/`, sửa/xóa tại `logs/<id>/edit/` và `logs/<id>/delete/`.
+   - [Thống kê](http://127.0.0.1:8000/focus/statistics/): mặc định 7 ngày gần nhất, tính cả hôm nay.
+
+2. **Dữ liệu mẫu và số liệu đối chiếu**
+
+   Dùng tài khoản thử A mới để không có nhật ký cũ; B cho ca phân quyền. Gọi **H** là ngày hôm nay theo giờ Việt Nam. Tạo hai môn và hai công việc chưa hoàn thành:
+
+   | Môn | Công việc | Ước tính/còn lại | Deadline |
+   |---|---|---|---|
+   | Lập trình Python, HK1 | Ôn vòng lặp và hàm | 120 phút | H+3 ngày |
+   | Toán rời rạc, HK1 | Bài tập đồ thị | 90 phút | H+4 ngày |
+
+   Nhập hai nhật ký tay: Python **30 phút ngày H**, Toán **45 phút ngày H−1**. Chọn khoảng H−6 đến H để đối chiếu:
+
+   | Trạng thái dữ liệu | Tổng | Bản ghi/ngày có học | Theo nguồn | Theo môn |
+   |---|---|---|---|---|
+   | Hai nhật ký mẫu | 75 phút | 2 / 2 | Tay 75, Pomodoro 0 | Python 30, Toán 45 |
+   | Thêm đúng một Pomodoro Python được lưu P phút, P≥1 | 75+P | 3 / 2 | Tay 75, Pomodoro P | Python 30+P, Toán 45 |
+   | Thêm nhật ký Python 15 phút hôm nay, rồi sửa thành 20 | 95+P | 4 / 2 | Tay 95, Pomodoro P | Python 50+P, Toán 45 |
+
+   Trung bình = tổng phút / **toàn bộ 7 ngày** trong khoảng, gồm cả ngày không học, làm tròn 1 chữ số. Ví dụ P=2 thì tổng cuối **97**, 4 bản ghi/2 ngày, trung bình **13,9**, ngày H có 52 phút, H−1 có 45 phút. Các ngày còn lại bằng 0.
+
+   Để test nhanh, chạy Pomodoro ít nhất 60 giây học thực sự rồi kết thúc sớm; P là phút tròn được lưu. Các ca thử nhiều phiên, hết đủ 25 phút hoặc hủy nên dùng bộ dữ liệu/tài khoản thử riêng để không làm lệch bảng mẫu trên. Test tự động dùng đồng hồ cố định, không phải chờ 25 phút.
+
+3. **Checklist Pomodoro**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M07-TC01 | Mở Tập trung hoặc Học Pomodoro từ danh sách công việc | Form chỉ chọn việc của tài khoản đang đăng nhập, chưa hoàn thành; liên kết từ công việc chọn sẵn đúng việc | Chưa kiểm thử |
+   | M07-TC02 | Chọn việc và bấm Bắt đầu học 25 phút | Có phiên Học tập/Đang chạy, đồng hồ khoảng 25:00 rồi giảm; đúng tên việc/môn | Chưa kiểm thử |
+   | M07-TC03 | Đang chạy, tải lại trang hoặc rời trang rồi quay lại | Khôi phục cùng phiên, không trở về 25:00 hoặc tạo phiên mới; số phút được xác nhận bằng giờ server | Chưa kiểm thử |
+   | M07-TC04 | Bấm Tạm dừng, đợi khoảng 10 giây rồi tải lại | Giữ nguyên số giây còn lại, trạng thái Tạm dừng; thời gian chờ không cộng vào học | Chưa kiểm thử |
+   | M07-TC05 | Bấm Tiếp tục, đợi vài giây | Đồng hồ chạy từ phần đã giữ, không reset; bấm/gửi lặp không đặt lại mốc tính giờ | Chưa kiểm thử |
+   | M07-TC06 | Khi đang chạy hoặc tạm dừng, mở trang Pomodoro ở tab khác | Hiện Tiếp tục phiên hiện tại, không tạo phiên thứ hai; mỗi người chỉ có một phiên học/nghỉ hoạt động | Chưa kiểm thử |
+   | M07-TC07 | Có ≥60 giây học thực sự, nhập ghi chú và bấm Lưu và kết thúc | Có đúng một nhật ký Pomodoro P phút tròn; không tính nghỉ/tạm dừng; thời lượng công việc vẫn 120 phút | Chưa kiểm thử |
+   | M07-TC08 | Sau khi lưu, tải lại, mở lại hoặc gửi lại thao tác kết thúc | Không tạo nhật ký lần hai, không cộng thêm thời gian; không còn nút lưu phiên đã kết thúc | Chưa kiểm thử |
+   | M07-TC09 | Ở bộ thử riêng, kết thúc phiên chưa đủ 60 giây | Phiên kết thúc, không tạo nhật ký 0 phút | Chưa kiểm thử |
+   | M07-TC10 | Ở bộ thử riêng, chọn Hủy phiên, không lưu sau khi đã chạy | Trạng thái Đã hủy, không tạo nhật ký dù đã chạy một phần; không thể lưu lại phiên hủy | Chưa kiểm thử |
+   | M07-TC11 | Sau phiên học kết thúc, bấm Nghỉ 5 phút; tạm dừng/tiếp tục hoặc Kết thúc nghỉ | Đồng hồ nghỉ khoảng 05:00; mọi phút nghỉ không tạo nhật ký; bấm Nghỉ lại từ cùng phiên học mở đúng phiên nghỉ cũ | Chưa kiểm thử |
+   | M07-TC12 | Để phiên học đủ 25 phút hoặc quay lại sau khi đã hết giờ | Đồng hồ về 00:00, có lời nhắc xác nhận; không tự ghi nhật ký. Bấm lưu chỉ ghi tối đa 25 phút, không tính thời gian quá giờ | Chưa kiểm thử |
+
+   Hai tab đồng bộ khi quay lại trang và khoảng mỗi 15 giây. Nếu thao tác từ tab khác đổi trạng thái, trang thông báo tải lại để lấy các thao tác mới, không xóa ghi chú đang nhập bằng cách tự tải lại. Trạng thái kết thúc/hủy không được tiếp tục. Hết giờ vẫn giữ phiên hoạt động cho đến khi bạn xác nhận hoặc hủy.
+
+4. **Checklist nhật ký**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M07-TC13 | Thêm hai nhật ký tay theo mẫu | Hiện 30 phút hôm nay, 45 phút hôm qua, đúng việc/môn/nguồn Nhập tay | Chưa kiểm thử |
+   | M07-TC14 | Thử 0, số âm, >1440 phút, ngày tương lai hoặc ghi chú >1000 ký tự | Form báo lỗi, không thêm bản ghi, không lỗi 500 | Chưa kiểm thử |
+   | M07-TC15 | Gửi lặp cùng form tạo nhật ký (ví dụ trình duyệt gửi lại sau Back) | Cùng mã biểu mẫu không tạo bản ghi thứ hai. Muốn nhập hoạt động mới, mở mới trang Thêm nhật ký | Chưa kiểm thử |
+   | M07-TC16 | Thêm nhật ký Python 15 phút; sửa thành 20, đổi ghi chú/ngày nếu cần | Giữ một bản ghi được sửa, thống kê cập nhật, không thay tiến độ hoặc lịch | Chưa kiểm thử |
+   | M07-TC17 | Sửa nhật ký Pomodoro | Chỉ có ghi chú; không sửa ngày, phút, nguồn hoặc công việc của bản ghi đo từ đồng hồ | Chưa kiểm thử |
+   | M07-TC18 | Mở Xóa nhật ký rồi Hủy, giữ lại; sau đó xóa bản thử khi đã chắc chắn | Mở GET không xóa; xác nhận POST mới xóa và giảm thống kê; không đổi thời lượng công việc/lịch | Chưa kiểm thử |
+   | M07-TC19 | Xóa một nhật ký Pomodoro thử, mở lại phiên và gửi lại kết thúc | Nhật ký đã xóa không được tự tạo lại; thống kê giữ mức sau xóa. Thao tác xóa không hoàn tác trong ứng dụng | Chưa kiểm thử |
+   | M07-TC20 | Chỉ trên dữ liệu thử: đổi tên hoặc xóa công việc/môn đã có nhật ký | Nhật ký/phiên giữ tên và nhãn môn cũ, phút lịch sử không mất; xóa việc làm liên kết việc rỗng, vẫn đọc/sửa ghi chú nhật ký được | Chưa kiểm thử |
+   | M07-TC21 | Xóa công việc khi Pomodoro còn chạy rồi kết thúc phiên | Phiên vẫn kết thúc và ghi phút học với tên cũ, không lỗi vì thiếu công việc; không có liên kết cập nhật tiến độ việc đã xóa | Chưa kiểm thử |
+   | M07-TC22 | Có >20 nhật ký, chọn khoảng ngày rồi chuyển trang | Mỗi trang tối đa 20 bản; Trang trước/sau giữ nguyên bộ lọc, không trùng tham số ngày qua mỗi lần chuyển | Chưa kiểm thử |
+
+5. **Checklist thống kê**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M07-TC23 | Trên bộ mẫu, mở Thống kê trước và sau khi lưu Pomodoro P phút | Đúng công thức 75 rồi 75+P; số bản ghi, ngày học, nhóm môn và nguồn khớp bảng mẫu | Chưa kiểm thử |
+   | M07-TC24 | Sau khi nhật ký thêm 15 được sửa thành 20 | Tổng 95+P, chỉ 4 bản ghi, 2 ngày; Python 50+P, Toán 45; nghỉ/hủy không được cộng | Chưa kiểm thử |
+   | M07-TC25 | Chọn riêng hôm nay rồi riêng hôm qua | Chỉ cộng bản ghi thuộc ngày tương ứng, biên đầu/cuối đều được tính; trung bình chia đúng số ngày chọn | Chưa kiểm thử |
+   | M07-TC26 | Chọn khoảng không có nhật ký hoặc tài khoản chưa có dữ liệu | Tổng/bản ghi/ngày học/trung bình bằng 0, biểu đồ có ngày 0 phút, không lỗi chia cho 0 | Chưa kiểm thử |
+   | M07-TC27 | Ngày sai, kết thúc trước bắt đầu, kết thúc tương lai hoặc khoảng >366 ngày | Hiện lỗi bộ lọc, không lỗi 500; không tính nhầm dữ liệu ngoài phạm vi | Chưa kiểm thử |
+   | M07-TC28 | Chạy phiên qua nửa đêm hoặc đối chiếu test đồng hồ cố định | Toàn bộ phút được gán ngày bắt đầu phiên theo giờ Việt Nam; không tự tách thành hai nhật ký | Chưa kiểm thử |
+
+6. **Checklist quyền và hồi quy**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M07-TC29 | Chưa đăng nhập mở Pomodoro, phiên, nhật ký, thống kê hoặc URL thao tác | Chuyển Đăng nhập; không lộ dữ liệu | Chưa kiểm thử |
+   | M07-TC30 | B mở URL phiên/API trạng thái/sửa/xóa nhật ký của A; thử POST thao tác phiên A | 404, không đọc/sửa được dữ liệu A. Bộ chọn việc không nhận việc B gửi giả từ A | Chưa kiểm thử |
+   | M07-TC31 | Gửi owner/giây chạy/nguồn/ngày giả vào thao tác timer hoặc trường chỉ đọc của nhật ký Pomodoro | Máy chủ bỏ qua các trường không cho sửa; phút học/owner/nguồn giữ đúng; đã có test tự động cho dữ liệu giả và CSRF | Chưa kiểm thử |
+   | M07-TC32 | Chỉ xem/tải lại trang hoặc API sau khi timer đã hết | Không tự tạo/kết thúc/xóa phiên hoặc ghi nhật ký bằng GET; GET pause/resume/finish/cancel/break trả 405 | Chưa kiểm thử |
+   | M07-TC33 | Xem Pomodoro 320 px, nhật ký/thống kê 375 px; dùng Tab và tạm dừng | Không tràn ngang; đồng hồ/nút/form đọc được, không đọc số đếm liên tục qua aria-live; thao tác bàn phím dùng được | Chưa kiểm thử |
+   | M07-TC34 | Khởi động lại server; xem lại nhật ký/phiên tạm dừng, thử tài khoản/học tập/lịch mốc trước | Phiên và số liệu giữ nguyên; các tính năng mốc 02–06 vẫn hoạt động | Chưa kiểm thử |
+
+7. **Quy tắc và giới hạn**
+
+   - 25 phút học/5 phút nghỉ cố định. Chưa có tùy chỉnh độ dài, nghỉ dài sau nhiều vòng, tự chạy chu kỳ tiếp theo, chuông hoặc thông báo trình duyệt/email. Hết giờ có lời nhắc trên trang, cần bấm xác nhận.
+   - Đồng hồ lưu ở máy chủ. Đóng tab không hủy, hết giờ không tự ghi log; quay lại mở phiên hiện tại. JavaScript chỉ hiển thị ước lượng đếm ngược, số phút lưu luôn tính lại từ trạng thái server và giới hạn phiên.
+   - Tính phần nguyên phút học, bỏ giây lẻ; mỗi lần pause chốt giây tròn. Không cộng pause, break hoặc thời gian quá 25 phút. Hủy khác Lưu và kết thúc: hủy bỏ toàn bộ phút của phiên, không ghi log.
+   - Pomodoro và nhật ký không tự giảm Task.remaining_minutes, không tự đánh dấu StudySession đã học. Dùng Cập nhật tiến độ/Ghi nhận buổi ở mốc 06 để ghi phần việc còn lại, tránh trừ tiến độ hai lần.
+   - Nhật ký là thời gian được ghi nhận, không chứng minh mức độ tập trung hoặc đã hoàn thành việc. Không nhập tay lại cùng hoạt động Pomodoro đã lưu. Mã biểu mẫu chỉ ngăn gửi trùng cùng yêu cầu, không đoán hai bản ghi nhập riêng có phải cùng hoạt động.
+   - Nhật ký tay chấp nhận 1–1440 phút/bản, có thể gắn việc đã hoàn thành để ghi lịch sử. Thời gian học thực tế không bắt buộc theo khung/quỹ dự kiến trên lịch. Muốn sửa log tay sau khi việc đã xóa có thể giữ liên kết rỗng; tên/môn lịch sử được giữ.
+   - Xóa nhật ký không hoàn tác, không tự hồi sinh khi finish lại. Pomodoro cho sửa ghi chú, không sửa số phút/ngày đo được. Thống kê chỉ cộng nhật ký còn lưu, không cộng FocusSession riêng.
+   - Ngày Pomodoro là ngày bắt đầu phiên ở Asia/Ho_Chi_Minh; phiên qua ngày hoặc tạm dừng nhiều ngày vẫn ghi vào ngày bắt đầu. Nhật ký tay theo ngày bạn chọn. Môn nhóm theo nhãn lúc bắt đầu phiên hoặc nhập/sửa nhật ký tay; đổi tên/học kỳ rồi ghi thêm có thể thành nhóm khác.
+   - Nhật ký và thống kê mặc định 7 ngày, chọn được 1–366 ngày; trung bình bao gồm ngày không học. Giao diện ngày gốc có thể theo định dạng trình duyệt, nội dung báo cáo dùng ngày/tháng.
+   - SQLite có thể báo đang bận khi thao tác đồng thời; trang thao tác yêu cầu tải lại/thử lại, không báo lưu thành công giả. Constraint database vẫn chặn nhiều phiên hoạt động và nhật ký trùng theo phiên/yêu cầu.
+   - Email/tác vụ nền, AI, đồng bộ Calendar, PostgreSQL/bản online vẫn là các mốc sau theo kế hoạch.
+
+8. **Kết quả xác minh của agent**
+
+   - **29 test mới**, tổng `manage.py test accounts studies planner focus --noinput`: **150/150 PASS**.
+   - Bao phủ vòng đời timer, pause/resume/lặp yêu cầu, giới hạn 25 phút, dưới một phút, hủy, nghỉ không tính, GET không ghi, lưu log một lần kể cả sau xóa, quyền A/B, CSRF, trường giả, validation, CRUD, phân trang/ngày và tổng thống kê theo nguồn/môn/ngày.
+   - Test constraint kiểm tra một phiên hoạt động/owner, trạng thái hợp lệ, giây không vượt thời lượng và log không có 0 phút. Kiểm tra giữ lịch sử khi xóa việc, thời lượng công việc không tự giảm và thông báo SQLite bận.
+   - `manage.py check`, `makemigrations --check --dry-run`, `migrate --check`, kiểm tra tính toàn vẹn SQLite và `git diff --check`: PASS. Migration `focus.0001_initial` đã áp dụng; bản sao lưu được Git bỏ qua.
+   - Trình duyệt với database/cookie riêng: mở timer mẫu → pause/tải lại giữ 22:16 → resume → lưu 2 phút → nghỉ/kết thúc nghỉ không thêm log → thống kê 77 phút → thêm log 15/sửa 20 → tổng 97, 4 bản ghi/2 ngày, nguồn tay 95/Pomodoro 2, môn Python 52/Toán 45.
+   - Đã bắt đầu phiên mới từ form, kiểm tra đồng hồ 320 px rồi hủy; thống kê ở 375 px không tràn ngang. Đã quan sát ảnh desktop. Server QA riêng đã dừng và dọn database tạm; không thêm dữ liệu mẫu vào `db.sqlite3` của bạn.
+
+9. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m07
+   git add focus config/settings.py config/urls.py studies/views.py templates/base.html templates/studies/task_list.html templates/focus static/css/focus.css static/js/focus_timer.js README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: add persistent pomodoro study logs and statistics"
+   git push origin main
+   ```
+
+   Nhánh lúc bắt đầu mốc là `main`; thay tên nếu bạn đã đổi nhánh. Giữ migration trong commit; không đưa `.env`, `.venv`, SQLite hoặc bản sao lưu lên GitHub. Agent không stage/commit/push thay bạn.
+
+   Nếu có lỗi, gửi ID test và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi triển khai mốc 08 (thông báo và email nhắc bằng tác vụ nền).

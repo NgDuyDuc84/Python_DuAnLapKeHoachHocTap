@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "studies.apps.StudiesConfig",
     "planner.apps.PlannerConfig",
+    "focus.apps.FocusConfig",
 ]
 
 MIDDLEWARE = [

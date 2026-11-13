@@ -120,7 +120,7 @@ class TaskDeleteView(SuccessMessageMixin, OwnedObjectMixin, DeleteView):
     success_url = reverse_lazy("studies:task_list")
     success_message = "Đã xóa công việc và các buổi học của công việc. Tài liệu liên quan vẫn được giữ."
     page_title = "Xóa công việc"
-    delete_warning = "Các buổi học của công việc này cũng sẽ bị xóa khỏi kế hoạch và lịch tuần. Tài liệu vẫn được giữ, nhưng sẽ không còn liên kết với công việc này."
+    delete_warning = "Các buổi học của công việc này cũng sẽ bị xóa khỏi kế hoạch và lịch tuần. Tài liệu, nhật ký và phiên Pomodoro được giữ nhưng sẽ không còn liên kết với công việc này. Nhật ký/Pomodoro giữ tên việc và môn tại lúc ghi nhận."
 
 
 class MaterialListView(FilteredListMixin, ListView):

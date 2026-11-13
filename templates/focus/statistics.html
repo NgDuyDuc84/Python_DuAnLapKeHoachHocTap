@@ -1,0 +1,20 @@
+{% extends "focus/base.html" %}
+{% block focus_content %}
+{% include "focus/range_filter.html" %}
+{% if totals %}
+<div class="stat-cards">
+    <article class="study-card"><p>Tổng phút học</p><strong>{{ totals.minutes }}</strong></article>
+    <article class="study-card"><p>Bản ghi / ngày có học</p><strong>{{ totals.entries }} / {{ study_days }}</strong></article>
+    <article class="study-card"><p>Trung bình phút/ngày trong khoảng chọn</p><strong>{{ daily_average }}</strong></article>
+</div>
+<h2 class="focus-heading">Phút học theo ngày</h2>
+<div class="study-card daily-chart" aria-label="Biểu đồ phút học theo ngày">
+{% for day in days %}<div class="chart-row"><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"d/m/Y" }}</time><div class="chart-track" aria-hidden="true"><div class="chart-bar" style="width: {{ day.width }}%"></div></div><span>{{ day.minutes }} phút</span></div>{% endfor %}
+</div>
+<div class="study-grid stat-tables">
+    <section class="study-card"><h2>Theo môn lúc ghi nhận</h2><ul class="stat-list">{% for row in subjects %}<li><span>{{ row.subject_label|default:"Chưa gắn môn" }}</span><strong>{{ row.minutes }} phút</strong></li>{% empty %}<li>Chưa có dữ liệu.</li>{% endfor %}</ul></section>
+    <section class="study-card"><h2>Theo nguồn ghi nhận</h2><ul class="stat-list">{% for row in sources %}<li><span>{% if row.source == 'pomodoro' %}Pomodoro{% else %}Nhập tay{% endif %} · {{ row.entries }} bản ghi</span><strong>{{ row.minutes }} phút</strong></li>{% empty %}<li>Chưa có dữ liệu.</li>{% endfor %}</ul></section>
+</div>
+<p class="focus-note">Chỉ cộng nhật ký còn lưu; nghỉ và phiên hủy không được tính. Pomodoro có thể kết thúc sớm, không đồng nghĩa hoàn thành đủ 25 phút hoặc hoàn thành công việc. Môn hiển thị theo nhãn lúc ghi nhận; đổi nhãn rồi ghi thêm có thể thành nhóm riêng.</p>
+{% endif %}
+{% endblock %}

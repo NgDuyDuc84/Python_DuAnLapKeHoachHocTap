@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04), tự xếp lịch/xem trước/áp dụng (mốc 05), chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo (mốc 06).
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–06 (nền Django, tài khoản, học tập, lịch và xếp lịch), cùng Pomodoro/nhật ký/thống kê ở mốc 07.
 
 1. **Phân chia trách nhiệm**
 
@@ -17,9 +17,9 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
-   | focus | Pomodoro, nhật ký học | Chưa triển khai |
+   | focus | Pomodoro, nhật ký và thống kê thời gian học | Đã có đồng hồ bền qua tải lại, thao tác trạng thái, nhật ký và thống kê bằng Python |
    | notifications | Nhắc việc và email | Chưa triển khai |
-   | insights | Thống kê, AI | Chưa triển khai |
+   | insights | Phân tích thói quen, AI | Chưa triển khai; thống kê thời gian cơ bản hiện đặt ở focus |
    | integrations | Kết nối lịch bên ngoài | Chưa triển khai |
 
 3. **Dữ liệu nghiệp vụ dự kiến**
@@ -33,8 +33,8 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | BusyEvent | Thuộc user; thời điểm bắt đầu/kết thúc của lần đầu, cờ lặp hằng tuần, ngày dừng lặp tùy chọn |
    | StudyPlan | Đã có: owner, thứ Hai đầu tuần, ngày tạo/áp dụng, dấu vân tay đầu vào và báo cáo phân bổ |
    | StudySession | Đã có: owner, công việc, kế hoạch, bắt đầu/kết thúc, trạng thái planned/done/cancelled, is_locked và is_manual |
-   | StudyLog | Nhật ký thực tế; công việc, phút học, ghi chú, buổi học nếu có |
-   | FocusSession | Phiên Pomodoro; user, công việc, trạng thái và các mốc học/nghỉ/tạm dừng |
+   | StudyLog | Đã có: owner, công việc tùy chọn, tên việc/nhãn môn lịch sử, ngày học, phút, ghi chú, nguồn manual/pomodoro, liên kết một-một tới FocusSession nếu có |
+   | FocusSession | Đã có: owner, việc tùy chọn, tên/nhãn môn lịch sử, phase work/break, trạng thái, thời lượng/giây tích lũy và mốc bắt đầu/tiếp tục/kết thúc; liên kết một-một tới phiên học trước cho giờ nghỉ |
    | Material | Thuộc user; tên, URL, mô tả, môn/công việc liên quan |
    | Reminder | Đối tượng, kênh, thời điểm, phiên bản và trạng thái gửi |
    | CalendarConnection | User, lịch đích, thông tin cấp quyền được bảo vệ và trạng thái |
@@ -77,6 +77,14 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    Ghi nhận Đã học được phép từ thời điểm bắt đầu, không tự trừ độ dài buổi. Người dùng nhập số phút công việc thực tế còn cần: 0 đưa Task sang done, số dương đưa sang in_progress. Hủy/bỏ qua không đổi tiến độ, giữ bản ghi và giải phóng lịch/quỹ. Buổi đã ghi nhận hoặc hủy không ghi nhận lại; sửa ước lượng còn lại qua trang tiến độ công việc. Buổi done vẫn giữ thời gian trên lịch và tiêu quỹ ngày, nhưng không còn được tính là phút tương lai sẽ học cho công việc. Nếu kết thúc sớm, đặt chỗ vẫn giữ đến giờ kết thúc cũ; chưa có đo thời gian thực tế.
 
    `planner/services/alerts.py` dựng cảnh báo từ dữ liệu hiện tại: mọi công việc quá hạn, công việc đến hạn trong 7 ngày thiếu phút tương lai, buổi planned sắp diễn ra trong 7 ngày trùng lịch bận/buổi khác, thiếu nghỉ, sai khung/ngày, quá quỹ/ngày, vượt deadline hoặc vượt thời lượng còn lại. Hiện tối đa 20 buổi đã kết thúc chưa ghi nhận gần nhất, kèm tổng số; các buổi cũ hơn vẫn xem được từ lịch và kế hoạch. Chưa gửi email và chưa kết luận thiếu lịch là không thể xếp đủ. Các buổi giữ nguyên nhưng đã sai ràng buộc được cảnh báo để người dùng xử lý trực tiếp; xếp lại không tự thay buổi khóa/chỉnh tay/đã bắt đầu/đã học.
+
+   Mốc 07 tạo app `focus`. `FocusSession` có unique constraint có điều kiện: tối đa một phiên running/paused mỗi owner, kể cả giờ nghỉ. Server tính giây tích lũy và phần từ resumed_at tới hiện tại, chặn số âm và giới hạn duration_seconds (1500 học/300 nghỉ). Pause lưu giây đã chạy rồi bỏ resumed_at; resume giữ phần tích lũy và đặt lại mốc chạy. GET và API đọc trạng thái không ghi database, không tự kết thúc khi hết giờ. JavaScript dùng thời gian tương đối để vẽ đồng hồ, đồng bộ bằng GET mỗi 15 giây/khi quay lại trang. Hết giờ hiển thị lời nhắc xác nhận, chưa gửi thông báo ngoài trang.
+
+   Start có UUID theo biểu mẫu; lặp cùng yêu cầu trả lại phiên cũ. Các thao tác trạng thái dùng POST/CSRF, lọc owner và transaction. Finish tạo một StudyLog duy nhất cho phiên work có ít nhất 60 giây, phút là phần nguyên của giây đã học/60; không cộng pause hoặc break. Finish lặp lại không ghi thêm, kể cả log cũ đã bị xóa. Cancel không tạo log. Mỗi phiên work finished có tối đa một phiên nghỉ liên kết; bấm bắt đầu nghỉ lại mở đúng phiên đó, không tạo chuỗi nghỉ trùng. Trạng thái và constraint được kiểm thử trong database; lỗi SQLite bận khi thao tác đồng thời được thông báo để tải lại/thử lại.
+
+   StudyLog nhập tay có ngày không vượt hiện tại, 1–1440 phút/bản và ghi chú tối đa 1000 ký tự; UUID theo biểu mẫu tránh ghi lặp cùng lần gửi. Nhật ký nhập tay được sửa ngày/phút/việc/ghi chú; nhật ký Pomodoro chỉ sửa ghi chú để giữ số đo đồng hồ. Có trang xác nhận xóa qua POST: xóa làm giảm thống kê, không tự đổi tiến độ hoặc lịch. Foreign key Task dùng SET_NULL cho FocusSession/StudyLog; tên việc và nhãn môn được chụp khi bắt đầu Pomodoro hoặc nhập/sửa nhật ký tay để giữ lịch sử sau đổi/xóa dữ liệu gốc. Nhãn môn không chứa trạng thái lưu trữ.
+
+   Thời gian nhật ký độc lập với ước lượng công việc: không tự giảm Task.remaining_minutes hoặc tự ghi nhận StudySession. Người dùng cập nhật tiến độ và trạng thái buổi bằng mốc 06. Pomodoro gắn công việc, chưa gắn trực tiếp từng buổi lịch. Thống kê chỉ tổng hợp các StudyLog còn lưu, không cộng FocusSession riêng để tránh tính hai lần. Mặc định 7 ngày, chọn được 1–366 ngày; dữ liệu theo ngày có cả ngày 0 phút, theo nhãn môn và nguồn; trung bình chia cho toàn bộ số ngày đã chọn. Pomodoro gán toàn bộ phút vào ngày bắt đầu phiên ở Asia/Ho_Chi_Minh, chưa chia phiên qua nửa đêm. Đổi nhãn môn rồi ghi thêm có thể tạo nhóm lịch sử khác.
 
 4. **Quy tắc lịch**
 

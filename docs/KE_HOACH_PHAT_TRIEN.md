@@ -36,8 +36,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 05:** đã hoàn thành tự sinh kế hoạch tuần, chia buổi, chừa nghỉ, báo phần chưa bố trí, xem trước và áp dụng. Người dùng đã cho phép chuyển sang mốc 06.
 
-**Mốc 06 hiện tại:** chỉnh giờ/độ dài và khóa buổi, ghi nhận đã học/hủy, cập nhật thời lượng còn lại; chế độ xếp lại qua xem trước, giữ buổi khóa/chỉnh tay/đã bắt đầu/đã học và các tuần khác. Cảnh báo quá hạn, chưa đủ lịch trước hạn, xung đột và buổi chờ ghi nhận. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 06:** đã hoàn thành chỉnh/khóa buổi, ghi nhận, cập nhật tiến độ, xem trước/xếp lại và cảnh báo. Người dùng đã cho phép chuyển sang mốc 07.
 
-**Mốc 07 dự kiến:** Pomodoro, nhật ký học thực tế và thống kê bằng Python. Ghi nhận trạng thái buổi và số phút công việc còn lại ở mốc 06 chưa phải bộ đếm hoặc nhật ký thời gian đã học.
+**Mốc 07 hiện tại:** Pomodoro 25/5 có lưu trạng thái chạy/tạm dừng/tiếp tục/kết thúc/hủy; ghi nhật ký phút học một lần, nhật ký nhập tay, sửa/xóa và lọc ngày. Thống kê tổng phút, số bản ghi/ngày học, trung bình, theo ngày/môn/nguồn bằng Python. Nhật ký giữ lịch sử sau khi xóa việc, không tự trừ tiến độ. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 08 dự kiến:** thông báo và email nhắc bằng tác vụ nền. Mốc 07 chỉ báo hết giờ trên trang Pomodoro đang mở; chưa có gửi email, chuông hay thông báo của trình duyệt.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

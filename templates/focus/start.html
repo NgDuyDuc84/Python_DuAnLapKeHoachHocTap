@@ -1,0 +1,22 @@
+{% extends "focus/base.html" %}
+{% block focus_content %}
+<p class="focus-note">Một phiên học 25 phút, sau đó có thể nghỉ 5 phút. Tạm dừng không tính vào phút học. Bạn có thể lưu và kết thúc sớm; hủy phiên sẽ không ghi nhật ký.</p>
+{% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+{% if active %}
+    <div class="study-card"><h2>Bạn đang có một phiên {{ active.get_phase_display|lower }}</h2><p>{{ active.task_title }} · {{ active.get_status_display }}</p><a class="button" href="{% url 'focus:session' active.pk %}">Tiếp tục phiên hiện tại</a></div>
+{% else %}
+    <div class="study-form-card">
+        <form method="post" class="study-form">{% csrf_token %}
+            {{ form.request_key }}{{ form.request_key.errors }}
+            <div class="form-field">{{ form.task.label_tag }}{{ form.task }}{{ form.task.errors }}</div>
+            <button class="button" type="submit">Bắt đầu học 25 phút</button>
+        </form>
+    </div>
+{% endif %}
+<h2 class="focus-heading">10 phiên gần nhất</h2>
+<div class="study-list">
+{% for session in recent_sessions %}
+    <article class="study-card"><h3><a class="text-link" href="{% url 'focus:session' session.pk %}">{{ session.task_title }}</a></h3><p class="study-meta">{{ session.started_at|date:"d/m/Y H:i" }} · {{ session.get_phase_display }} · {{ session.get_status_display }}</p></article>
+{% empty %}<p class="empty-state">Chưa có phiên tập trung. Chọn một công việc chưa hoàn thành để bắt đầu.</p>{% endfor %}
+</div>
+{% endblock %}
