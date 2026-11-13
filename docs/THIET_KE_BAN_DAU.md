@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04).
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04), tự xếp lịch/xem trước/áp dụng (mốc 05).
 
 1. **Phân chia trách nhiệm**
 
@@ -16,7 +16,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | core | Trang chủ và giao diện chung | Đã tạo |
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
-   | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn và lịch tuần; tự sinh kế hoạch ở mốc sau |
+   | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
    | focus | Pomodoro, nhật ký học | Chưa triển khai |
    | notifications | Nhắc việc và email | Chưa triển khai |
    | insights | Thống kê, AI | Chưa triển khai |
@@ -31,8 +31,8 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | Subject | Thuộc user; tên môn, màu, học kỳ, trạng thái lưu trữ |
    | Task | Thuộc user, có thể gắn môn; deadline, ưu tiên, phút ước tính/còn lại, cho phép chia nhỏ, trạng thái |
    | BusyEvent | Thuộc user; thời điểm bắt đầu/kết thúc của lần đầu, cờ lặp hằng tuần, ngày dừng lặp tùy chọn |
-   | StudyPlan | Thuộc user; tuần, trạng thái nháp/áp dụng |
-   | StudySession | Thuộc công việc; thời gian, trạng thái, nguồn thủ công/tự động, cờ khóa và kế hoạch nếu có |
+   | StudyPlan | Đã có: owner, thứ Hai đầu tuần, ngày tạo/áp dụng, dấu vân tay đầu vào và báo cáo phân bổ |
+   | StudySession | Đã có: owner, công việc, kế hoạch, bắt đầu/kết thúc; trạng thái thực hiện/khóa/thủ công ở mốc sau |
    | StudyLog | Nhật ký thực tế; công việc, phút học, ghi chú, buổi học nếu có |
    | FocusSession | Phiên Pomodoro; user, công việc, trạng thái và các mốc học/nghỉ/tạm dừng |
    | Material | Thuộc user; tên, URL, mô tả, môn/công việc liên quan |
@@ -61,6 +61,14 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    `planner/services/availability.py` xử lý mở rộng lịch lặp và trừ hợp các khoảng bận theo quy ước [bắt đầu, kết thúc). Ca qua đêm/nhiều ngày được cắt theo từng ngày để hiển thị. Khoảng trống nằm trong ngày/giờ được học và từ hiện tại trở đi, làm tròn lên phút kế tiếp nếu đang có giây lẻ. Quỹ ngày là giá trị nhỏ hơn giữa tổng phút trống và giới hạn phút/ngày. Đây là giới hạn trên, chưa bảo đảm xếp được số buổi mong muốn hoặc đã chừa thời gian nghỉ giữa các buổi.
 
    Lịch tuần hiển thị các mốc deadline của user trong tuần (kể cả việc hoàn thành), nhưng không coi deadline là khoảng bận. Các ngày đã qua không có khoảng trống tương lai. Các buổi tự học, trạng thái thực hiện và thuật toán phân bổ chưa triển khai ở mốc 04.
+
+   Mốc 05 thêm `StudyPlan`, `StudySession` và `planner/services/scheduling.py`. Tạo bản xem trước qua POST; các GET chỉ đọc. Thuật toán xét công việc chưa hoàn thành theo deadline, ưu tiên giảm dần khi cùng hạn, rồi ID để giữ tính xác định. Chỉ xếp trong tuần được chọn, từ hiện tại làm tròn lên phút, trước hoặc bằng deadline. Buổi chia nhỏ có thể ngắn hơn độ dài mong muốn; công việc không chia buổi cần toàn phần còn thiếu liên tục và không vượt quỹ ngày.
+
+   Các buổi của kế hoạch đã áp dụng chặn thời gian, chừa khoảng nghỉ ở cả hai phía (kể cả qua ngày/tuần) và tiêu quỹ ngày bằng phút học, không tính phút nghỉ vào phút học. Phút của buổi tương lai dành cho công việc ở mọi tuần được trừ khỏi nhu cầu, phần đã qua không tự tính đã học xong. Buổi đang diễn ra chỉ được tính phần nguyên phút từ hiện tại làm tròn lên. Công việc không chia nhưng đã có một phần lịch sẽ được yêu cầu rà soát thay vì thêm mảnh mới. Kế hoạch bổ sung giữ mọi buổi đã áp dụng.
+
+   Báo cáo lưu ảnh chụp tên/deadline/thời lượng và các phút đã có lịch, bố trí mới, chưa bố trí khi tạo. Danh sách buổi hiển thị thông tin công việc hiện tại. Áp dụng qua POST có CSRF và kiểm tra owner; transaction so khớp dấu vân tay đầu vào và kết quả tính lại theo thời gian hiện tại. Từ chối phương án cũ, không áp dụng một phần. Gửi lại cùng bản đã áp dụng không tạo thêm buổi. Lịch tuần chỉ lấy buổi thuộc kế hoạch đã áp dụng. Không giảm `Task.remaining_minutes` khi xếp lịch.
+
+   Xóa công việc xóa các buổi thuộc công việc, giữ báo cáo kế hoạch và tài liệu; giao diện xác nhận nêu rõ tác động. Mốc 05 chưa có chỉnh/khóa/hủy từng buổi hoặc tự xếp lại khi sửa lịch bận/giờ học/deadline sau áp dụng. Các buổi cũ tiếp tục giữ chỗ dù công việc được đánh dấu xong, chờ cơ chế cập nhật/xếp lại ở mốc 06. Đây là các đặt chỗ dự kiến, chưa phải nhật ký học thực tế.
 
 4. **Quy tắc lịch**
 

@@ -1,0 +1,26 @@
+{% extends "planner/base.html" %}
+
+{% block planner_content %}
+<div class="calendar-note">
+    <p>Hệ thống xếp công việc chưa hoàn thành theo deadline gần nhất, cùng hạn thì ưu tiên cao trước. Lịch bận, ngày học, quỹ phút mỗi ngày và nghỉ giữa buổi là các giới hạn bắt buộc.</p>
+    <p>Giữ các buổi đã áp dụng ở mọi tuần và trừ phần thời gian tương lai đã dành cho từng công việc. Chỉ bấm <strong>Áp dụng</strong> sau khi kiểm tra bản xem trước mới đưa buổi học lên lịch.</p>
+</div>
+<div class="study-form-card">
+    <form method="post" class="study-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="form-field">{{ form.week.label_tag }}{{ form.week }}{{ form.week.errors }}</div>
+        <p class="field-help">Chọn tuần hiện tại hoặc tương lai. Hệ thống chỉ xếp từ thời điểm hiện tại và trước deadline.</p>
+        <div class="form-actions"><button class="button" type="submit">Tạo bản xem trước</button><a class="text-link" href="{% url 'planner:preferences' %}">Điều chỉnh giờ học</a></div>
+    </form>
+</div>
+<h2 class="plan-section-title">10 kế hoạch gần nhất</h2>
+<div class="study-list">
+    {% for plan in recent_plans %}
+        <article class="study-card">
+            <div><a class="text-link" href="{% url 'planner:plan_detail' plan.pk %}">Tuần {{ plan.week_start|date:"d/m/Y" }} – {{ plan.week_end|date:"d/m/Y" }}</a><p class="plan-muted">Tạo {{ plan.created_at|date:"d/m/Y H:i" }} · {{ plan.session_count }} buổi</p></div>
+            <span class="badge">{% if plan.applied_at %}Đã áp dụng{% else %}Bản xem trước{% endif %}</span>
+        </article>
+    {% empty %}<div class="empty-state">Chưa có kế hoạch. Thêm công việc và chọn giờ học trước khi xếp lịch.</div>{% endfor %}
+</div>
+{% endblock %}

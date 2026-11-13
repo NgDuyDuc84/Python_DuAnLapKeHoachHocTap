@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django import forms
+from django.utils import timezone
 
 from studies.forms import OwnedModelForm
 
@@ -69,4 +70,12 @@ class WeekForm(forms.Form):
             monday + timedelta(days=14)
         except OverflowError:
             raise forms.ValidationError("Ngày nằm ngoài phạm vi lịch được hỗ trợ.")
+        return monday
+
+
+class PlanWeekForm(WeekForm):
+    def clean_week(self):
+        monday = super().clean_week()
+        if monday + timedelta(days=7) <= timezone.localdate():
+            raise forms.ValidationError("Chọn tuần hiện tại hoặc một tuần tương lai để xếp lịch.")
         return monday

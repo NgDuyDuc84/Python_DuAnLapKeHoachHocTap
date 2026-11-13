@@ -113,3 +113,60 @@ class BusyEvent(models.Model):
                 errors["repeat_until"] = "Ngày kết thúc chuỗi không được trước ngày bắt đầu."
         if errors:
             raise ValidationError(errors)
+
+
+class StudyPlan(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    week_start = models.DateField("Thứ Hai đầu tuần")
+    created_at = models.DateTimeField(auto_now_add=True)
+    applied_at = models.DateTimeField("Đã áp dụng lúc", null=True, blank=True)
+    input_fingerprint = models.CharField(max_length=64)
+    report = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    @property
+    def week_end(self):
+        return self.week_start + timedelta(days=6)
+
+    def clean(self):
+        if self.week_start and self.week_start.weekday() != 0:
+            raise ValidationError({"week_start": "Tuần phải bắt đầu vào thứ Hai."})
+
+
+class StudySession(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    plan = models.ForeignKey(StudyPlan, on_delete=models.CASCADE, related_name="sessions")
+    task = models.ForeignKey("studies.Task", on_delete=models.CASCADE, related_name="study_sessions")
+    starts_at = models.DateTimeField("Bắt đầu")
+    ends_at = models.DateTimeField("Kết thúc")
+
+    class Meta:
+        ordering = ["starts_at", "pk"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(ends_at__gt=models.F("starts_at")),
+                name="study_session_time_valid",
+            ),
+        ]
+
+    @property
+    def duration_minutes(self):
+        return int((self.ends_at - self.starts_at).total_seconds() // 60)
+
+    def clean(self):
+        errors = {}
+        for name in ("plan", "task"):
+            if getattr(self, f"{name}_id") and getattr(self, name).owner_id != self.owner_id:
+                errors[name] = "Chỉ được dùng dữ liệu thuộc tài khoản của bạn."
+        if self.starts_at and self.ends_at:
+            start, end = timezone.localtime(self.starts_at), timezone.localtime(self.ends_at)
+            if end <= start or start.date() != end.date():
+                errors["ends_at"] = "Buổi học phải kết thúc sau bắt đầu, trong cùng ngày."
+            if self.task_id and end > self.task.deadline:
+                errors["ends_at"] = "Buổi học không được vượt deadline."
+            if self.plan_id and not self.plan.week_start <= start.date() <= self.plan.week_end:
+                errors["starts_at"] = "Buổi học phải thuộc tuần của kế hoạch."
+        if errors:
+            raise ValidationError(errors)

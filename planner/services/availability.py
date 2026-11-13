@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from studies.models import Task
 
-from ..models import DAY_CHOICES, BusyEvent, StudyPreference
+from ..models import DAY_CHOICES, BusyEvent, StudyPreference, StudySession
 
 
 @dataclass(frozen=True)
@@ -92,6 +92,11 @@ def build_week(user, monday, preferences, now=None):
     tasks = list(Task.objects.filter(
         owner=user, deadline__gte=week_start, deadline__lt=week_end,
     ).select_related("subject"))
+    gap = timedelta(minutes=preferences.break_minutes)
+    sessions = list(StudySession.objects.filter(
+        owner=user, plan__applied_at__isnull=False,
+        starts_at__lt=week_end + gap, ends_at__gt=week_start - gap,
+    ).select_related("task"))
     days = []
     for offset in range(7):
         day = monday + timedelta(days=offset)
@@ -113,9 +118,22 @@ def build_week(user, monday, preferences, now=None):
                     "kind": "deadline", "task": task, "starts_at": local_deadline,
                     "start_label": local_deadline.strftime("%H:%M"),
                 })
+        used_minutes = 0
+        for session in sessions:
+            blocked.append((session.starts_at - gap, session.ends_at + gap))
+            if session.starts_at < day_end and session.ends_at > day_start:
+                start = timezone.localtime(max(session.starts_at, day_start))
+                end = timezone.localtime(min(session.ends_at, day_end))
+                used_minutes += int((end - start).total_seconds() // 60)
+                items.append({
+                    "kind": "study", "session": session, "starts_at": start,
+                    "start_label": start.strftime("%H:%M"),
+                    "end_label": "24:00" if end == day_end else end.strftime("%H:%M"),
+                })
         intervals = available_intervals(day, preferences, blocked, now)
         free = [
-            {"start_label": start.strftime("%H:%M"), "end_label": end.strftime("%H:%M"),
+            {"start_label": timezone.localtime(start).strftime("%H:%M"),
+             "end_label": timezone.localtime(end).strftime("%H:%M"),
              "minutes": int((end - start).total_seconds() // 60)}
             for start, end in intervals if end - start >= timedelta(minutes=1)
         ]
@@ -124,6 +142,6 @@ def build_week(user, monday, preferences, now=None):
             "is_today": day == timezone.localtime(now).date(),
             "is_past": day < timezone.localtime(now).date(),
             "items": sorted(items, key=lambda item: item["starts_at"]), "free": free,
-            "capacity_minutes": min(sum(item["minutes"] for item in free), preferences.max_daily_minutes),
+            "capacity_minutes": min(sum(item["minutes"] for item in free), max(0, preferences.max_daily_minutes - used_minutes)),
         })
     return days

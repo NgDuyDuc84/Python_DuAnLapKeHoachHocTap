@@ -17,13 +17,14 @@
             <a class="text-link" href="?week={{ next_week }}">Tuần sau →</a>
         </nav>
     </div>
+    <p><a class="button" href="{% url 'planner:plan_generate' %}?week={{ week_start|date:'Y-m-d' }}">Xếp lịch học cho tuần này</a></p>
     <div class="calendar-note">
         <p>Khung học {{ preferences.study_start|time:"H:i" }}–{{ preferences.study_end|time:"H:i" }} trong các ngày đã chọn · tối đa {{ preferences.max_daily_minutes }} phút/ngày · mỗi buổi mong muốn {{ preferences.session_minutes }} phút · nghỉ {{ preferences.break_minutes }} phút.</p>
         {% if not preferences.pk %}<p>Đang dùng tùy chọn mặc định. <a class="text-link" href="{% url 'planner:preferences' %}">Điều chỉnh giờ học</a> theo thời gian của bạn.</p>{% endif %}
-        <p>Khoảng trống tính từ hiện tại, chưa phải buổi học được đặt. Deadline là mốc nhắc hạn, không chiếm thời gian trên lịch.</p>
+        <p>Khoảng trống tính từ hiện tại, đã chừa nghỉ quanh buổi học được áp dụng. Quỹ ngày đã trừ các buổi có lịch. Deadline là mốc nhắc hạn, không chiếm thời gian trên lịch.</p>
     </div>
     <div class="calendar-legend" aria-label="Chú giải lịch">
-        <span class="legend-busy">Lịch bận</span><span class="legend-deadline">Deadline</span><span class="legend-free">Khoảng trống</span>
+        <span class="legend-busy">Lịch bận</span><span class="legend-study">Buổi học đã áp dụng</span><span class="legend-deadline">Deadline</span><span class="legend-free">Khoảng trống</span>
     </div>
     <div class="week-grid">
         {% for day in days %}
@@ -41,6 +42,12 @@
                                 <a href="{% url 'planner:busy_update' item.event.pk %}">{{ item.event.title }}</a>
                                 <small>{% if item.event.repeat_weekly %}Bận · lặp{% else %}Lịch bận{% endif %}</small>
                             </div>
+                        {% elif item.kind == 'study' %}
+                            <div class="calendar-item calendar-study">
+                                <span class="item-time">{{ item.start_label }}–{{ item.end_label }}</span>
+                                <a href="{% url 'planner:plan_detail' item.session.plan_id %}">{{ item.session.task.title }}</a>
+                                <small>Đã xếp · {{ item.session.duration_minutes }} phút</small>
+                            </div>
                         {% else %}
                             <div class="calendar-item calendar-deadline{% if item.task.status == 'done' %} deadline-done{% endif %}">
                                 <span class="item-time">{{ item.start_label }}</span>
@@ -48,7 +55,7 @@
                                 <small>{% if item.task.status == 'done' %}Đã hoàn thành{% else %}Hạn hoàn thành{% endif %}</small>
                             </div>
                         {% endif %}
-                    {% empty %}<p class="day-empty">Không có lịch bận hoặc deadline.</p>{% endfor %}
+                    {% empty %}<p class="day-empty">Không có lịch bận, buổi học hoặc deadline.</p>{% endfor %}
                 </div>
                 <div class="day-availability">
                     {% if day.free %}

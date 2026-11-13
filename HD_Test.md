@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 04 — lịch bận, tùy chọn học và lịch tuần**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 05 — tự sinh kế hoạch tuần, xem trước và áp dụng**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -349,7 +349,7 @@ Phạm vi: môn học (màu, học kỳ, lưu trữ); công việc (deadline, ư
 
 **Mốc 04 — Lịch bận, tùy chọn học và lịch tuần**
 
-Trạng thái: chờ người dùng kiểm thử và push GitHub.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 05. Giữ kết quả và checklist mốc 04 làm lịch sử.
 
 Phạm vi: tạo/sửa/xóa lịch bận một lần hoặc lặp hằng tuần, ca qua đêm; lưu các ngày được học và một khung giờ học chung; giới hạn phút/ngày, độ dài buổi mong muốn và thời gian nghỉ. Lịch tuần từ thứ Hai đến Chủ nhật hiển thị lịch bận, deadline và các khoảng trống từ hiện tại. Chưa tự sinh hoặc lưu buổi tự học; đó là mốc 05.
 
@@ -456,3 +456,143 @@ Phạm vi: tạo/sửa/xóa lịch bận một lần hoặc lặp hằng tuần,
    Giữ migration trong commit; không đưa database/bản sao lưu/`.env` lên GitHub. Nhánh khi bắt đầu mốc là `main`; nếu bạn đổi nhánh thì thay tên khi push. Agent không stage/commit/push thay bạn.
 
    Gửi ID test và kết quả thực tế nếu có lỗi. Sau khi bạn xác nhận mốc 04 đạt và đã push, mốc 05 mới triển khai thuật toán tự xếp lịch.
+
+---
+
+**Mốc 05 — Tự sinh kế hoạch tuần, xem trước và áp dụng**
+
+Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng ở mốc này.
+
+Phạm vi: thuật toán Python xếp deadline gần trước, cùng hạn thì ưu tiên cao trước; chia buổi, chừa nghỉ, tôn trọng ngày/khung học, quỹ ngày và lịch bận. Có bản xem trước, báo cáo phút chưa bố trí theo công việc, áp dụng lên lịch và danh sách 10 kế hoạch gần nhất. Phần chỉnh/khóa/hủy buổi, tự xếp lại và theo dõi học thực tế thuộc mốc tiếp theo.
+
+1. **Khởi động và kiểm tra kỹ thuật**
+
+   Nếu server cũ đang chạy, dừng bằng Ctrl+C trong terminal của server rồi chạy lại:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies planner --noinput
+   & .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+   & .\.venv\Scripts\python.exe manage.py migrate --check
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi: **90/90 tests PASS**, không có migration thiếu, không có lỗi system check. Không thêm thư viện mới. Agent đã dùng SQLite backup tạo `db.sqlite3-before-m05` trước khi áp dụng `planner.0002_studyplan_studysession` trên máy này; không ghi đè bản sao lưu cũ. Các kiểm thử tự động dùng database riêng. Không xóa database đang dùng để chạy lại test.
+
+   Đường dẫn chính:
+
+   - Tạo/xem các kế hoạch gần đây: `http://127.0.0.1:8000/planner/plans/new/`.
+   - Chi tiết kế hoạch: `/planner/plans/<id>/`.
+   - Áp dụng: POST `/planner/plans/<id>/apply/`, dùng nút có CSRF trên giao diện.
+   - Lịch tuần: `/planner/?week=YYYY-MM-DD`; tuần luôn được chuẩn hóa về thứ Hai.
+
+2. **Dữ liệu mẫu để đối chiếu chính xác**
+
+   Đăng ký tài khoản thử A riêng để không có lịch/công việc cũ ảnh hưởng. Dùng tài khoản B riêng cho ca phân quyền. Không dùng dữ liệu học thật cho ca xóa hoặc thay đổi deadline.
+
+   Gọi **D** là thứ Hai của một tuần tương lai. Ví dụ tại ngày viết hướng dẫn: D = 16/11/2026; nếu đã qua, chọn thứ Hai mới. Giờ nhập theo Việt Nam.
+
+   - Giờ học: thứ Hai, thứ Ba, thứ Tư; 18:00–22:00; tối đa 120 phút/ngày; buổi mong muốn 50 phút; nghỉ 10 phút.
+   - Lịch bận: **Lớp Python**, thứ Hai D 19:00–20:00, lặp hằng tuần.
+   - Các công việc đều Chưa bắt đầu, chưa có buổi học đã áp dụng:
+
+   | Tên | Ước tính/còn lại | Deadline | Ưu tiên | Chia buổi |
+   |---|---|---|---|---|
+   | Bài tập Python | 120 phút | D 22:00 | Cao | Có |
+   | Ôn thi cuối kỳ | 300 phút | D+2 ngày 22:00 | Trung bình | Có |
+   | Bài thực hành liên tục | 180 phút | D+2 ngày 22:00 | Thấp | Không |
+
+   Ở Tạo kế hoạch, chọn một ngày trong tuần D rồi bấm **Tạo bản xem trước**. Kết quả dự kiến **9 buổi, 360 phút, 240 phút chưa bố trí**:
+
+   | Ngày | Công việc | Các buổi đề xuất | Tổng |
+   |---|---|---|---|
+   | Thứ Hai D | Bài tập Python | 18:00–18:50; 20:00–20:50; 21:00–21:20 | 120 phút |
+   | Thứ Ba D+1 | Ôn thi cuối kỳ | 18:00–18:50; 19:00–19:50; 20:00–20:20 | 120 phút |
+   | Thứ Tư D+2 | Ôn thi cuối kỳ | 18:00–18:50; 19:00–19:50; 20:00–20:20 | 120 phút |
+
+   Báo cáo: Bài tập Python đủ 120 phút; Ôn thi còn thiếu 60 phút; Bài thực hành liên tục thiếu 180 phút vì không có quỹ ngày đủ cho một buổi liên tục. Nghỉ không tính vào phút học. Hai buổi có thể cách nhau bằng đúng số phút nghỉ yêu cầu.
+
+3. **Checklist luồng chính — chạy theo thứ tự trên bộ mẫu**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M05-TC01 | Chưa đăng nhập, mở Tạo kế hoạch hoặc URL chi tiết | Chuyển sang Đăng nhập; không lộ kế hoạch | Chưa kiểm thử |
+   | M05-TC02 | Đăng nhập A, mở Tạo kế hoạch rồi tải lại trước khi bấm tạo | Không tự tạo bản xem trước hoặc ghi tùy chọn | Chưa kiểm thử |
+   | M05-TC03 | Chọn thứ Tư D+2, bấm Tạo bản xem trước | Chuẩn hóa về thứ Hai D; đúng 9 buổi/360 phút/thiếu 240 như mẫu | Chưa kiểm thử |
+   | M05-TC04 | Đọc danh sách và báo cáo từng việc | Không đè Lớp Python; không vượt deadline, 120 phút/ngày; buổi cuối 20 phút; báo đúng thiếu 60 và 180 | Chưa kiểm thử |
+   | M05-TC05 | Từ bản xem trước bấm Xem lịch tuần, chưa áp dụng | Chỉ có lịch bận/deadline, chưa có buổi tự học; tối đa vẫn 120 phút/ngày | Chưa kiểm thử |
+   | M05-TC06 | Quay lại bản xem trước và bấm Áp dụng vào lịch tuần | Chuyển về đúng tuần D, thông báo thành công, 9 buổi hiện màu xanh; quỹ bố trí thêm bằng 0 ở ba ngày | Chưa kiểm thử |
+   | M05-TC07 | Mở khoảng trống thứ Hai sau áp dụng | Có 21:30–22:00; dù còn trống 30 phút nhưng quỹ ngày đã hết nên không bố trí thêm | Chưa kiểm thử |
+   | M05-TC08 | Mở công việc sau áp dụng; xem lại bản đã áp dụng | Còn lại vẫn 120/300/180, chưa tự đánh dấu xong; bản đã áp dụng không còn nút áp dụng | Chưa kiểm thử |
+   | M05-TC09 | Tạo bản xem trước mới cùng tuần D, không sửa dữ liệu | 0 buổi mới; báo đã có lịch tương lai 120/240/0; phần thiếu vẫn 0/60/180, không nhân đôi buổi | Chưa kiểm thử |
+   | M05-TC10 | Xem 10 kế hoạch gần nhất, mở các bản vừa tạo | Bản mới nhất đứng trước, đúng nhãn xem trước/đã áp dụng; tài khoản B không thấy bản A | Chưa kiểm thử |
+
+4. **Checklist thay đổi đầu vào và áp dụng**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M05-TC11 | Sau TC09 tăng tối đa ngày lên 180, giữ nghỉ 10; tạo bản mới tuần D | Thêm 60 phút cho Ôn thi: thứ Hai 21:30–22:00 và thứ Ba 20:30–21:00; Bài tập Python không được xếp lại | Chưa kiểm thử |
+   | M05-TC12 | Chưa áp dụng bản TC11, đổi nghỉ từ 10 thành 15; trở về bản đó và bấm Áp dụng | Hiện lỗi yêu cầu tạo bản mới, không thêm hai buổi cũ vào lịch, bản vẫn là xem trước | Chưa kiểm thử |
+   | M05-TC13 | Tạo bản mới; sửa deadline/thời lượng công việc hoặc thêm/sửa lịch bận; thử áp dụng bản vừa tạo | Từ chối bản cũ, giữ nguyên lịch đã áp dụng trước đó; không áp dụng một phần | Chưa kiểm thử |
+   | M05-TC14 | Với dữ liệu có thể xếp thêm buổi, tạo hai bản cùng đầu vào; áp dụng bản thứ nhất rồi thử bản thứ hai | Bản thứ hai bị từ chối; lịch không chứa hai bộ buổi giống nhau | Chưa kiểm thử |
+   | M05-TC15 | B mở URL chi tiết của A hoặc gửi POST vào URL áp dụng của A | 404; kế hoạch của A không đổi. Có test tự động cho POST giả owner và CSRF | Chưa kiểm thử |
+   | M05-TC16 | Nhập ngày không hợp lệ hoặc tuần đã qua vào form; mở trực tiếp URL áp dụng bằng GET | Form báo lỗi ngày/tuần; GET áp dụng trả 405, không tạo buổi | Chưa kiểm thử |
+
+   Gửi lặp lại POST cho cùng bản đã áp dụng chỉ thông báo đã áp dụng, không tạo thêm bản ghi; đã có test tự động. Với tuần hiện tại, nếu giờ đề xuất đã bắt đầu trôi qua trước khi áp dụng, phải tạo bản mới. Ở tuần tương lai, chờ vài phút không tự làm bản mất hiệu lực nếu kết quả xếp vẫn giữ nguyên.
+
+5. **Checklist ràng buộc — mỗi ca dùng bộ dữ liệu thử độc lập**
+
+   Các ca sau nên dùng tài khoản thử riêng hoặc tuần/công việc chưa có buổi áp dụng; các buổi cũ luôn giữ chỗ. Không cần xóa dữ liệu thật để đạt kết quả.
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M05-TC17 | Chỉ có việc liên tục 90 phút, khung 18:00–22:00, quỹ 120, buổi mong muốn 50 | Một buổi 18:00–19:30; không tự chia thành 50+40 | Chưa kiểm thử |
+   | M05-TC18 | Việc liên tục 90 phút nhưng lịch bận chỉ chừa các đoạn rời 60 phút | Không xếp; báo không có khoảng liên tục đủ dài. Đổi Cho phép chia thì xếp theo các đoạn và nghỉ | Chưa kiểm thử |
+   | M05-TC19 | Hai việc cùng deadline tranh quỹ ngày 60 phút, ưu tiên khác nhau | Việc ưu tiên cao được xếp trước; việc còn lại được báo phần thiếu | Chưa kiểm thử |
+   | M05-TC20 | Việc 120 phút nhưng deadline lúc 18:30, khung bắt đầu 18:00 | Chỉ xếp 18:00–18:30, thiếu 90 phút; không đặt sau hạn | Chưa kiểm thử |
+   | M05-TC21 | Bỏ chọn toàn bộ ngày, hoặc tạo tài khoản chưa có việc; tạo xem trước | Không lỗi; 0 buổi, không có nút áp dụng; có báo thiếu hoặc lời nhắc thêm công việc | Chưa kiểm thử |
+   | M05-TC22 | Có việc đã hoàn thành và việc quá hạn | Việc hoàn thành không tham gia phân bổ; việc quá hạn được báo, không có buổi trong quá khứ | Chưa kiểm thử |
+   | M05-TC23 | Chọn tuần hiện tại với giờ học còn lại; thêm ca qua đêm/lịch lặp | Không xếp trước hiện tại hoặc đè ca; giây lẻ được làm tròn lên phút kế tiếp | Chưa kiểm thử |
+   | M05-TC24 | Việc có deadline sau hai tuần, đã áp dụng một phần ở tuần sau; tạo bản ở tuần trước | Trừ phần phút tương lai đã có lịch ở tuần sau, không phân bổ đủ lượng công việc hai lần | Chưa kiểm thử |
+   | M05-TC25 | Việc lớn, deadline sau tuần được chọn, quỹ tuần không đủ | Báo phần thiếu trong tuần này và khả năng cần thêm tuần sau; không tự kết luận việc đã quá hạn | Chưa kiểm thử |
+   | M05-TC26 | Chỉ trên việc thử: mở trang Xóa rồi Hủy; sau đó xác nhận xóa việc có buổi học | Trang nêu rõ sẽ xóa cả buổi; Hủy giữ dữ liệu; xác nhận gỡ buổi khỏi lịch nhưng giữ tài liệu với liên kết việc rỗng | Chưa kiểm thử |
+   | M05-TC27 | Xem form tạo kế hoạch, danh sách buổi/báo cáo ở 375/320 px và dùng Tab | Không tràn ngang; nội dung/nút đọc được, thao tác bàn phím dùng được | Chưa kiểm thử |
+   | M05-TC28 | Khởi động lại server, xem lại kế hoạch và thử chức năng mốc 02–04 | Bản áp dụng còn nguyên, chỉ hiện dữ liệu người đang đăng nhập; tài khoản/môn/tài liệu/lịch bận vẫn dùng được | Chưa kiểm thử |
+
+6. **Quy tắc và giới hạn cần hiểu khi đánh giá**
+
+   - Thuật toán tham lam, chưa chứng minh tối ưu toàn cục. Ưu tiên cao chỉ quyết định khi deadline bằng nhau; deadline gần luôn được xét trước.
+   - Buổi chia nhỏ có thể ngắn hơn độ dài mong muốn, tối thiểu một phút. Không đặt buổi liên tục vượt quỹ ngày.
+   - Nghỉ áp dụng giữa các buổi tự học; lịch bận không mặc định cần thêm một khoảng nghỉ. Nghỉ được chừa quanh buổi đã áp dụng, kể cả qua ngày/tuần.
+   - Các buổi đã qua không tự chứng minh đã học xong. Hãy cập nhật thời lượng còn lại theo thực tế. Buổi đang diễn ra chỉ được tính phần nguyên phút chưa qua vào thời gian đã có lịch tương lai. Buổi đã qua trong ngày vẫn tiêu quỹ học của ngày đó.
+   - Thêm bản mới là bổ sung, giữ mọi buổi đã áp dụng. Chưa có sửa/khóa/hủy/xếp lại buổi ở mốc 05. Sửa deadline/lịch bận/khung giờ sau áp dụng chưa tự dời buổi; đánh dấu xong việc cũng chưa tự gỡ các đặt chỗ cũ. Đã ghi giới hạn trên trang chi tiết để người dùng rà soát.
+   - Báo cáo là số liệu lúc tạo; tên/deadline ở danh sách buổi theo công việc hiện tại. Thay đổi đầu vào liên quan yêu cầu tạo bản mới khi áp dụng. Các bản chưa áp dụng không giữ chỗ.
+   - Công việc không chia buổi nhưng đã có một phần lịch tương lai được báo cần rà soát, không tự thêm các mảnh mới.
+   - PostgreSQL, bản online, AI, Pomodoro, nhắc việc và đồng bộ Calendar vẫn thuộc các mốc sau theo kế hoạch.
+
+7. **Kết quả xác minh của agent**
+
+   - 30 kiểm thử mới cho thuật toán, deadline, ưu tiên, chia/không chia, lịch lặp/chồng/qua đêm, quỹ ngày, nghỉ qua ngày/tuần, trừ phút đã có lịch và làm tròn thời điểm hiện tại; cùng kiểm thử quyền, CSRF, preview/apply, bản cũ, gửi lặp, xóa việc và ràng buộc database.
+   - Tổng `manage.py test accounts studies planner --noinput`: **90/90 PASS**. System check, kiểm tra migration và diff whitespace: PASS.
+   - Migration `planner.0002_studyplan_studysession` áp dụng thành công; bản sao lưu local `db.sqlite3-before-m05` được Git bỏ qua.
+   - Trình duyệt với database/cookie riêng: đăng nhập → tạo mẫu 9 buổi/360 phút/thiếu 240 → lịch chưa có buổi trước áp dụng → áp dụng thành công → tạo lại không nhân đôi → mở thêm quỹ để xếp bổ sung → sửa nghỉ → từ chối bản cũ.
+   - Lịch tuần ở 375 px và chi tiết kế hoạch ở 320 px không tràn ngang; đã quan sát ảnh giao diện desktop và mobile. Server QA riêng đã dừng, dữ liệu mẫu không ghi vào `db.sqlite3` của bạn.
+
+8. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m05
+   git add planner/forms.py planner/models.py planner/views.py planner/urls.py planner/services/availability.py planner/services/scheduling.py planner/test_scheduling.py planner/migrations/0002_studyplan_studysession.py studies/views.py templates/planner/base.html templates/planner/week.html templates/planner/plan_form.html templates/planner/plan_detail.html static/css/planner.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: generate preview and apply weekly study plans"
+   git push origin main
+   ```
+
+   Giữ file migration trong commit. Không đưa `.env`, `.venv`, database hoặc bản sao lưu lên GitHub. Nhánh khi bắt đầu mốc là `main`; thay tên khi push nếu bạn đã đổi nhánh. Agent không stage/commit/push thay bạn.
+
+   Nếu gặp lỗi, gửi ID test, bước thao tác và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi làm mốc 06.

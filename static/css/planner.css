@@ -41,9 +41,22 @@
 .study-days > div { display: flex; flex-wrap: wrap; gap: 12px 20px; }
 .study-days label { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 .study-days input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.calendar-study { background: #e9f5ee; border-color: #176b58; }
+.legend-study::before { background: #176b58; }
+.plan-section-title { margin-top: 36px; font-size: 21px; }
+.plan-muted { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.plan-sessions, .plan-reports { display: grid; gap: 12px; }
+.plan-session { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: white; overflow-wrap: anywhere; }
+.plan-session-time { display: grid; gap: 4px; font-size: 13px; color: var(--accent); }
+.plan-session-time strong { font-size: 17px; }
+.plan-report { padding: 18px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 10px; background: white; overflow-wrap: anywhere; }
+.plan-report h3 { margin: 0 0 10px; font-size: 17px; }
+.plan-report p { margin: 6px 0; font-size: 13px; }
+.plan-shortfall { border-left-color: #bd7729; background: #fffbf3; }
 
 @media (max-width: 1000px) { .week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 640px) {
+    .plan-session { grid-template-columns: 1fr; gap: 12px; }
     .week-grid { grid-template-columns: 1fr; }
     .week-toolbar, .week-heading { align-items: flex-start; flex-direction: column; }
     .week-heading h2 { font-size: 20px; }

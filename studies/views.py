@@ -111,9 +111,9 @@ class TaskDeleteView(SuccessMessageMixin, OwnedObjectMixin, DeleteView):
     model = Task
     template_name = "studies/confirm_delete.html"
     success_url = reverse_lazy("studies:task_list")
-    success_message = "Đã xóa công việc. Tài liệu liên quan vẫn được giữ."
+    success_message = "Đã xóa công việc và các buổi học của công việc. Tài liệu liên quan vẫn được giữ."
     page_title = "Xóa công việc"
-    delete_warning = "Tài liệu vẫn được giữ, nhưng sẽ không còn liên kết với công việc này."
+    delete_warning = "Các buổi học của công việc này cũng sẽ bị xóa khỏi kế hoạch và lịch tuần. Tài liệu vẫn được giữ, nhưng sẽ không còn liên kết với công việc này."
 
 
 class MaterialListView(FilteredListMixin, ListView):

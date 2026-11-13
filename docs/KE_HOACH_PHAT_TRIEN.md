@@ -32,8 +32,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 03:** đã hoàn thành quản lý môn học, công việc và tài liệu theo lựa chọn của người dùng. Người dùng đã cho phép chuyển sang mốc 04.
 
-**Mốc 04 hiện tại:** lịch bận một lần/lặp hằng tuần, ca qua đêm, tùy chọn ngày/giờ học và lịch tuần. Python tính các lần lặp, gộp khoảng bận, tìm khoảng trống và hiển thị deadline. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 04:** đã hoàn thành lịch bận một lần/lặp hằng tuần, ca qua đêm, tùy chọn học và lịch tuần. Người dùng đã cho phép chuyển sang mốc 05.
 
-**Mốc 05 dự kiến:** dùng dữ liệu lịch bận và tùy chọn học để tự sinh kế hoạch tuần, trả phần chưa xếp được, cho xem trước và áp dụng các buổi học. Khoảng trống ở mốc 04 chưa phải buổi học đã được xếp.
+**Mốc 05 hiện tại:** thuật toán tham lam bằng Python tự sinh kế hoạch tuần, chia buổi, chừa nghỉ, tôn trọng deadline và quỹ ngày; báo phút chưa bố trí theo công việc. Xem trước rồi áp dụng với kiểm tra dữ liệu/thời gian đã thay đổi. Giữ buổi đã áp dụng, khấu trừ phút tương lai đã có lịch ở các tuần và hiển thị buổi học trên lịch tuần. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 06 dự kiến:** sửa/khóa buổi, cập nhật tiến độ, xếp lại phần được phép và cảnh báo deadline. Mốc 05 chưa tự điều chỉnh các buổi đã áp dụng khi đầu vào thay đổi; tạo kế hoạch bổ sung không thay thế kế hoạch cũ.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.
