@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04), tự xếp lịch/xem trước/áp dụng (mốc 05).
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành bộ khung (mốc 01), tài khoản (mốc 02), quản lý học tập (mốc 03), lịch bận/tùy chọn học/lịch tuần (mốc 04), tự xếp lịch/xem trước/áp dụng (mốc 05), chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo (mốc 06).
 
 1. **Phân chia trách nhiệm**
 
@@ -32,7 +32,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | Task | Thuộc user, có thể gắn môn; deadline, ưu tiên, phút ước tính/còn lại, cho phép chia nhỏ, trạng thái |
    | BusyEvent | Thuộc user; thời điểm bắt đầu/kết thúc của lần đầu, cờ lặp hằng tuần, ngày dừng lặp tùy chọn |
    | StudyPlan | Đã có: owner, thứ Hai đầu tuần, ngày tạo/áp dụng, dấu vân tay đầu vào và báo cáo phân bổ |
-   | StudySession | Đã có: owner, công việc, kế hoạch, bắt đầu/kết thúc; trạng thái thực hiện/khóa/thủ công ở mốc sau |
+   | StudySession | Đã có: owner, công việc, kế hoạch, bắt đầu/kết thúc, trạng thái planned/done/cancelled, is_locked và is_manual |
    | StudyLog | Nhật ký thực tế; công việc, phút học, ghi chú, buổi học nếu có |
    | FocusSession | Phiên Pomodoro; user, công việc, trạng thái và các mốc học/nghỉ/tạm dừng |
    | Material | Thuộc user; tên, URL, mô tả, môn/công việc liên quan |
@@ -69,6 +69,14 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    Báo cáo lưu ảnh chụp tên/deadline/thời lượng và các phút đã có lịch, bố trí mới, chưa bố trí khi tạo. Danh sách buổi hiển thị thông tin công việc hiện tại. Áp dụng qua POST có CSRF và kiểm tra owner; transaction so khớp dấu vân tay đầu vào và kết quả tính lại theo thời gian hiện tại. Từ chối phương án cũ, không áp dụng một phần. Gửi lại cùng bản đã áp dụng không tạo thêm buổi. Lịch tuần chỉ lấy buổi thuộc kế hoạch đã áp dụng. Không giảm `Task.remaining_minutes` khi xếp lịch.
 
    Xóa công việc xóa các buổi thuộc công việc, giữ báo cáo kế hoạch và tài liệu; giao diện xác nhận nêu rõ tác động. Mốc 05 chưa có chỉnh/khóa/hủy từng buổi hoặc tự xếp lại khi sửa lịch bận/giờ học/deadline sau áp dụng. Các buổi cũ tiếp tục giữ chỗ dù công việc được đánh dấu xong, chờ cơ chế cập nhật/xếp lại ở mốc 06. Đây là các đặt chỗ dự kiến, chưa phải nhật ký học thực tế.
+
+   Mốc 06 thêm `StudyPlan.mode` (add/replace), `replacement_ids` và trạng thái/cờ của buổi. Chế độ add giữ mọi buổi; replace chọn đúng buổi planned, tự động, không khóa, bắt đầu sau hiện tại và thuộc tuần được chọn. Phút của các buổi được thay không tính vào nhu cầu đã có lịch/quỹ bị chiếm trong phương án mới, nhưng vẫn đưa vào dấu vân tay để phát hiện thay đổi sau xem trước. Áp dụng so khớp cả danh sách buổi cần thay rồi chuyển chúng sang cancelled trong cùng transaction với việc kích hoạt buổi mới. Cho phép áp dụng bản chỉ hủy buổi cũ khi việc đã xong; không cần tạo buổi rỗng giả. Lịch tuần bỏ cancelled; chi tiết kế hoạch giữ chúng để xem lại.
+
+   `planner/services/sessions.py` xử lý chỉnh giờ, khóa/mở khóa và ghi nhận theo owner trong transaction. Chỉ chỉnh buổi planned chưa bắt đầu, không khóa, sang giờ tròn phút trong cùng tuần. Kiểm tra model và lịch bận/lặp, khung học, nghỉ, quỹ ngày, tổng phút đã dành cho công việc và quy tắc không chia buổi. Chỉnh thành công đặt is_manual=True; mở khóa không gỡ cờ chỉnh tay. Muốn thay một buổi chỉnh tay bằng tự động thì hủy buổi rồi tạo/xếp lại. Khóa có nghĩa giữ khi tự xếp lại; phải mở khóa trước khi chỉnh/hủy. Vẫn có thể ghi nhận Đã học cho buổi khóa đã bắt đầu.
+
+   Ghi nhận Đã học được phép từ thời điểm bắt đầu, không tự trừ độ dài buổi. Người dùng nhập số phút công việc thực tế còn cần: 0 đưa Task sang done, số dương đưa sang in_progress. Hủy/bỏ qua không đổi tiến độ, giữ bản ghi và giải phóng lịch/quỹ. Buổi đã ghi nhận hoặc hủy không ghi nhận lại; sửa ước lượng còn lại qua trang tiến độ công việc. Buổi done vẫn giữ thời gian trên lịch và tiêu quỹ ngày, nhưng không còn được tính là phút tương lai sẽ học cho công việc. Nếu kết thúc sớm, đặt chỗ vẫn giữ đến giờ kết thúc cũ; chưa có đo thời gian thực tế.
+
+   `planner/services/alerts.py` dựng cảnh báo từ dữ liệu hiện tại: mọi công việc quá hạn, công việc đến hạn trong 7 ngày thiếu phút tương lai, buổi planned sắp diễn ra trong 7 ngày trùng lịch bận/buổi khác, thiếu nghỉ, sai khung/ngày, quá quỹ/ngày, vượt deadline hoặc vượt thời lượng còn lại. Hiện tối đa 20 buổi đã kết thúc chưa ghi nhận gần nhất, kèm tổng số; các buổi cũ hơn vẫn xem được từ lịch và kế hoạch. Chưa gửi email và chưa kết luận thiếu lịch là không thể xếp đủ. Các buổi giữ nguyên nhưng đã sai ràng buộc được cảnh báo để người dùng xử lý trực tiếp; xếp lại không tự thay buổi khóa/chỉnh tay/đã bắt đầu/đã học.
 
 4. **Quy tắc lịch**
 

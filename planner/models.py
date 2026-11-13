@@ -116,12 +116,18 @@ class BusyEvent(models.Model):
 
 
 class StudyPlan(models.Model):
+    class Mode(models.TextChoices):
+        ADD = "add", "Bổ sung, giữ mọi buổi đã áp dụng"
+        REPLACE = "replace", "Xếp lại buổi tự động chưa bắt đầu trong tuần"
+
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     week_start = models.DateField("Thứ Hai đầu tuần")
     created_at = models.DateTimeField(auto_now_add=True)
     applied_at = models.DateTimeField("Đã áp dụng lúc", null=True, blank=True)
     input_fingerprint = models.CharField(max_length=64)
     report = models.JSONField(default=list, blank=True)
+    mode = models.CharField(max_length=10, choices=Mode.choices, default=Mode.ADD)
+    replacement_ids = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ["-created_at", "-pk"]
@@ -136,11 +142,19 @@ class StudyPlan(models.Model):
 
 
 class StudySession(models.Model):
+    class Status(models.TextChoices):
+        PLANNED = "planned", "Chưa ghi nhận"
+        DONE = "done", "Đã học"
+        CANCELLED = "cancelled", "Đã hủy / bỏ qua"
+
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     plan = models.ForeignKey(StudyPlan, on_delete=models.CASCADE, related_name="sessions")
     task = models.ForeignKey("studies.Task", on_delete=models.CASCADE, related_name="study_sessions")
     starts_at = models.DateTimeField("Bắt đầu")
     ends_at = models.DateTimeField("Kết thúc")
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PLANNED)
+    is_locked = models.BooleanField("Giữ buổi khi xếp lại", default=False)
+    is_manual = models.BooleanField("Đã chỉnh tay", default=False)
 
     class Meta:
         ordering = ["starts_at", "pk"]

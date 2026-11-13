@@ -7,7 +7,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from .forms import (
     MaterialFilterForm, MaterialForm, SubjectFilterForm, SubjectForm,
-    TaskFilterForm, TaskForm,
+    TaskFilterForm, TaskForm, TaskProgressForm,
 )
 from .models import Material, Subject, Task
 
@@ -105,6 +105,13 @@ class TaskUpdateView(OwnedFormMixin, UpdateView):
     form_class = TaskForm
     success_url = reverse_lazy("studies:task_list")
     page_title = "Sửa công việc"
+
+
+class TaskProgressView(OwnedFormMixin, UpdateView):
+    model = Task
+    form_class = TaskProgressForm
+    success_url = reverse_lazy("studies:task_list")
+    page_title = "Cập nhật tiến độ công việc"
 
 
 class TaskDeleteView(SuccessMessageMixin, OwnedObjectMixin, DeleteView):

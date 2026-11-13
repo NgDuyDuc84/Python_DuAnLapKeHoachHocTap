@@ -29,14 +29,14 @@ def minutes_between(start, end):
     return max(0, int((end - start).total_seconds() // 60))
 
 
-def calculate_schedule(user, monday, *, now=None, exclude_plan_id=None):
+def calculate_schedule(user, monday, *, now=None, exclude_plan_id=None, mode=StudyPlan.Mode.ADD):
     now = now or timezone.now()
     preferences = get_preferences(user)
     start, end = at_time(monday, time.min), at_time(monday + timedelta(days=7), time.min)
     gap = timedelta(minutes=preferences.break_minutes)
     tasks = list(Task.objects.filter(owner=user).exclude(status=Task.Status.DONE))
     events = list(BusyEvent.objects.filter(owner=user).order_by("pk"))
-    existing = list(StudySession.objects.filter(
+    all_sessions = list(StudySession.objects.filter(
         owner=user, plan__applied_at__isnull=False,
     ).filter(
         Q(ends_at__gt=now) | Q(ends_at__gt=start - gap, starts_at__lt=end + gap)
@@ -49,9 +49,16 @@ def calculate_schedule(user, monday, *, now=None, exclude_plan_id=None):
         "tasks": [[t.pk, t.title, t.subject_id, t.deadline, t.priority, t.status,
                    t.estimated_minutes, t.remaining_minutes, t.can_split] for t in tasks],
         "busy": [[e.pk, e.title, e.starts_at, e.ends_at, e.repeat_weekly, e.repeat_until] for e in events],
-        "sessions": [[s.pk, s.task_id, s.starts_at, s.ends_at] for s in existing],
+        "sessions": [[s.pk, s.task_id, s.starts_at, s.ends_at, s.status, s.is_locked, s.is_manual] for s in all_sessions],
     }
     fingerprint = hashlib.sha256(json.dumps(snapshot, default=str, sort_keys=True).encode()).hexdigest()
+    replacement_ids = [
+        s.pk for s in all_sessions
+        if mode == StudyPlan.Mode.REPLACE and s.status == StudySession.Status.PLANNED
+        and not s.is_locked and not s.is_manual and s.starts_at > now
+        and start <= s.starts_at < end
+    ]
+    existing = [s for s in all_sessions if s.pk not in replacement_ids and s.status != StudySession.Status.CANCELLED]
     occurrences = expand_busy_events(events, start, end)
     blocked = [(o.starts_at, o.ends_at) for o in occurrences]
     blocked += [(s.starts_at - gap, s.ends_at + gap) for s in existing]
@@ -69,7 +76,7 @@ def calculate_schedule(user, monday, *, now=None, exclude_plan_id=None):
     for task in tasks:
         credit = sum(
             minutes_between(max(s.starts_at, ceil_minute(now)), min(s.ends_at, task.deadline))
-            for s in existing if s.task_id == task.pk
+            for s in existing if s.task_id == task.pk and s.status == StudySession.Status.PLANNED
         )
         need = max(0, task.remaining_minutes - credit)
         scheduled = 0
@@ -119,14 +126,16 @@ def calculate_schedule(user, monday, *, now=None, exclude_plan_id=None):
             "remaining_minutes": task.remaining_minutes, "existing_minutes": credit,
             "scheduled_minutes": scheduled, "unallocated_minutes": need, "reason": reason,
         })
-    return {"fingerprint": fingerprint, "sessions": sorted(proposals, key=lambda s: (s[1], s[0])), "report": report}
+    return {"fingerprint": fingerprint, "sessions": sorted(proposals, key=lambda s: (s[1], s[0])),
+            "report": report, "replacement_ids": replacement_ids}
 
 
 @transaction.atomic
-def create_draft(user, monday, *, now=None):
-    result = calculate_schedule(user, monday, now=now)
+def create_draft(user, monday, *, now=None, mode=StudyPlan.Mode.ADD):
+    result = calculate_schedule(user, monday, now=now, mode=mode)
     plan = StudyPlan.objects.create(
         owner=user, week_start=monday, input_fingerprint=result["fingerprint"], report=result["report"],
+        mode=mode, replacement_ids=result["replacement_ids"],
     )
     StudySession.objects.bulk_create([
         StudySession(owner=user, plan=plan, task_id=task_id, starts_at=start, ends_at=end)
@@ -144,12 +153,14 @@ def apply_plan(user, plan_id, *, now=None):
         return plan, False
     now = now or timezone.now()
     stored = list(plan.sessions.order_by("starts_at", "task_id").values_list("task_id", "starts_at", "ends_at"))
-    if not stored:
+    if not stored and not plan.replacement_ids:
         raise PlanError("Không có buổi học mới để áp dụng. Hãy xem báo cáo và điều chỉnh dữ liệu.")
     # This write also obtains SQLite's writer lock. Exceptions roll it back.
     StudyPlan.objects.filter(pk=plan.pk, applied_at__isnull=True).update(applied_at=now)
-    fresh = calculate_schedule(user, plan.week_start, now=now, exclude_plan_id=plan.pk)
-    if fresh["fingerprint"] != plan.input_fingerprint or fresh["sessions"] != stored:
+    fresh = calculate_schedule(user, plan.week_start, now=now, exclude_plan_id=plan.pk, mode=plan.mode)
+    if (fresh["fingerprint"] != plan.input_fingerprint or fresh["sessions"] != stored
+            or fresh["replacement_ids"] != plan.replacement_ids):
         raise PlanError("Dữ liệu hoặc thời gian đã thay đổi. Hãy tạo bản xem trước mới rồi kiểm tra lại trước khi áp dụng.")
+    StudySession.objects.filter(owner=user, pk__in=plan.replacement_ids).update(status=StudySession.Status.CANCELLED)
     plan.applied_at = now
     return plan, True

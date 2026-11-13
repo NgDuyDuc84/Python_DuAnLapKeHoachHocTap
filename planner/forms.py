@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from studies.forms import OwnedModelForm
 
-from .models import DAY_CHOICES, BusyEvent, StudyPreference
+from .models import DAY_CHOICES, BusyEvent, StudyPlan, StudyPreference, StudySession
 
 
 class BusyEventForm(OwnedModelForm):
@@ -74,8 +74,32 @@ class WeekForm(forms.Form):
 
 
 class PlanWeekForm(WeekForm):
+    mode = forms.ChoiceField(label="Cách xếp lịch", choices=StudyPlan.Mode.choices, required=False)
+
+    def clean_mode(self):
+        return self.cleaned_data["mode"] or StudyPlan.Mode.ADD
+
     def clean_week(self):
         monday = super().clean_week()
         if monday + timedelta(days=7) <= timezone.localdate():
             raise forms.ValidationError("Chọn tuần hiện tại hoặc một tuần tương lai để xếp lịch.")
         return monday
+
+
+class SessionMoveForm(forms.Form):
+    starts_at = forms.DateTimeField(label="Bắt đầu mới", widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"))
+    ends_at = forms.DateTimeField(label="Kết thúc mới", widget=forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"))
+
+
+class SessionRecordForm(forms.Form):
+    result = forms.ChoiceField(label="Kết quả buổi học", choices=[
+        (StudySession.Status.DONE, "Đã học"), (StudySession.Status.CANCELLED, "Hủy / bỏ qua"),
+    ])
+    remaining_minutes = forms.IntegerField(
+        label="Công việc còn lại bao nhiêu phút?", min_value=0, max_value=2147483647,
+        help_text="Nhập 0 nếu đã xong việc. Hủy/bỏ qua buổi thì giữ nguyên số phút còn lại.",
+    )
+
+
+class SessionLockForm(forms.Form):
+    locked = forms.TypedChoiceField(choices=[("true", "Khóa"), ("false", "Mở khóa")], coerce=lambda value: value == "true")

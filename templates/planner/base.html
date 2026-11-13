@@ -15,6 +15,7 @@
         <a href="{% url 'planner:plan_generate' %}" {% if 'plan_' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Tạo kế hoạch</a>
         <a href="{% url 'planner:busy_list' %}" {% if 'busy' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Lịch bận</a>
         <a href="{% url 'planner:preferences' %}" {% if request.resolver_match.url_name == 'preferences' %}aria-current="page"{% endif %}>Giờ học</a>
+        <a href="{% url 'planner:alerts' %}" {% if request.resolver_match.url_name == 'alerts' %}aria-current="page"{% endif %}>Cảnh báo</a>
     </nav>
     {% block planner_content %}{% endblock %}
 </section>

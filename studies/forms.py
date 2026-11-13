@@ -64,6 +64,19 @@ class MaterialForm(OwnedModelForm):
         help_texts = {"url": "Dùng đường dẫn HTTP hoặc HTTPS tới bài giảng, tài liệu hoặc tệp đã lưu."}
 
 
+class TaskProgressForm(OwnedModelForm):
+    class Meta:
+        model = Task
+        fields = ("status", "remaining_minutes")
+        help_texts = {"remaining_minutes": "Nhập thời gian thực tế còn cần. Chọn Hoàn thành để đưa về 0. Thay đổi tiến độ chưa tự dời hoặc hủy các buổi cũ; dùng Xếp lại lịch và kiểm tra cảnh báo."}
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("status") == Task.Status.DONE:
+            cleaned["remaining_minutes"] = 0
+        return cleaned
+
+
 class StudyFilterForm(forms.Form):
     q = forms.CharField(label="Tìm kiếm", required=False, max_length=200)
 

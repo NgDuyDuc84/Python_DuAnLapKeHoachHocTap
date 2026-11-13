@@ -96,7 +96,7 @@ def build_week(user, monday, preferences, now=None):
     sessions = list(StudySession.objects.filter(
         owner=user, plan__applied_at__isnull=False,
         starts_at__lt=week_end + gap, ends_at__gt=week_start - gap,
-    ).select_related("task"))
+    ).exclude(status=StudySession.Status.CANCELLED).select_related("task"))
     days = []
     for offset in range(7):
         day = monday + timedelta(days=offset)

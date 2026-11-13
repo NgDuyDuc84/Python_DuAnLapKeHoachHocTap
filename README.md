@@ -6,7 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 
-Hiện tại: **mốc 05 — tự sinh kế hoạch tuần, xem trước và áp dụng**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 06 — chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -33,7 +33,8 @@ Các trang chính:
 - [Công việc](http://127.0.0.1:8000/studies/tasks/): deadline, ưu tiên, thời lượng, trạng thái và lọc quá hạn.
 - [Tài liệu](http://127.0.0.1:8000/studies/materials/): liên kết HTTP/HTTPS theo môn hoặc công việc.
 - [Lịch tuần](http://127.0.0.1:8000/planner/): lịch bận, buổi học đã áp dụng, deadline và khoảng trống từ hiện tại.
-- [Tạo kế hoạch](http://127.0.0.1:8000/planner/plans/new/): chọn tuần, xem trước, đọc phần chưa bố trí và áp dụng vào lịch.
+- [Tạo kế hoạch](http://127.0.0.1:8000/planner/plans/new/): chọn tuần và chế độ Bổ sung/Xếp lại, xem trước rồi áp dụng vào lịch.
+- [Cảnh báo](http://127.0.0.1:8000/planner/alerts/): việc quá hạn, thiếu lịch trước hạn, buổi xung đột và buổi đã kết thúc chưa ghi nhận.
 - [Lịch bận](http://127.0.0.1:8000/planner/busy/): một lần/lặp hằng tuần, hỗ trợ qua đêm.
 - [Giờ học](http://127.0.0.1:8000/planner/preferences/): ngày được học, khung giờ chung, giới hạn phút/ngày, độ dài buổi và nghỉ.
 - [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
@@ -54,4 +55,8 @@ Mốc 04 thêm migration `planner/0001_initial.py`; tiếp tục chạy `manage.
 
 Mốc 05 thêm migration `planner/0002_studyplan_studysession.py`. Thuật toán tham lam xếp deadline gần trước, cùng hạn thì ưu tiên cao trước; tôn trọng lịch bận, khung học, phút/ngày, chia buổi và nghỉ. Bản xem trước chưa chiếm lịch; áp dụng kiểm tra lại dữ liệu/thời gian trong transaction. Giữ các buổi đã áp dụng và trừ phút tương lai đã dành cho công việc ở mọi tuần để tránh xếp lại. Xếp lịch không tự giảm thời lượng còn lại. Xóa công việc cũng xóa các buổi học của công việc, vẫn giữ liên kết tài liệu.
 
-Quỹ ngày trên lịch đã trừ các buổi có lịch và chừa nghỉ quanh buổi học. Thay đổi deadline/lịch bận/giờ học sau khi áp dụng chưa tự sửa các buổi cũ; sửa, khóa và xếp lại buổi thuộc mốc 06. Thuật toán chưa bảo đảm tối ưu toàn cục. Xem dữ liệu mẫu, các giới hạn và checklist mốc 05 ở cuối `HD_Test.md`.
+Mốc 06 thêm migration `planner/0003_studyplan_mode_studyplan_replacement_ids_and_more.py`; chạy `manage.py migrate` và khởi động lại server. Từ chi tiết kế hoạch đã áp dụng, có thể chỉnh giờ/độ dài buổi tương lai, khóa/mở khóa, ghi nhận Đã học hoặc Hủy/bỏ qua. Chỉnh tay phải đúng khung học, deadline, quỹ ngày, không trùng và đủ nghỉ; không vượt thời lượng công việc còn lại. Nhập số phút thực tế còn cần khi ghi nhận; nhập 0 đánh dấu việc hoàn thành. Có form Cập nhật tiến độ riêng trên danh sách công việc.
+
+Chế độ Xếp lại chỉ thay buổi tự động chưa bắt đầu trong tuần được chọn, giữ buổi khóa, đã chỉnh tay, đang học, đã học và các tuần khác. Xem trước chỉ đọc các đặt chỗ cũ; khi áp dụng mới hủy buổi cũ và thêm buổi mới trong cùng transaction. Buổi bị hủy giữ dấu vết, không còn chiếm lịch/quỹ ngày. Bổ sung vẫn giữ mọi buổi đã áp dụng.
+
+Thay đổi đầu vào chưa tự chạy xếp lại; cần chọn Xếp lại và kiểm tra bản xem trước. Buổi khóa hoặc chỉnh tay có xung đột cần xử lý trực tiếp. Cảnh báo trong ứng dụng xét mọi việc quá hạn, việc đến hạn/buổi sắp diễn ra trong 7 ngày và tối đa 20 buổi chưa ghi nhận gần nhất. Chưa gửi email hoặc ghi nhật ký thời gian học/Pomodoro. Thuật toán chưa bảo đảm tối ưu toàn cục. Xem dữ liệu mẫu, giới hạn và checklist mốc 06 ở cuối `HD_Test.md`.

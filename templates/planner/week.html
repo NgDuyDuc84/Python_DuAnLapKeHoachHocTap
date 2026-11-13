@@ -46,7 +46,7 @@
                             <div class="calendar-item calendar-study">
                                 <span class="item-time">{{ item.start_label }}–{{ item.end_label }}</span>
                                 <a href="{% url 'planner:plan_detail' item.session.plan_id %}">{{ item.session.task.title }}</a>
-                                <small>Đã xếp · {{ item.session.duration_minutes }} phút</small>
+                                <small>{{ item.session.get_status_display }} · {{ item.session.duration_minutes }} phút{% if item.session.is_locked %} · Đã khóa{% endif %}{% if item.session.is_manual %} · Chỉnh tay{% endif %}</small>
                             </div>
                         {% else %}
                             <div class="calendar-item calendar-deadline{% if item.task.status == 'done' %} deadline-done{% endif %}">

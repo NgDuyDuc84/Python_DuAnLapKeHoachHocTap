@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 05 — tự sinh kế hoạch tuần, xem trước và áp dụng**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 06 — chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -461,7 +461,7 @@ Phạm vi: tạo/sửa/xóa lịch bận một lần hoặc lặp hằng tuần,
 
 **Mốc 05 — Tự sinh kế hoạch tuần, xem trước và áp dụng**
 
-Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng ở mốc này.
+Trạng thái: người dùng đã cho phép chuyển sang mốc 06. Giữ checklist và kết quả mốc 05 làm lịch sử.
 
 Phạm vi: thuật toán Python xếp deadline gần trước, cùng hạn thì ưu tiên cao trước; chia buổi, chừa nghỉ, tôn trọng ngày/khung học, quỹ ngày và lịch bận. Có bản xem trước, báo cáo phút chưa bố trí theo công việc, áp dụng lên lịch và danh sách 10 kế hoạch gần nhất. Phần chỉnh/khóa/hủy buổi, tự xếp lại và theo dõi học thực tế thuộc mốc tiếp theo.
 
@@ -596,3 +596,151 @@ Phạm vi: thuật toán Python xếp deadline gần trước, cùng hạn thì 
    Giữ file migration trong commit. Không đưa `.env`, `.venv`, database hoặc bản sao lưu lên GitHub. Nhánh khi bắt đầu mốc là `main`; thay tên khi push nếu bạn đã đổi nhánh. Agent không stage/commit/push thay bạn.
 
    Nếu gặp lỗi, gửi ID test, bước thao tác và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi làm mốc 06.
+
+---
+
+**Mốc 06 — Chỉnh/khóa buổi, tiến độ, xếp lại và cảnh báo**
+
+Trạng thái: chờ bạn kiểm thử và commit/push GitHub. Agent dừng sau mốc 06.
+
+Phạm vi đã làm: chỉnh giờ/độ dài buổi tương lai; khóa/mở khóa; ghi nhận Đã học hoặc Hủy/bỏ qua; cập nhật tiến độ công việc; xem trước và áp dụng xếp lại đúng các buổi được phép; cảnh báo deadline, xung đột và buổi chưa ghi nhận. Nghiệp vụ xử lý bằng Python/Django, không thêm thư viện.
+
+1. **Khởi động và kiểm tra kỹ thuật**
+
+   Dừng server cũ bằng Ctrl+C trong terminal của server rồi chạy:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test accounts studies planner --noinput
+   & .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+   & .\.venv\Scripts\python.exe manage.py migrate --check
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mong đợi: **121/121 tests PASS**, không lỗi system check, không có migration thiếu. Migration mới là `planner.0003_studyplan_mode_studyplan_replacement_ids_and_more`. Agent đã tạo `db.sqlite3-before-m06` bằng SQLite backup trước khi migrate trên máy này; không ghi đè bản sao lưu cũ hoặc xóa dữ liệu mốc trước.
+
+   Mở [Tạo kế hoạch](http://127.0.0.1:8000/planner/plans/new/) hoặc [Cảnh báo](http://127.0.0.1:8000/planner/alerts/). Từ buổi học trên lịch, mở kế hoạch để thấy các thao tác mới. Các bản xem trước cũ có thể cần tạo lại sau migration nếu kiểm tra đầu vào báo đã thay đổi; các bản đã áp dụng vẫn giữ nguyên dữ liệu với trạng thái mặc định Chưa ghi nhận.
+
+   | Trang/thao tác | URL | Ghi chú |
+   |---|---|---|
+   | Chỉnh buổi | `/planner/sessions/<id>/edit/` | GET xem, POST lưu |
+   | Ghi nhận/hủy | `/planner/sessions/<id>/record/` | GET xem, POST lưu |
+   | Khóa/mở khóa | POST `/planner/sessions/<id>/lock/` | Dùng nút trên chi tiết kế hoạch; GET trả 405 |
+   | Tiến độ công việc | `/studies/tasks/<id>/progress/` | Trạng thái và thời lượng còn lại |
+   | Cảnh báo | `/planner/alerts/` | Chỉ đọc, tính lại theo dữ liệu hiện tại |
+
+2. **Dữ liệu mẫu cho luồng xếp lại**
+
+   Đăng ký tài khoản thử A riêng để không bị các buổi/công việc cũ ảnh hưởng. Dùng B cho kiểm tra phân quyền. Gọi **D** là thứ Hai của một tuần tương lai, ví dụ 16/11/2026 tại lúc viết hướng dẫn; thay bằng tuần mới nếu ngày này đã qua.
+
+   - Giờ học: thứ Hai/Ba/Tư, 18:00–22:00, tối đa **180 phút/ngày**, buổi **50 phút**, nghỉ **10 phút**.
+   - Một công việc **Python mốc 06**, ước tính/còn lại **180 phút**, deadline D+2 ngày 22:00, Chưa bắt đầu, cho chia buổi.
+   - Ban đầu chưa có lịch bận hoặc công việc khác. Chọn tuần D, chế độ **Bổ sung**, tạo và áp dụng: thứ Hai có 18:00–18:50, 19:00–19:50, 20:00–20:50, 21:00–21:30.
+   - Khóa buổi 18:00. Chỉnh buổi 19:00 sang **thứ Ba D+1 18:00–18:50**, giữ độ dài; buổi này có nhãn Đã chỉnh tay.
+   - Thêm lịch bận **Ca làm mới**, thứ Hai D **20:00–21:00**.
+
+   Chọn **Xếp lại buổi tự động chưa bắt đầu trong tuần**. Kết quả mong đợi:
+
+   | Nội dung | Kết quả |
+   |---|---|
+   | Buổi được giữ | Thứ Hai 18:00–18:50 đã khóa; thứ Ba 18:00–18:50 đã chỉnh tay |
+   | Buổi cũ sẽ hủy khi áp dụng | Thứ Hai 20:00–20:50 và 21:00–21:30 |
+   | Buổi mới đề xuất | Thứ Hai 19:00–19:50 và 21:00–21:30 |
+   | Báo cáo Python | Còn 180; đã có lịch được giữ 100; bố trí mới 80; thiếu 0 phút |
+
+   Một buổi mới có thể trùng giờ buổi cũ bị thay, nhưng bản xem trước ghi rõ hai bộ; áp dụng phải hủy bộ cũ trước khi kích hoạt bộ mới trong cùng transaction. Các buổi khóa/chỉnh tay không được nhân bản sang bản mới.
+
+3. **Checklist chỉnh/khóa và xếp lại — chạy theo bộ mẫu**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M06-TC01 | Tạo và áp dụng bộ mẫu ở trên | Có đúng bốn buổi ban đầu, còn lại vẫn 180 phút | Chưa kiểm thử |
+   | M06-TC02 | Khóa 18:00; tải lại; mở khóa rồi khóa lại | Nhãn/nút đúng trạng thái; khóa không đổi giờ hay thời lượng | Chưa kiểm thử |
+   | M06-TC03 | Khi 18:00 đang khóa, thử chỉnh giờ hoặc hủy buổi | Có lỗi yêu cầu mở khóa; buổi giữ nguyên | Chưa kiểm thử |
+   | M06-TC04 | Chỉnh buổi 19:00 sang thứ Ba 18:00–18:50 | Lưu thành công, nhãn Đã chỉnh tay, chuyển đúng ngày trên lịch | Chưa kiểm thử |
+   | M06-TC05 | Thêm Ca làm mới 20:00–21:00, xem Cảnh báo | Nếu D trong 7 ngày tới: báo buổi 20:00 trùng lịch bận | Chưa kiểm thử |
+   | M06-TC06 | Tạo bản Xếp lại tuần D | Hiện rõ Sẽ hủy 2 buổi cũ; đúng hai buổi mới và báo cáo như bảng mẫu | Chưa kiểm thử |
+   | M06-TC07 | Trước khi áp dụng, mở lại lịch/chi tiết kế hoạch cũ | Buổi cũ chưa bị hủy; bản xem trước chưa giữ chỗ | Chưa kiểm thử |
+   | M06-TC08 | Áp dụng bản xếp lại | Hai buổi tự động cũ chuyển Đã hủy / bỏ qua; buổi khóa/chỉnh tay giữ đúng ID/giờ; buổi mới lên lịch, không nhân đôi | Chưa kiểm thử |
+   | M06-TC09 | Xem kế hoạch cũ và lịch; xem lại Cảnh báo | Kế hoạch cũ vẫn có dấu vết hai buổi hủy; lịch không hiện/khấu trừ buổi hủy; hết cảnh báo trùng ca làm | Chưa kiểm thử |
+   | M06-TC10 | Tạo bản Bổ sung cùng tuần, không đổi dữ liệu | Không xếp lại 180 phút; đã có đủ lịch tương lai, không có buổi mới cho Python | Chưa kiểm thử |
+   | M06-TC11 | Tạo một bản Xếp lại; trước áp dụng đổi khóa, chỉnh giờ hoặc tiến độ | Áp dụng bị từ chối vì dữ liệu thay đổi; buổi cũ chưa bị hủy; tạo bản mới để tiếp tục | Chưa kiểm thử |
+
+4. **Checklist ràng buộc chỉnh giờ — các ca độc lập, chưa lưu thay đổi nếu form báo lỗi**
+
+   Dùng một buổi planned tương lai, không khóa. Giữ các lịch mẫu để kiểm tra nghỉ/xung đột; có thể tạo tài khoản thử khác khi cần bộ dữ liệu đơn giản.
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M06-TC12 | Nhập kết thúc bằng/trước bắt đầu, sang ngày sau hoặc ra ngoài tuần của kế hoạch | Báo lỗi; giờ cũ và cờ chỉnh tay không đổi | Chưa kiểm thử |
+   | M06-TC13 | Chỉnh sang ngày không được học, ngoài 18:00–22:00, vượt deadline hoặc lịch bận | Từ chối, không lưu một phần | Chưa kiểm thử |
+   | M06-TC14 | Chỉnh đè buổi khác hoặc chỉ cách 5 phút khi nghỉ 10; sau đó thử cách đúng 10 phút | Đè/thiếu nghỉ bị từ chối; đúng 10 phút được chấp nhận nếu mọi giới hạn khác hợp lệ | Chưa kiểm thử |
+   | M06-TC15 | Tăng độ dài khiến tổng học trong ngày vượt giới hạn hoặc tổng phút đã xếp vượt còn lại của việc | Báo rõ giới hạn bị vượt; không đổi buổi | Chưa kiểm thử |
+   | M06-TC16 | Với việc không chia buổi, chỉnh chỉ giữ một phần thời lượng còn lại | Từ chối; cần đủ toàn bộ thời lượng trong một buổi, đúng quỹ và khung học | Chưa kiểm thử |
+   | M06-TC17 | Thử chỉnh buổi đã bắt đầu/đã học/đã hủy hoặc dời vào quá khứ | Không cho chỉnh; sửa tiến độ công việc dùng trang riêng | Chưa kiểm thử |
+
+5. **Checklist tiến độ và hủy buổi**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M06-TC18 | Trên Công việc, chọn Cập nhật tiến độ; nhập Đang thực hiện, còn 100 phút | Chỉ đổi trạng thái/phút còn lại, không đổi deadline/môn/giờ buổi | Chưa kiểm thử |
+   | M06-TC19 | Với mẫu đang giữ 100 phút khóa/chỉnh tay, sau TC18 tạo Xếp lại | Chỉ cần hủy các buổi tự động còn lại, có thể 0 buổi mới; nút Áp dụng vẫn có và thao tác hủy hợp lệ | Chưa kiểm thử |
+   | M06-TC20 | Nhập còn lại 0 nhưng trạng thái chưa hoàn thành; thử số âm. Sau đó chọn Hoàn thành | Dữ liệu không nhất quán/âm bị từ chối; chọn Hoàn thành đưa còn lại về 0 | Chưa kiểm thử |
+   | M06-TC21 | Ở buổi tương lai, chọn Ghi nhận Đã học | Báo chưa thể ghi nhận buổi tương lai, không đổi tiến độ | Chưa kiểm thử |
+   | M06-TC22 | Với buổi đã bắt đầu chưa ghi nhận: Đã học, nhập còn lại 70 phút | Buổi sang Đã học, việc sang Đang thực hiện còn đúng 70; không tự trừ thêm độ dài buổi | Chưa kiểm thử |
+   | M06-TC23 | Ghi nhận một buổi khác đã bắt đầu, nhập còn lại 0; mở lại buổi | Việc Hoàn thành/còn 0; buổi Đã học không còn form ghi nhận; không ghi nhận lần hai | Chưa kiểm thử |
+   | M06-TC24 | Hủy/bỏ qua buổi không khóa, giữ nguyên số phút còn lại | Buổi giữ dấu vết, biến khỏi lịch và giải phóng quỹ ngày; việc không giảm thời lượng | Chưa kiểm thử |
+   | M06-TC25 | Chọn hủy nhưng đồng thời đổi số phút còn lại | Từ chối, yêu cầu giữ nguyên phút hoặc cập nhật riêng ở trang công việc | Chưa kiểm thử |
+
+   Với TC22–23, có thể dùng buổi đã bắt đầu từ các mốc trước. Nếu chưa có, dùng tài khoản thử khác, chọn ngày hiện tại/khung giờ còn lại trong ngày, tạo việc và áp dụng rồi chờ tới giờ bắt đầu; hệ thống không cho khai buổi tương lai là đã học. Các ca thời điểm này cũng được kiểm thử tự động bằng đồng hồ cố định, không phải chờ trong test suite.
+
+6. **Checklist cảnh báo, quyền và hồi quy**
+
+   | ID | Thao tác | Kết quả mong đợi | Kết quả của bạn |
+   |---|---|---|---|
+   | M06-TC26 | Tạo việc chưa hoàn thành có deadline hôm qua và việc hạn trong 7 ngày nhưng chưa đủ lịch | Trang Cảnh báo nêu Quá hạn/Chưa đủ lịch và đúng số phút thiếu; việc đã hoàn thành không vào danh sách deadline | Chưa kiểm thử |
+   | M06-TC27 | Đổi khung/ngày, giới hạn ngày hoặc deadline làm buổi sắp tới vi phạm; giảm còn lại xuống dưới phút đã xếp | Báo lý do sai khung/quỹ/hạn hoặc vượt phút còn lại. Buổi khóa/chỉnh tay cần xử lý trực tiếp | Chưa kiểm thử |
+   | M06-TC28 | Có buổi đã kết thúc chưa ghi nhận; sau đó ghi nhận/bỏ qua | Hiện trong danh sách chờ, tổng số đúng; xử lý xong biến khỏi danh sách chờ; tối đa hiện 20 buổi gần nhất | Chưa kiểm thử |
+   | M06-TC29 | B mở URL chỉnh/ghi nhận/POST khóa của A hoặc trang tiến độ việc A; đăng xuất rồi mở các trang mới | B nhận 404, không lộ/sửa dữ liệu A; chưa đăng nhập chuyển Đăng nhập. POST thiếu CSRF bị từ chối trong test tự động | Chưa kiểm thử |
+   | M06-TC30 | Mở URL thao tác buổi thuộc bản chưa áp dụng; mở URL khóa bằng GET | Buổi nháp trả 404; GET khóa trả 405; chỉ xem trang không ghi dữ liệu | Chưa kiểm thử |
+   | M06-TC31 | Tạo buổi khóa/chỉnh tay ở tuần khác; xếp lại tuần D; kiểm tra buổi đã học/đã bắt đầu | Không thay các buổi ngoài tuần, đã khóa/chỉnh tay/đã bắt đầu/đã học | Chưa kiểm thử |
+   | M06-TC32 | Xem cảnh báo/chỉnh giờ ở 375/320 px, dùng Tab; khởi động lại server; thử mốc 02–05 | Không tràn ngang; nhãn/form/nút dùng được; trạng thái và lịch còn nguyên, các chức năng cũ vẫn hoạt động | Chưa kiểm thử |
+
+7. **Quy tắc và giới hạn**
+
+   - Chưa có kéo thả, tạo buổi thủ công từ đầu, hoặc đổi tuần của một buổi. Chỉnh buổi hiện có bằng form, lưu thành buổi đã chỉnh tay.
+   - Khóa bảo vệ buổi khỏi xếp lại; mở khóa không biến buổi chỉnh tay thành tự động. Muốn thuật toán phân bổ lại phần đó thì hủy buổi chỉnh tay trước, rồi tạo bản Xếp lại/Bổ sung.
+   - Xếp lại do người dùng chủ động yêu cầu, không tự chạy sau mỗi lần sửa dữ liệu. Ràng buộc được bảo đảm cho các buổi mới; buổi giữ nguyên nhưng vi phạm được cảnh báo trong phạm vi 7 ngày để xử lý trực tiếp. Các tuần xa hơn vẫn xem được trên lịch.
+   - Hủy và ghi nhận là trạng thái cuối của buổi, không có nút hoàn tác. Hủy vẫn giữ bản ghi; có thể sinh buổi mới để bố trí lại. Nếu nhập sai số phút còn lại, sửa ở Cập nhật tiến độ công việc; chưa sửa lại trạng thái buổi.
+   - Đã học giữ thời gian đặt trên lịch và tiêu quỹ ngày; không còn được tính vào phút sẽ học trong tương lai. Nếu ghi nhận trước giờ kết thúc, lịch vẫn giữ đến giờ kết thúc cũ. Chưa có nhật ký phút học thực tế hoặc tự trừ thời lượng.
+   - Cảnh báo xét mọi việc quá hạn, việc đến hạn/buổi sắp diễn ra trong 7 ngày; danh sách chờ hiện tối đa 20 buổi gần nhất kèm tổng số. “Chưa đủ lịch” không có nghĩa đã chứng minh không thể hoàn thành.
+   - Task hoàn thành không tự xóa buổi khóa/chỉnh tay; cảnh báo để người dùng hủy trực tiếp. Xếp lại có thể hủy các buổi tự động chưa bắt đầu của việc đã xong mà không tạo buổi mới.
+   - Báo cáo kế hoạch vẫn là số liệu tại lúc tạo; số buổi/phút còn hiệu lực có thể thay đổi sau chỉnh/ghi nhận/xếp lại. Xóa việc vẫn xóa các buổi thuộc việc như mốc trước, tài liệu được giữ.
+   - Pomodoro, nhật ký học/thống kê, email/tác vụ nền, AI, đồng bộ và bản online là các mốc sau.
+
+8. **Kết quả xác minh của agent**
+
+   - **31 test mới**, tổng **121/121 PASS**. Bao phủ bảo toàn buổi khóa/chỉnh tay/đã bắt đầu/đã học/ngoài tuần; xem trước không đổi lịch; thay thế nguyên tử; bản cũ do đổi khóa/thời gian/tiến độ; áp dụng 0 buổi mới; gửi lặp; chỉnh giờ sai ràng buộc; ghi nhận/hủy và bảo vệ quyền/CSRF.
+   - Các test cảnh báo kiểm tra quá hạn, hạn gần, phút chưa có lịch, trùng bận/lặp qua đêm/buổi khác, nghỉ, khung học, quỹ, deadline, vượt thời lượng còn lại, công việc hoàn thành, phạm vi 7 ngày và 20 buổi chờ.
+   - `manage.py check`, kiểm tra migration và `git diff --check`: PASS. Migration 0003 đã áp dụng, bản sao lưu được Git bỏ qua.
+   - Trình duyệt với database/cookie riêng: ghi nhận buổi cũ từ 90 còn 40 phút → xác nhận việc Đang thực hiện → mở/khóa → chỉnh giờ → xem trước xếp lại hai buổi → áp dụng → buổi khóa/chỉnh tay giữ nguyên, hết xung đột ca làm. Cảnh báo quá hạn vẫn đúng.
+   - Đã quan sát giao diện desktop; Cảnh báo 375 px và form Chỉnh giờ 320 px không tràn ngang. Server QA riêng đã dừng, dữ liệu mẫu không ghi vào database của bạn.
+
+9. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m06
+   git add planner studies/forms.py studies/urls.py studies/views.py templates/planner templates/studies/form.html templates/studies/task_list.html static/css/planner.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: edit lock track and replan study sessions with alerts"
+   git push origin main
+   ```
+
+   Nhánh khi bắt đầu mốc là `main`; thay tên nếu bạn đổi nhánh. Giữ migration trong commit, không đưa `.env`, `.venv`, SQLite hoặc bản sao lưu lên GitHub. Agent không stage/commit/push thay bạn.
+
+   Gửi ID test và kết quả thực tế nếu có lỗi. Sau khi bạn kiểm thử và xác nhận, mốc 07 mới làm Pomodoro, nhật ký và thống kê.

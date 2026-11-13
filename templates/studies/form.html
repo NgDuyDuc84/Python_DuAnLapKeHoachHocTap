@@ -2,6 +2,7 @@
 
 {% block study_content %}
 <div class="study-form-card">
+    {% if request.resolver_match.url_name == 'task_progress' %}<h2>{{ view.object }}</h2>{% endif %}
     <form class="study-form" method="post">
         {% csrf_token %}
         {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}

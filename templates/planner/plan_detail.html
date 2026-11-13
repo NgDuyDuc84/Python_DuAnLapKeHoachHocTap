@@ -7,23 +7,43 @@
 </div>
 {% if apply_error %}<div class="form-errors" role="alert">{{ apply_error }}</div>{% endif %}
 <div class="calendar-note">
-    <p><strong>{{ sessions|length }} buổi · {{ scheduled_minutes }} phút trong bản này · {{ unallocated_minutes }} phút chưa bố trí.</strong></p>
+    <p><strong>{{ active_count }} buổi còn hiệu lực · {{ scheduled_minutes }} phút trong bản này · {{ unallocated_minutes }} phút chưa bố trí lúc tạo.</strong></p>
+    <p>{{ plan.get_mode_display }}.</p>
     <p>Xếp lịch không có nghĩa là đã học xong: thời lượng còn lại của công việc không tự giảm. Độ dài buổi là mức mong muốn; buổi chia nhỏ có thể ngắn hơn. Công việc không cho chia cần một khoảng liên tục đủ dài.</p>
-    <p>{% if plan.applied_at %}Kế hoạch đã có trên lịch. Đổi công việc, lịch bận hoặc giờ học sau khi áp dụng chưa tự sửa các buổi đã đặt; hãy rà soát lịch. Chức năng sửa/xếp lại buổi sẽ có ở mốc tiếp theo.{% else %}Nếu dữ liệu hoặc thời gian thay đổi, hệ thống yêu cầu tạo bản mới trước khi áp dụng. Bản xem trước khác không chiếm chỗ trên lịch.{% endif %}</p>
+    <p>{% if plan.applied_at %}Bấm Chỉnh giờ hoặc Ghi nhận ở từng buổi để cập nhật. Đổi đầu vào chưa tự dời buổi; dùng Xếp lại và xem Cảnh báo. Buổi đã chỉnh tay được giữ khi xếp lại, kể cả đã mở khóa.{% else %}Nếu dữ liệu hoặc thời gian thay đổi, hệ thống yêu cầu tạo bản mới trước khi áp dụng. Bản xem trước khác không chiếm chỗ trên lịch.{% endif %}</p>
 </div>
 <div class="form-actions">
-    {% if not plan.applied_at and sessions and not apply_error %}
+    {% if can_apply and not apply_error %}
         <form method="post" action="{% url 'planner:plan_apply' plan.pk %}">{% csrf_token %}<button class="button" type="submit">Áp dụng vào lịch tuần</button></form>
     {% endif %}
     <a class="text-link" href="{% url 'planner:plan_generate' %}?week={{ plan.week_start|date:'Y-m-d' }}">Tạo bản xem trước mới</a>
     <a class="text-link" href="{% url 'planner:week' %}?week={{ plan.week_start|date:'Y-m-d' }}">Xem lịch tuần</a>
+    <a class="text-link" href="{% url 'planner:alerts' %}">Xem cảnh báo</a>
 </div>
+{% if replacement_sessions %}
+<details class="calendar-note" open>
+    <summary>{% if plan.applied_at %}Các buổi cũ đã thay{% else %}Sẽ hủy {{ replacement_sessions|length }} buổi cũ khi áp dụng{% endif %}</summary>
+    <ul>{% for old in replacement_sessions %}<li>{{ old.starts_at|date:"d/m H:i" }}–{{ old.ends_at|date:"H:i" }} · {{ old.task.title }}</li>{% endfor %}</ul>
+    <p>Các buổi cũ được giữ dấu vết với trạng thái Đã hủy / bỏ qua; chỉ các buổi mới của bản này được thêm vào lịch.</p>
+</details>
+{% endif %}
 <h2 class="plan-section-title">Các buổi học {% if not plan.applied_at %}đề xuất{% endif %}</h2>
 <div class="plan-sessions">
     {% for session in sessions %}
-        <article class="plan-session">
+        <article class="plan-session{% if session.status == 'cancelled' %} session-cancelled{% endif %}">
             <div class="plan-session-time"><time datetime="{{ session.starts_at|date:'c' }}">{{ session.starts_at|date:"D, d/m" }}</time><strong>{{ session.starts_at|date:"H:i" }}–{{ session.ends_at|date:"H:i" }}</strong><span>{{ session.duration_minutes }} phút</span></div>
-            <div><a class="text-link" href="{% url 'studies:task_update' session.task_id %}">{{ session.task.title }}</a><p class="plan-muted">{% if session.task.subject %}{{ session.task.subject.name }} · {% endif %}Hạn {{ session.task.deadline|date:"d/m/Y H:i" }} · Ưu tiên {{ session.task.get_priority_display }}</p></div>
+            <div>
+                <a class="text-link" href="{% url 'studies:task_update' session.task_id %}">{{ session.task.title }}</a>
+                <p class="plan-muted">{% if session.task.subject %}{{ session.task.subject.name }} · {% endif %}Hạn {{ session.task.deadline|date:"d/m/Y H:i" }} · Ưu tiên {{ session.task.get_priority_display }}</p>
+                <p class="plan-muted">{{ session.get_status_display }}{% if session.is_locked %} · Đã khóa{% endif %}{% if session.is_manual %} · Đã chỉnh tay{% endif %}</p>
+                {% if plan.applied_at and session.status == 'planned' %}
+                <div class="form-actions">
+                    <a class="text-link" href="{% url 'planner:session_move' session.pk %}">Chỉnh giờ<span class="sr-only"> buổi {{ session.starts_at|date:"d/m H:i" }}</span></a>
+                    <a class="text-link" href="{% url 'planner:session_record' session.pk %}">Ghi nhận / hủy<span class="sr-only"> buổi {{ session.starts_at|date:"d/m H:i" }}</span></a>
+                    <form method="post" action="{% url 'planner:session_lock' session.pk %}">{% csrf_token %}<input type="hidden" name="locked" value="{% if session.is_locked %}false{% else %}true{% endif %}"><button class="session-link" type="submit">{% if session.is_locked %}Mở khóa{% else %}Khóa buổi{% endif %}<span class="sr-only"> {{ session.starts_at|date:"d/m H:i" }}</span></button></form>
+                </div>
+                {% endif %}
+            </div>
         </article>
     {% empty %}<div class="empty-state">Không có buổi học mới. Xem báo cáo bên dưới; có thể công việc đã đủ lịch hoặc chưa có khoảng trống phù hợp.</div>{% endfor %}
 </div>
