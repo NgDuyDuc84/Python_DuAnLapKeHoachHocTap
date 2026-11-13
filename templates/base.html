@@ -24,6 +24,7 @@
                     <a href="{% url 'planner:week' %}">Lịch tuần</a>
                     <a href="{% url 'focus:home' %}">Tập trung</a>
                     <a href="{% url 'notifications:inbox' %}">Thông báo</a>
+                    <a href="{% url 'integrations:google' %}">Đồng bộ</a>
                     <a href="{% url 'accounts:profile' %}">Tài khoản</a>
                     {% if user.is_staff %}
                         <a href="{% url 'admin:index' %}">Quản trị</a>

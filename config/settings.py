@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "planner.apps.PlannerConfig",
     "focus.apps.FocusConfig",
     "notifications.apps.NotificationsConfig",
+    "integrations.apps.IntegrationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -109,3 +110,9 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "true").strip().lower() in {"true", "
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "false").strip().lower() in {"true", "1", "yes"}
 EMAIL_TIMEOUT = 10
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000").rstrip("/")
+
+# Optional until Google Calendar is connected; credentials never belong in Git.
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", SITE_URL + "/integrations/google/callback/")
+GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "")

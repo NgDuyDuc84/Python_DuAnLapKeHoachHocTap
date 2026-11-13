@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–07 và nhắc deadline/buổi học qua thông báo/email ở mốc 08.
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–08 và triển khai đồng bộ Google Calendar ở mốc 09; kết nối Google thật cần cấu hình và kiểm thử theo HD_Test.md.
 
 1. **Phân chia trách nhiệm**
 
@@ -20,7 +20,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | focus | Pomodoro, nhật ký và thống kê thời gian học | Đã có đồng hồ bền qua tải lại, thao tác trạng thái, nhật ký và thống kê bằng Python |
    | notifications | Nhắc việc và email | Đã có tùy chọn, hàng đợi, worker, hộp thông báo và lịch sử email |
    | insights | Phân tích thói quen, AI | Chưa triển khai; thống kê thời gian cơ bản hiện đặt ở focus |
-   | integrations | Kết nối lịch bên ngoài | Chưa triển khai |
+   | integrations | Kết nối lịch bên ngoài | Đã có OAuth, token mã hóa, xem trước và worker đồng bộ một chiều sang Google Calendar |
 
 3. **Dữ liệu nghiệp vụ dự kiến**
 
@@ -94,6 +94,18 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    Mỗi bản được claim bằng UPDATE có điều kiện và token riêng trước gửi, không giữ transaction qua SMTP. Web chuyển sent/delivered_at, chỉ các bản web sent mới xuất hiện ở hộp thông báo. Đánh dấu đọc/tất cả đã đọc bằng POST theo owner. Email tăng attempts, SMTP trả chấp nhận mới ghi sent; không cam kết vào inbox. Bị từ chối rõ ràng hoặc cấu hình/địa chỉ sai thì failed và tối đa 3 lần, giãn ít nhất một phút. Mất kết nối không xác nhận chuyển uncertain, không tự retry. Claim email treo quá 5 phút cũng uncertain; claim web có thể đưa lại pending. Token ngăn worker muộn ghi đè kết quả đã thu hồi. Người dùng kiểm tra hộp thư rồi POST yêu cầu gửi lại failed/uncertain, reset một lượt tối đa 3 lần, vẫn kiểm tra hiệu lực trước gửi. Email SMTP không hỗ trợ cam kết tuyệt đối gửi đúng một lần khi kết nối bị gián đoạn.
 
    Nội dung email chỉ gồm tên việc, thời điểm, phút còn lại và liên kết nội bộ với SITE_URL cấu hình, kèm đường dẫn thay/tắt nhắc. Email nhận lấy từ tài khoản hiện tại, không lấy recipient/owner từ POST. Lịch sử lưu cả địa chỉ nhận và chế độ thử nghiệm/máy chủ tại lần thử để không nhầm thư console cũ sau khi đổi sang SMTP. Mặc định console backend để kiểm thử local; SMTP và thông tin xác thực qua môi trường. Lỗi lưu vào lịch sử dùng thông báo cố định, không chép exception SMTP có thể chứa thông tin riêng. Foreign key việc/buổi dùng SET_NULL giữ lịch sử; bản chưa phát được bỏ qua sau xóa. Cảnh báo trực tiếp ở planner vẫn độc lập với lịch sử nhắc này. Chưa có push notification/chuông hoặc email báo hết Pomodoro.
+
+   Mốc 09 triển khai `CalendarConnection` (một kết nối hiện tại/user, định danh Google, email, token mã hóa Fernet, phiên kết nối và trạng thái lịch đích), `CalendarEventMapping` (ID buổi nguồn, FK SET_NULL, tuần và ID sự kiện Google), `CalendarSyncJob` (tuần, fingerprint, phiên kết nối, claim và kết quả). Giữ ID nguồn/ánh xạ sau khi xóa buổi hoặc công việc để lần đồng bộ tuần cũ có thể gỡ sự kiện trên Google. Không đưa token vào Django Admin hoặc giao diện.
+
+   OAuth dùng google-auth-oauthlib với state một lần, thời hạn 10 phút, PKCE, redirect URI cố định trong môi trường và offline access. Dùng endpoint userinfo đã xác thực để lấy Google sub/email và kiểm tra scope thực sự được cấp. Chỉ xin `calendar.app.created`, openid và userinfo.email; không xin quyền đọc các lịch cá nhân khác. Token được mã hóa bằng `GOOGLE_TOKEN_ENCRYPTION_KEY` riêng, khóa đặt ngoài Git. Callback lỗi hiển thị thông báo cố định. Ngắt kết nối xóa token, đổi phiên, vô hiệu hóa yêu cầu đang chờ/chạy và cố thu hồi token phía Google. Lịch và sự kiện từ các lần trước được giữ lại. Kết nối lại cùng Google sub giữ lịch đích; đổi Google sub sau ngắt kết nối xóa ánh xạ cũ và dùng lịch đích mới.
+
+   GET xem trước chỉ đọc dữ liệu; chữ ký có owner/kết nối/phiên/tuần/fingerprint, hiệu lực 10 phút. POST xác nhận kiểm tra lại rồi tạo job; mỗi kết nối chỉ có một job pending/running bằng unique constraint. Worker `process_calendar_sync` xử lý một lượt hoặc `--watch --interval 60`; dùng claim có điều kiện, heartbeat và token riêng, thu hồi claim treo quá 5 phút. Không giữ transaction qua HTTP. Kiểm tra tài khoản active, phiên kết nối và fingerprint trước từng thao tác; thay đổi giữa đợt thì dừng và yêu cầu xem trước lại. Mốc local không thêm Redis/Celery.
+
+   Lần đầu có dữ liệu tạo lịch riêng Nhịp Học theo múi giờ Việt Nam. Đồng bộ tất cả buổi chưa hủy của kế hoạch đã áp dụng trong tuần đã chọn, gồm buổi đã học, với tiêu đề/môn/giờ/liên kết web và sự kiện private, tắt nhắc mặc định của Google. Những phần này được ghi lại theo dữ liệu trong web mỗi lần đồng bộ. Không đẩy lịch bận/deadline, không nhập dữ liệu Google về. Buổi khóa/chỉnh tay vẫn được đồng bộ như các buổi khác. Chỉ sự kiện có ánh xạ và dấu nhận diện ứng dụng/ID nguồn đúng mới được sửa/gỡ; sự kiện Google khác được giữ nguyên.
+
+   ID sự kiện UUID dạng base32hex hợp lệ được lưu trước insert. Nếu mất phản hồi, lần chạy lại tìm đúng ID để cập nhật; 409 kiểm tra dấu nhận diện trước khi sửa. Nếu sự kiện đã bị xóa, lưu ID mới trước khi tạo lại. Hủy/xóa nguồn để lại ánh xạ cho đến khi xác nhận gỡ hoặc sự kiện đã vắng mặt. Tạo lịch không có ID do client đặt: phản hồi không xác định hoặc claim treo lúc tạo chuyển sang trạng thái cần kiểm tra; không tự tạo lịch khác. Người dùng kiểm tra Google rồi POST xác nhận tạo lịch đích mới, bỏ ánh xạ cũ nhưng giữ nguyên lịch/sự kiện cũ trên Google.
+
+   Đồng bộ chỉ chạy sau xác nhận, không tự theo mọi chỉnh sửa. Khi lỗi, phần đã ghi lên Google có thể còn đó; cần xem trước và chạy lại để hoàn tất. Request đang ở phía Google lúc ngắt kết nối không thể thu hồi. Mã kiểm thử sử dụng API giả lập; kiểm thử thật phụ thuộc OAuth Client/test user và sự đồng ý cấp quyền của người dùng.
 
 4. **Quy tắc lịch**
 

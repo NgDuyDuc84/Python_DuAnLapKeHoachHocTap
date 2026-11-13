@@ -6,7 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 
-Hiện tại: **mốc 08 — thông báo, email nhắc và worker nền**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 09 — đồng bộ một chiều sang Google Calendar**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -42,6 +42,7 @@ Các trang chính:
 - [Thống kê](http://127.0.0.1:8000/focus/statistics/): tổng phút, ngày có học, trung bình và phân bổ theo ngày/môn/nguồn, xử lý bằng Python.
 - [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email.
 - [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật riêng từng kênh, chọn thời gian nhắc trước hạn/buổi.
+- [Đồng bộ](http://127.0.0.1:8000/integrations/google/): kết nối Google, xem trước theo tuần, xác nhận và xem kết quả đồng bộ.
 - [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
 
 Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsuperuser`, nhập thông tin trực tiếp trong terminal. Đăng xuất qua nút trên giao diện dùng POST, không mở URL đăng xuất bằng GET.
@@ -49,7 +50,7 @@ Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsu
 Chạy kiểm thử tự động:
 
 ```powershell
-& .\.venv\Scripts\python.exe manage.py test accounts studies planner focus notifications --noinput
+& .\.venv\Scripts\python.exe manage.py test --noinput
 ```
 
 Các kiểm thử dùng database riêng trong bộ nhớ, không sửa tài khoản đang lưu ở `db.sqlite3`. Xem checklist đầy đủ và cách kiểm tra khóa/mở tài khoản trong `HD_Test.md`.
@@ -85,3 +86,17 @@ Worker kiểm tra mỗi 60 giây, Ctrl+C để dừng. Muốn kiểm thử một
 Email mặc định dùng console backend, nội dung xuất hiện trong terminal worker. SMTP thật cấu hình bằng các biến `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `SITE_URL` trong `.env` theo `.env.example`; chưa thử gửi qua nhà cung cấp thật trong mốc này. Không ghi đè `.env` đang dùng hoặc đưa thông tin đăng nhập SMTP lên GitHub.
 
 Mỗi đối tượng/thời điểm/kênh có một bản nhắc; đổi độ nhắc sớm không gửi lại bản đã xử lý. Đổi deadline/giờ buổi tạo nhắc cho thời điểm mới. Trước gửi kiểm tra lại tài khoản, kênh nhận, công việc, buổi và thời điểm; bỏ nhắc cũ/đã quá giờ. Email bị từ chối được tự thử tối đa 3 lần, cách ít nhất 1 phút; mất kết nối/kẹt khi gửi chuyển Chưa xác nhận và cần người dùng kiểm tra hộp thư trước khi yêu cầu gửi lại. Hệ thống SMTP không bảo đảm thư đã vào inbox hoặc tuyệt đối không trùng khi kết quả gửi không xác định. Xem checklist và cấu hình kiểm thử mốc 08 ở cuối `HD_Test.md`.
+
+Mốc 09 thêm app `integrations` và migration `integrations/0001_initial.py`. Cài lại `requirements.txt`, chạy `manage.py migrate` và khởi động lại server. Các biến `GOOGLE_*` trong `.env.example` là tùy chọn; thiếu cấu hình thì trang Đồng bộ hướng dẫn cấu hình, các phần học tập vẫn hoạt động. Xem phần mốc 09 trong `HD_Test.md` để tạo OAuth Client loại Web application, khai báo callback và tạo khóa Fernet. Không chép đè `.env`, không đưa client secret, khóa mã hóa hoặc database lên GitHub.
+
+Sau khi kết nối, chọn tuần → xem trước → xác nhận; mở terminal riêng chạy:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py process_calendar_sync --watch
+```
+
+Worker kiểm tra hàng đợi mỗi 60 giây, Ctrl+C để dừng; bỏ `--watch` để xử lý một lượt. Chỉ xử lý tuần đã được xác nhận, không tự đồng bộ mỗi khi sửa lịch. Không cần Redis/Celery ở mốc local. Worker nhắc việc và worker Calendar là hai tiến trình độc lập.
+
+Ứng dụng xin quyền `calendar.app.created` để tạo lịch Google riêng **Nhịp Học**, cùng quyền định danh/email để hiển thị tài khoản kết nối. Chỉ đẩy buổi học của kế hoạch đã áp dụng, gồm buổi đã học; không nhập lịch Google về web. Mỗi lần đồng bộ ghi lại giờ/nội dung theo web, gỡ sự kiện của buổi hủy/xóa, không sửa sự kiện thiếu dấu nhận diện của ứng dụng. Token được mã hóa trước khi lưu. Ngắt kết nối xóa token trong web và cố thu hồi quyền Google, giữ lịch/sự kiện đã có.
+
+Nếu mất phản hồi khi tạo lịch, hệ thống yêu cầu kiểm tra Google rồi xác nhận trước khi tạo lịch đích mới. Ánh xạ sự kiện được lưu trước khi gửi để có thể chạy lại sau mất mạng. Kiểm thử tự động và trình duyệt ở mốc này dùng API giả lập; OAuth và Calendar thật cần bạn cấu hình và kiểm thử theo `HD_Test.md`.

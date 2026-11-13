@@ -8,5 +8,6 @@ urlpatterns = [
     path("planner/", include("planner.urls")),
     path("focus/", include("focus.urls")),
     path("notifications/", include("notifications.urls")),
+    path("integrations/", include("integrations.urls")),
     path("", include("core.urls")),
 ]

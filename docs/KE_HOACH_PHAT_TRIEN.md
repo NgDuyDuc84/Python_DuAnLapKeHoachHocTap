@@ -40,8 +40,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 07:** đã hoàn thành Pomodoro 25/5, nhật ký nhập tay/từ đồng hồ, lọc/sửa/xóa và thống kê bằng Python. Người dùng đã cho phép chuyển sang mốc 08.
 
-**Mốc 08 hiện tại:** thông báo trong web và email nhắc deadline/buổi đã áp dụng, tùy chọn theo user, hộp đã đọc/chưa đọc và lịch sử email. Worker Python dùng hàng đợi database, kiểm tra hiệu lực trước gửi, chống tạo trùng, thử lại có giới hạn và xử lý kết quả email không chắc chắn. Email local dùng console, có cấu hình SMTP qua môi trường. Đang chờ người dùng kiểm thử và push GitHub.
+**Mốc 08:** đã hoàn thành thông báo trong web và email nhắc deadline/buổi đã áp dụng, tùy chọn theo user, hộp đã đọc/chưa đọc và lịch sử email. Worker Python dùng hàng đợi database, kiểm tra hiệu lực trước gửi, chống tạo trùng, thử lại có giới hạn và xử lý kết quả email không chắc chắn. Email local dùng console, có cấu hình SMTP qua môi trường. Người dùng đã cho phép chuyển sang mốc 09.
 
-**Mốc 09 dự kiến:** đồng bộ một chiều buổi học từ ứng dụng sang Google Calendar. Việc cấp quyền/kết nối dịch vụ ngoài sẽ được xử lý khi đến mốc đó. Worker mốc 08 chạy bằng management command trên Windows, chưa yêu cầu Redis/Celery; cấu hình vận hành online nằm ở mốc triển khai.
+**Mốc 09 hiện tại:** đã triển khai OAuth có state/PKCE, token mã hóa, kết nối/ngắt kết nối, lịch Google riêng, xem trước theo tuần và hàng đợi đồng bộ bằng worker Python. Tạo/cập nhật/gỡ sự kiện theo buổi đã áp dụng, lưu ánh xạ và kiểm tra dữ liệu sống trước mỗi thao tác. Đã kiểm thử tự động và trình duyệt với API giả lập; cấu hình OAuth Client và kiểm thử Google thật theo `HD_Test.md`. Đang chờ người dùng kiểm thử và push GitHub.
+
+**Mốc 10 dự kiến:** AI nhận xét thói quen, gợi ý phân bổ, tóm tắt việc và giải thích cảnh báo từ dữ liệu thực. Chỉ bắt đầu sau khi người dùng kiểm thử và xác nhận mốc 09. Các worker local chạy bằng management command trên Windows; cấu hình vận hành online nằm ở mốc triển khai.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 08 — thông báo, email nhắc và worker nền**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 09 — đồng bộ một chiều sang Google Calendar**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -1074,3 +1074,154 @@ Phạm vi: nhắc deadline và buổi học sắp bắt đầu, hộp thông bá
    Nhánh lúc bắt đầu là `main`; thay tên nếu bạn đã đổi nhánh. Giữ migration và `.env.example` trong commit, không đưa `.env` thật hoặc database lên GitHub. Agent không stage/commit/push thay bạn.
 
    Nếu có lỗi, gửi ID test và kết quả thực tế. Chờ bạn kiểm thử và xác nhận trước khi chuyển mốc 09 — đồng bộ một chiều sang Google Calendar.
+
+---
+
+**Mốc 09 — Đồng bộ một chiều sang Google Calendar**
+
+Trạng thái: người dùng đã cho phép chuyển từ mốc 08. Đã triển khai mốc 09; dừng tại đây để bạn kiểm thử và commit/push trước mốc 10.
+
+Phạm vi: kết nối Google bằng OAuth có state/PKCE, mã hóa token, tạo lịch riêng Nhịp Học, xem trước thay đổi theo tuần, xác nhận vào hàng đợi và worker Python tạo/cập nhật/gỡ sự kiện. Có lịch sử kết quả và ngắt kết nối. Đồng bộ là một chiều từ web sang Google; cần xác nhận lại sau khi sửa dữ liệu.
+
+1. **Cập nhật môi trường và database**
+
+   Trong PowerShell tại thư mục dự án:
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test --noinput
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Khởi động lại server cũ nếu đang chạy. Migration mới là `integrations.0001_initial`. Agent đã tạo bản sao SQLite `db.sqlite3-before-m09` trước khi migrate trên máy hiện tại; các tài khoản, công việc, buổi học và nhật ký cũ được giữ nguyên. Không ghi đè `.env` bằng `.env.example`.
+
+   Có thể kiểm tra phần chưa cấu hình và chạy toàn bộ test ngay, chưa cần tài khoản Google. Các test dùng database riêng và giả lập API, không gọi Google thật. Các thư viện mới được chốt phiên bản trong `requirements.txt`.
+
+2. **Cấu hình OAuth thật bằng tài khoản của bạn**
+
+   Đây là bước bắt buộc để kiểm tra kết nối Google thật. Agent chưa tạo OAuth Client, chưa cấp quyền và chưa ghi vào Google Calendar thật của bạn.
+
+   - Mở [Google Cloud Console](https://console.cloud.google.com/), chọn hoặc tạo project dành cho ứng dụng.
+   - Bật **Google Calendar API** trong thư viện API của project.
+   - Trong Google Auth Platform/OAuth consent screen, cấu hình tên ứng dụng, email liên hệ và đối tượng sử dụng. Nếu đang ở chế độ Testing, thêm tài khoản Google dùng để thử vào danh sách test users.
+   - Khai báo các scope ứng dụng cần: `openid`, `https://www.googleapis.com/auth/userinfo.email`, `https://www.googleapis.com/auth/calendar.app.created`. Scope Calendar này giới hạn vào các lịch phụ do ứng dụng tạo; ứng dụng không cần quyền đọc toàn bộ lịch cá nhân.
+   - Tạo OAuth Client loại **Web application**. Thêm **Authorized redirect URI** chính xác: `http://127.0.0.1:8000/integrations/google/callback/`. Không thêm/bớt dấu `/`, không thay `127.0.0.1` bằng `localhost` trong lúc thử. Khi triển khai sẽ khai báo callback HTTPS tương ứng với tên miền thật.
+   - Lưu Client ID và Client secret vào `.env` đang bị Git bỏ qua. Không tải tệp credentials vào thư mục được Git theo dõi, không gửi secret trong ảnh chụp hoặc báo lỗi.
+
+   Tạo khóa mã hóa một lần trên máy bạn:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+   ```
+
+   Thêm các dòng sau vào `.env`, thay nội dung trong dấu `<...>` bằng giá trị thật:
+
+   ```dotenv
+   GOOGLE_CLIENT_ID=<Client ID của Web application>
+   GOOGLE_CLIENT_SECRET=<Client secret của Web application>
+   GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/integrations/google/callback/
+   GOOGLE_TOKEN_ENCRYPTION_KEY=<khóa Fernet vừa tạo>
+   ```
+
+   Không giữ dấu `<...>` trong giá trị thật. Giữ khóa mã hóa ổn định cùng database; đổi hoặc mất khóa thì token đã lưu không đọc được và cần kết nối lại. Sao lưu khóa riêng với bản sao database, không đưa khóa lên GitHub. Dừng rồi mở lại server và worker sau khi đổi `.env`.
+
+   Tài liệu đối chiếu: [OAuth cho ứng dụng web](https://developers.google.com/identity/protocols/oauth2/web-server), [scope Calendar API](https://developers.google.com/workspace/calendar/api/auth), [tạo lịch phụ](https://developers.google.com/workspace/calendar/api/v3/reference/calendars/insert) và [tạo sự kiện với ID do ứng dụng đặt](https://developers.google.com/workspace/calendar/api/v3/reference/events/insert). Các yêu cầu xuất bản/xác minh Google phụ thuộc cấu hình project; sẽ cần kiểm tra lại khi triển khai online.
+
+3. **Chạy worker đồng bộ**
+
+   Mở terminal riêng tại thư mục dự án:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py process_calendar_sync --watch
+   ```
+
+   Mặc định kiểm tra mỗi 60 giây, Ctrl+C để dừng. Có thể dùng `--watch --interval 5` để kiểm thử nhanh; interval nhận 1–3600 giây. Muốn kiểm tra một lượt:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py process_calendar_sync
+   ```
+
+   Khi chưa có yêu cầu, kết quả là `Google Calendar: processed 0 sync job(s).` Khi xử lý một yêu cầu là `processed 1 sync job(s).` Số này là số yêu cầu đã xử lý, gồm cả yêu cầu bị dừng/lỗi; xem trạng thái chi tiết trong web để biết có thành công không. Thông báo terminal dùng tiếng Anh để tương thích mã hóa Windows; giao diện vẫn tiếng Việt.
+
+   Worker này độc lập với `process_reminders` của mốc 08. Không cần Redis/Celery; cần giữ worker hoạt động để xử lý yêu cầu, kể cả khi đóng trình duyệt. Nếu worker bị ngắt giữa chừng, chạy lại và đợi hơn 5 phút để thu hồi claim treo. Nếu bị ngắt lúc tạo lịch Google, cần kiểm tra lịch đích theo TC09-15.
+
+4. **Dữ liệu và luồng kiểm thử chính**
+
+   Đăng nhập tài khoản A. Chuẩn bị một kế hoạch đã **Áp dụng** có ít nhất hai buổi học của A trong cùng tuần (có thể tạo việc thử với tên `M09 — thử đồng bộ`, deadline tương lai rồi tạo/áp dụng kế hoạch). Ghi lại tuần, tên việc và giờ bắt đầu/kết thúc. Chuẩn bị tài khoản B riêng để kiểm tra quyền dữ liệu.
+
+   Mở [Đồng bộ Google Calendar](http://127.0.0.1:8000/integrations/google/) qua liên kết **Đồng bộ** trên thanh điều hướng. Thực hiện các test dưới đây và ghi `Đạt/Không đạt`, kèm lỗi thực tế. Chỉ dùng dữ liệu/lịch thử khi kiểm tra các thao tác hủy/xóa.
+
+   | ID | Thao tác | Kết quả cần đạt |
+   |---|---|---|
+   | TC09-01 | Chưa thêm biến Google, mở Đồng bộ; thử phần Học tập/Lịch tuần | Thông báo chưa cấu hình OAuth, các phần còn lại hoạt động, không xuất hiện trang lỗi |
+   | TC09-02 | Sau cấu hình và restart, bấm Kết nối Google; tự đăng nhập và cấp các quyền đã nêu | Trở về web, hiện Đã kết nối và đúng email Google; chưa có sự kiện mới chỉ vì vừa kết nối |
+   | TC09-03 | Bắt đầu kết nối rồi chọn từ chối/hủy trên Google | Web báo chưa được cấp quyền, dữ liệu học tập giữ nguyên; có thể bắt đầu kết nối lại |
+   | TC09-04 | Chọn một ngày bất kỳ trong tuần đã áp dụng và bấm Xem trước | Chuẩn hóa về thứ Hai; liệt kê đúng tên/giờ buổi của A theo giờ Việt Nam; mới xem trước chưa ghi lên Google |
+   | TC09-05 | Chọn tuần trống hoặc chỉ có bản kế hoạch nháp | Có trạng thái chưa có thay đổi, không có nút xác nhận trống và không tạo lịch Google |
+   | TC09-06 | Xem trước → Xác nhận khi worker chưa chạy | Hiện yêu cầu Đang chờ worker. Tải lại không tự tạo yêu cầu khác |
+   | TC09-07 | Chạy worker một lượt rồi Tải lại kết quả; mở Google Calendar | Trạng thái Đồng bộ thành công, có lịch riêng Nhịp Học và các buổi đúng tiêu đề/ngày/giờ; các lịch cá nhân khác giữ nguyên |
+   | TC09-08 | Xem trước và xác nhận lại cùng tuần, chạy worker | Không tạo thêm lịch riêng hoặc bản sự kiện trùng; cập nhật các sự kiện đã có |
+   | TC09-09 | Sửa tên việc hoặc giờ một buổi hợp lệ trong web; xem trước/xác nhận/chạy worker | Sự kiện cũ đổi tên/giờ tương ứng, giữ cùng một sự kiện |
+   | TC09-10 | Sửa tiêu đề/giờ của một sự kiện Nhịp Học trực tiếp trên Google; đồng bộ lại tuần đó | Web giữ nguyên; sự kiện Google được ghi lại theo dữ liệu web. Thay đổi trên Google không nhập về |
+   | TC09-11 | Hủy một buổi thử trong web rồi đồng bộ lại đúng tuần cũ | Bản xem trước có một mục gỡ; worker gỡ đúng sự kiện; buổi khác và tuần khác giữ nguyên |
+   | TC09-12 | Xóa công việc thử đã từng đồng bộ, rồi đồng bộ lại đúng tuần cũ | Vẫn thấy các mục gỡ nhờ ánh xạ còn giữ; các sự kiện tương ứng được gỡ khỏi Google |
+   | TC09-13 | Sau khi mở bản xem trước, sửa dữ liệu trong tab khác rồi xác nhận bản cũ; hoặc đợi quá 10 phút | Yêu cầu xem trước lại, không xếp hàng bản dữ liệu cũ. Sửa dữ liệu khi job đang chờ cũng làm worker dừng với trạng thái Cần xem trước lại |
+   | TC09-14 | Tạm ngắt mạng khi worker đồng bộ, khôi phục mạng rồi xem trước/xác nhận lại | Lỗi có thông báo rõ; phần đã gửi có thể còn trên Google; chạy lại hoàn tất bằng ánh xạ cũ, không chủ động tạo bản trùng |
+   | TC09-15 | Nếu gặp Chưa xác nhận tạo lịch hoặc Không tìm thấy lịch đích | Kiểm tra Google trước. Chỉ khi muốn dùng lịch mới, đánh dấu xác nhận và bấm Cho phép tạo lịch mới; lần đồng bộ sau tạo lịch đích mới. Lịch/sự kiện cũ trên Google được giữ lại, cần tự xử lý nếu đã tồn tại |
+   | TC09-16 | Ngắt kết nối khi còn một yêu cầu đang chờ, rồi chạy worker | Web chuyển Chưa kết nối, token local bị xóa, yêu cầu cũ mất hiệu lực; lịch/sự kiện Google đã có được giữ. Nếu chưa xác nhận thu hồi quyền, web hướng dẫn gỡ quyền trong tài khoản Google |
+   | TC09-17 | Kết nối lại cùng Google; sau đó nếu muốn đổi Google thì ngắt kết nối trước | Cùng Google giữ lịch đích/ánh xạ. Đổi sang Google khác sau ngắt kết nối dùng lịch đích mới, giữ lịch cũ ở tài khoản cũ |
+   | TC09-18 | B đăng nhập, xem Đồng bộ và thử mở URL kết quả của A | B không thấy kết nối/lịch sử của A; URL kết quả của A trả 404. Đăng xuất rồi mở Đồng bộ chuyển về đăng nhập |
+   | TC09-19 | Mở giao diện trên điện thoại hoặc viewport 375 px; thử xem trước và đọc kết quả | Nội dung/nút xuống dòng, ngày giờ đọc được, không tràn ngang; thông báo trạng thái rõ |
+
+   Với TC09-14/15, không cố làm mất mạng khi đang dùng dữ liệu quan trọng. Các nhánh mất phản hồi/claim treo được kiểm tra bằng API giả lập trong bộ test; có thể đánh dấu kiểm tra thật là chưa thực hiện nếu không chủ động tạo lỗi ngoài dịch vụ.
+
+5. **Các quy tắc cần nhớ khi đối chiếu**
+
+   - Chỉ đồng bộ buổi học của kế hoạch đã áp dụng, gồm buổi Đã học, khóa hoặc đã chỉnh tay. Buổi hủy không được đẩy; bản nháp, lịch bận, mốc deadline, tài liệu và nhật ký Pomodoro không được đẩy.
+   - Web là nguồn chính. Sửa dữ liệu chưa tự đồng bộ; phải chọn đúng tuần, xem trước và xác nhận lại. Xóa việc/buổi vẫn cần đồng bộ tuần cũ để gỡ sự kiện Google. Danh sách gần đây hiển thị tối đa 10 yêu cầu của tài khoản đang đăng nhập.
+   - Sự kiện dùng giờ Việt Nam, chế độ riêng tư và tắt nhắc mặc định của Google để tránh trùng nhắc việc trong ứng dụng. Ứng dụng không gửi lời mời người tham dự.
+   - Chỉ quản lý sự kiện có ánh xạ và dấu nhận diện ứng dụng/ID nguồn khớp; nếu dấu bị đổi/mất thì dừng và báo lỗi thay vì sửa/gỡ nhầm. Sự kiện tự thêm trong lịch Google được giữ nguyên.
+   - Mỗi kết nối chỉ có một yêu cầu đang chờ/chạy. Gửi lặp khi chưa xong đưa về yêu cầu hiện tại. Dữ liệu đổi giữa đợt làm dừng phần còn lại; cần xem trước và gửi lại.
+   - Gặp lỗi không tự lặp vô hạn. Yêu cầu đã lỗi cần người dùng xem kết quả, xem trước và xác nhận lại. ID sự kiện được lưu trước khi gửi giúp xử lý lại khi mất phản hồi; không cam kết tuyệt đối mọi tình huống phía Google đều trả kết quả xác định.
+   - Request đã tới Google trước lúc ngắt kết nối có thể vẫn hoàn tất. Token local bị xóa và worker cũ không được ghi lại token/kết quả vào phiên kết nối mới. Thu hồi quyền qua Google thất bại do mạng thì cần gỡ quyền thủ công trong tài khoản Google.
+   - Không đổi khóa mã hóa hoặc xóa database để “sửa” lỗi đồng bộ: mất ánh xạ có thể để lại lịch/sự kiện cũ trên Google. Trước khi tạo lại lịch đích, kiểm tra và xử lý lịch cũ theo thông báo của ứng dụng.
+
+6. **Chẩn đoán lỗi cấu hình**
+
+   | Dấu hiệu | Cách kiểm tra |
+   |---|---|
+   | Chưa cấu hình Google OAuth | Client ID, secret và khóa Fernet phải có trong `.env`; khóa phải là kết quả generate_key; restart server/worker |
+   | `redirect_uri_mismatch` trên Google | OAuth Client phải là Web application; URI Google Cloud và GOOGLE_REDIRECT_URI giống hệt, kể cả cổng và `/`; mở web bằng cùng host |
+   | Không được phép truy cập app ở chế độ Testing | Thêm đúng Google email vào test users của project; tài khoản Workspace có thể bị chính sách tổ chức giới hạn |
+   | Quyền Google hết hạn/bị từ chối | Bấm Cấp lại quyền Google, cấp đủ scope; kiểm tra Calendar API đã bật. Không gửi token cho người hỗ trợ |
+   | Không đọc được thông tin cấp quyền | Khóa mã hóa đã thay hoặc token không hợp lệ; khôi phục khóa đúng hoặc cấp lại quyền |
+   | Chờ worker mãi | Chạy đúng môi trường/project/database, xem terminal; tải lại kết quả. Claim treo cần hơn 5 phút để được xử lý lại |
+   | Chưa xác nhận tạo lịch | Kiểm tra lịch Nhịp Học trong Google, tránh tạo lại mù; xem TC09-15 |
+
+7. **Kết quả xác minh của agent**
+
+   - Bộ kiểm thử mới kiểm tra OAuth/state/PKCE, mã hóa token và quyền thực cấp, chống truy cập chéo/CSRF, bản xem trước có chữ ký, dữ liệu đổi/hết hạn, trùng hàng đợi, tạo/cập nhật/gỡ, chạy lại sau mất phản hồi, 409, sự kiện đã xóa, bảo vệ dấu nhận diện, lịch đích không xác định, claim treo và ngắt kết nối.
+   - Trình duyệt với database tạm và API giả lập: xem trước 2 cập nhật + 1 gỡ → xác nhận → thấy Đang chờ worker → tải lại thành công 2 cập nhật + 1 gỡ. Kiểm tra tuần trống và ngắt kết nối thành công. Viewport 375 px không tràn ngang.
+   - Không tạo dữ liệu QA vào database thật, không gọi API Google thật. Đã dừng server/worker QA và dọn fixture tạm.
+   - **38 test mới; tổng 219/219 PASS** với `manage.py test --noinput`. Lỗi mã hóa terminal Windows đã được tái hiện bằng test cp1252 và sửa trong worker Calendar. Ngắt kết nối cũng vô hiệu hóa phiên OAuth còn chờ trong trình duyệt.
+   - `manage.py check`, `makemigrations --check --dry-run`, `pip check`, kiểm tra whitespace và SQLite integrity: PASS. Dữ liệu tài khoản/công việc/buổi học/nhật ký/nhắc việc khớp bản sao trước migration; bảng kết nối và job thật đều có 0 bản ghi. Lệnh worker thật chạy một lượt, xử lý 0 yêu cầu và không gọi Google.
+
+8. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m09
+   git add integrations config/settings.py config/urls.py requirements.txt .env.example templates/base.html templates/integrations static/css/integrations.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: add reviewed one-way Google Calendar sync"
+   git push origin main
+   ```
+
+   Nhánh lúc bắt đầu là `main`; thay nếu bạn đã đổi nhánh. Giữ migration và `.env.example` trong commit, giữ `.env`, OAuth credentials, khóa mã hóa và database/bản sao lưu ngoài Git. Agent không stage/commit/push thay bạn.
+
+   Dừng ở mốc 09. Nếu có lỗi, gửi ID test và thông báo thực tế đã che thông tin xác thực. Chỉ chuyển sang mốc 10 — AI hỗ trợ — sau khi bạn kiểm thử và xác nhận.

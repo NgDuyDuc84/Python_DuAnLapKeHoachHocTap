@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Kết quả đồng bộ — Nhịp Học{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+<link rel="stylesheet" href="{% static 'css/integrations.css' %}">
+{% endblock %}
+{% block content %}
+<section class="study-shell sync-shell">
+    <header class="study-heading"><p class="eyebrow">Google Calendar</p><h1>Yêu cầu đồng bộ</h1><p>Tuần bắt đầu {{ job.week_start|date:'d/m/Y' }}</p></header>
+    <section class="study-card">
+        <span class="badge">{{ job.get_status_display }}</span>
+        <h2>{% if job.status == 'success' %}Lịch học đã được gửi{% else %}Theo dõi đợt đồng bộ{% endif %}</h2>
+        {% if job.status == 'pending' or job.status == 'running' %}
+            <p>Yêu cầu đang chờ hoặc đang được worker xử lý. Tải lại để kiểm tra kết quả.</p>
+        {% endif %}
+        {% if error %}<p class="sync-notice">{{ error }}</p><p>Các thay đổi đã xử lý trước khi dừng có thể đã xuất hiện trên Google. Xem trước và đồng bộ lại để hoàn tất phần còn lại.</p>{% endif %}
+        {% if job.results %}<p><strong>{{ job.results.updated }}</strong> buổi đã tạo/cập nhật · <strong>{{ job.results.deleted }}</strong> sự kiện đã gỡ hoặc đã vắng mặt.</p>{% endif %}
+        <p>Yêu cầu lúc {{ job.created_at|date:'d/m/Y H:i' }}{% if job.finished_at %} · Kết thúc {{ job.finished_at|date:'d/m/Y H:i' }}{% endif %}.</p>
+        <div class="form-actions">
+            <a class="button button-primary" href="{% url 'integrations:job' job.pk %}">Tải lại kết quả</a>
+            <a class="button" href="{% url 'integrations:google' %}?week={{ job.week_start|date:'Y-m-d' }}">Về bản xem trước</a>
+            <a class="text-link" href="https://calendar.google.com/" target="_blank" rel="noopener noreferrer">Mở Google Calendar ↗</a>
+        </div>
+    </section>
+</section>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Google Calendar — Nhịp Học{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+<link rel="stylesheet" href="{% static 'css/integrations.css' %}">
+{% endblock %}
+{% block content %}
+<section class="study-shell sync-shell">
+    <header class="study-heading">
+        <p class="eyebrow">Lịch học luôn trong tầm tay</p>
+        <h1>Google Calendar</h1>
+        <p>Đưa buổi học sang lịch Google riêng mang tên <strong>Nhịp Học</strong>.</p>
+    </header>
+    <div class="sync-grid">
+        <section class="study-card">
+            <span class="badge">{% if connection.is_connected %}Đã kết nối{% else %}Chưa kết nối{% endif %}</span>
+            <h2>Tài khoản Google</h2>
+            {% if connection.is_connected %}
+                <p class="sync-account">{{ connection.email }}</p>
+                <p>{{ connection.get_calendar_state_display }}{% if connection.last_sync_at %} · Lần đồng bộ gần nhất: {{ connection.last_sync_at|date:'d/m/Y H:i' }}{% endif %}</p>
+            {% else %}
+                <p>Kết nối để đưa các buổi đã áp dụng vào Google Calendar. Việc học trong web vẫn hoạt động độc lập.</p>
+            {% endif %}
+            {% if configured %}
+                <form method="post" action="{% url 'integrations:connect' %}">
+                    {% csrf_token %}
+                    <button class="button button-primary" type="submit">{% if connection.is_connected %}Cấp lại quyền Google{% else %}Kết nối Google{% endif %}</button>
+                </form>
+            {% else %}
+                <p class="sync-notice">Chưa cấu hình Google OAuth. Người quản trị cần thêm OAuth Client và khóa mã hóa theo hướng dẫn mốc 09 trong HD_Test.md.</p>
+            {% endif %}
+            {% if connection.is_connected %}
+                <form class="sync-disconnect" method="post" action="{% url 'integrations:disconnect' %}">
+                    {% csrf_token %}<button class="text-link" type="submit">Ngắt kết nối Google</button>
+                </form>
+                <p class="help-text">Ngắt kết nối giữ lại lịch và sự kiện đã có trên Google.</p>
+            {% endif %}
+        </section>
+        <aside class="study-card sync-policy">
+            <p class="eyebrow">Đồng bộ một chiều</p>
+            <h2>Bạn duyệt trước mỗi lần</h2>
+            <ol>
+                <li>Chọn tuần và xem các buổi sẽ đưa sang Google.</li>
+                <li>Xác nhận để worker xử lý yêu cầu.</li>
+                <li>Kiểm tra kết quả và mở lịch Google của bạn.</li>
+            </ol>
+            <p>Giờ và nội dung trong web là nguồn chính. Đồng bộ lại sẽ cập nhật sự kiện Google theo web; buổi hủy hoặc xóa sẽ được gỡ.</p>
+            <p>Chỉ đồng bộ buổi học đã áp dụng, kể cả buổi đã học. Lịch bận, deadline và các lịch Google khác không nằm trong đợt đồng bộ này.</p>
+        </aside>
+    </div>
+    {% if error %}<p class="sync-notice" role="status">{{ error }}</p>{% endif %}
+    {% if connection.is_connected %}
+        {% if connection.calendar_state == 'uncertain' or connection.last_error == 'calendar_missing' %}
+            <section class="study-card">
+                <h2>Kiểm tra lịch đích</h2>
+                <p>Mở Google Calendar và kiểm tra lịch Nhịp Học trước. Cho tạo lịch mới sẽ bỏ ánh xạ cũ trong web; lịch/sự kiện cũ trên Google được giữ lại và cần bạn tự xử lý nếu đã tồn tại.</p>
+                <form method="post" action="{% url 'integrations:reset' %}">
+                    {% csrf_token %}
+                    <label><input type="checkbox" name="confirm" value="checked" required> Tôi đã kiểm tra Google và cho tạo lịch đích mới.</label>
+                    <p><button class="button" type="submit">Cho phép tạo lịch mới</button></p>
+                </form>
+            </section>
+        {% endif %}
+        <section class="study-card">
+            <h2>Chọn tuần đồng bộ</h2>
+            <form class="study-form" method="get">
+                {{ form.as_p }}
+                <div class="form-actions"><button class="button button-primary" type="submit">Xem trước đồng bộ</button></div>
+            </form>
+        </section>
+        {% if preview != None %}
+            <section class="study-card">
+                <p class="eyebrow">Tuần bắt đầu {{ week|date:'d/m/Y' }} · Giờ Việt Nam</p>
+                <h2>Những thay đổi bạn sắp gửi</h2>
+                <p><strong>{{ preview.desired|length }}</strong> buổi sẽ tạo hoặc cập nhật · <strong>{{ preview.deletions|length }}</strong> sự kiện sẽ gỡ.</p>
+                {% if connection.calendar_state == 'empty' and preview.desired %}<p>Lần đồng bộ này sẽ tạo một lịch Google riêng mang tên Nhịp Học.</p>{% endif %}
+                <ul class="sync-changes">
+                    {% for row in rows %}
+                        <li><span class="badge">Tạo / cập nhật</span><strong>{{ row.title }}</strong><span>{{ row.starts_at|date:'d/m/Y · H:i' }} → {{ row.ends_at|date:'H:i' }}</span></li>
+                    {% endfor %}
+                    {% for mapping in preview.deletions %}
+                        <li><span class="badge">Gỡ khỏi Google</span><strong>{{ mapping.title }}</strong><span>Buổi đã hủy hoặc không còn trong tuần.</span></li>
+                    {% endfor %}
+                </ul>
+                {% if preview.desired or preview.deletions %}
+                    <p>Sự kiện Google do ứng dụng tạo sẽ được ghi theo dữ liệu hiện tại trong web. Thay đổi trực tiếp trên Google không được nhập về.</p>
+                    <form method="post" action="{% url 'integrations:sync' %}">
+                        {% csrf_token %}<input type="hidden" name="preview" value="{{ token }}">
+                        <button class="button button-primary" type="submit">Xác nhận đồng bộ tuần này</button>
+                    </form>
+                    <p class="help-text">Bản xem trước có hiệu lực 10 phút và chỉ dùng khi dữ liệu chưa thay đổi.</p>
+                {% else %}<p class="empty-state">Tuần này chưa có thay đổi cần gửi. Hãy áp dụng một kế hoạch học trước.</p>{% endif %}
+            </section>
+        {% endif %}
+    {% endif %}
+    <section class="study-card">
+        <h2>Yêu cầu gần đây</h2>
+        <p>Chỉ các tuần bạn đã xác nhận mới được xử lý. Tải lại trang để xem trạng thái mới.</p>
+        <ul class="sync-history">
+            {% for job in jobs %}
+                <li><a href="{% url 'integrations:job' job.pk %}">Tuần {{ job.week_start|date:'d/m/Y' }}</a><span class="badge">{{ job.get_status_display }}</span><span>{{ job.created_at|date:'d/m H:i' }}</span></li>
+            {% empty %}<li>Chưa có yêu cầu đồng bộ.</li>{% endfor %}
+        </ul>
+    </section>
+</section>
+{% endblock %}
