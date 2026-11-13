@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu thiết kế, chưa phải danh sách model đã được triển khai. Tên Nhịp Học là tên hiển thị tạm thời.
+Tài liệu thiết kế, chưa phải danh sách model đã được triển khai. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai bộ khung ở mốc 01 và luồng tài khoản ở mốc 02; các model học tập vẫn là thiết kế dự kiến.
 
 1. **Phân chia trách nhiệm**
 
@@ -10,11 +10,11 @@ Tài liệu thiết kế, chưa phải danh sách model đã được triển kh
 
 2. **Cấu trúc dự kiến**
 
-   | Module | Vai trò | Trạng thái mốc 01 |
+   | Module | Vai trò | Trạng thái hiện tại |
    |---|---|---|
    | config | Settings, URL, WSGI/ASGI | Đã tạo cho local |
    | core | Trang chủ và giao diện chung | Đã tạo |
-   | accounts | Luồng tài khoản, quyền và hồ sơ | Chưa triển khai |
+   | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Chưa triển khai |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Chưa triển khai |
    | focus | Pomodoro, nhật ký học | Chưa triển khai |
@@ -41,6 +41,10 @@ Tài liệu thiết kế, chưa phải danh sách model đã được triển kh
    | CalendarEventMapping | Buổi học, ID sự kiện bên ngoài và trạng thái đồng bộ |
 
    Mỗi quan hệ dữ liệu phải cùng chủ sở hữu. Một công việc có thể có nhiều buổi học. Thời gian đã học và trạng thái hoàn thành công việc được lưu riêng; hết thời gian không tự động chứng minh đã làm xong việc.
+
+   Ở mốc 02, tài khoản mới được tạo qua `UserCreationForm` mở rộng với email bắt buộc. Đăng nhập bằng username; email phục vụ thông tin hồ sơ, chưa có xác minh hoặc khôi phục mật khẩu qua email. Username là định danh duy nhất; không áp dụng ràng buộc email duy nhất ở mốc này.
+
+   Trang thông tin lấy user trực tiếp từ phiên đăng nhập, không nhận ID người khác để xem. Đăng xuất dùng POST có CSRF. `is_staff` cho phép vào khu vực Admin; quyền xem/sửa người dùng được Django kiểm tra riêng. Tài khoản tạo bằng `createsuperuser` có đầy đủ quyền quản trị. Form đăng ký không cho người dùng tự đặt `is_staff`, `is_superuser` hoặc nhóm quyền.
 
 4. **Quy tắc lịch**
 

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="auth-shell" aria-labelledby="form-title">
+    <div class="auth-card">
+        <p class="eyebrow">KHÔNG GIAN CÁ NHÂN</p>
+        <h1 id="form-title">{% block form_heading %}{% endblock %}</h1>
+        <p class="auth-intro">{% block form_intro %}{% endblock %}</p>
+        <form class="account-form" method="post">
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+            {% if form.non_field_errors %}
+                <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+            {% endif %}
+            {% for field in form %}
+                <div class="form-field">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {{ field.errors }}
+                    {% if field.help_text %}
+                        <div class="field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button class="button" type="submit">{% block submit_label %}{% endblock %}</button>
+        </form>
+        <div class="auth-links">{% block form_footer %}{% endblock %}</div>
+    </div>
+</section>
+{% endblock %}

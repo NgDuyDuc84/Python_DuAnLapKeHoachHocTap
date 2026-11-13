@@ -26,6 +26,8 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 - Chỉ làm mốc tiếp theo sau khi người dùng xác nhận; nếu có lỗi thì sửa tại mốc hiện tại.
 - Giữ kết quả và checklist các mốc trước trong `HD_Test.md` khi thêm mốc mới.
 
-**Mốc 01 hiện tại:** hoàn thành tài liệu thiết kế và phần khởi tạo local của nền Django; trang chủ, template chung, static CSS, cấu hình `.env` và SQLite. Chưa triển khai online hoặc tạo model nghiệp vụ. Các module học tập được tạo khi đến mốc cần dùng, không tạo sẵn module rỗng.
+**Mốc 01:** đã hoàn thành tài liệu thiết kế và phần khởi tạo local của nền Django; trang chủ, template chung, static CSS, cấu hình `.env` và SQLite. Người dùng đã cho phép chuyển sang mốc 02.
 
-Mốc tiếp theo sau khi được xác nhận: tài khoản và phân quyền. Đưa PostgreSQL và bản online vào sớm sau khi có luồng tài khoản, trước khi mở rộng các tính năng học tập.
+**Mốc 02 hiện tại:** đăng ký, đăng nhập bằng username, đăng xuất qua POST, đổi mật khẩu và xem thông tin tài khoản riêng. Dùng Django Admin để quản lý và khóa/mở tài khoản; có kiểm thử quyền, CSRF và phiên đăng nhập. Đang chờ người dùng kiểm thử và push GitHub.
+
+Chưa triển khai online hoặc tạo model học tập. Các module học tập được tạo khi đến mốc cần dùng. Đưa PostgreSQL và bản online vào sớm sau luồng tài khoản, trước khi mở rộng các tính năng học tập.
