@@ -6,7 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 
-Hiện tại: **mốc 09 — đồng bộ một chiều sang Google Calendar**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 10 — AI hỗ trợ từ dữ liệu học tập thực tế**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -43,6 +43,7 @@ Các trang chính:
 - [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email.
 - [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật riêng từng kênh, chọn thời gian nhắc trước hạn/buổi.
 - [Đồng bộ](http://127.0.0.1:8000/integrations/google/): kết nối Google, xem trước theo tuần, xác nhận và xem kết quả đồng bộ.
+- [AI hỗ trợ](http://127.0.0.1:8000/insights/): số liệu 14 ngày, nhận xét Python, xem trước dữ liệu gửi AI và lịch sử phân tích riêng.
 - [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
 
 Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsuperuser`, nhập thông tin trực tiếp trong terminal. Đăng xuất qua nút trên giao diện dùng POST, không mở URL đăng xuất bằng GET.
@@ -100,3 +101,9 @@ Worker kiểm tra hàng đợi mỗi 60 giây, Ctrl+C để dừng; bỏ `--watc
 Ứng dụng xin quyền `calendar.app.created` để tạo lịch Google riêng **Nhịp Học**, cùng quyền định danh/email để hiển thị tài khoản kết nối. Chỉ đẩy buổi học của kế hoạch đã áp dụng, gồm buổi đã học; không nhập lịch Google về web. Mỗi lần đồng bộ ghi lại giờ/nội dung theo web, gỡ sự kiện của buổi hủy/xóa, không sửa sự kiện thiếu dấu nhận diện của ứng dụng. Token được mã hóa trước khi lưu. Ngắt kết nối xóa token trong web và cố thu hồi quyền Google, giữ lịch/sự kiện đã có.
 
 Nếu mất phản hồi khi tạo lịch, hệ thống yêu cầu kiểm tra Google rồi xác nhận trước khi tạo lịch đích mới. Ánh xạ sự kiện được lưu trước khi gửi để có thể chạy lại sau mất mạng. Kiểm thử tự động và trình duyệt ở mốc này dùng API giả lập; OAuth và Calendar thật cần bạn cấu hình và kiểm thử theo `HD_Test.md`.
+
+Mốc 10 thêm app `insights` và migration `insights/0001_initial.py`. Chạy `manage.py migrate` và khởi động lại server. Trang AI hỗ trợ luôn hiển thị số liệu/nhận xét do Python tính: nhật ký 14 ngày gồm hôm nay, so sánh hai nhóm 7 ngày, việc chưa hoàn thành, phương án bổ sung tuần hiện tại và cảnh báo thực tế. Không có API key thì phần này vẫn dùng được và được ghi rõ là phân tích Python.
+
+Muốn dùng AI thật, thêm `OPENAI_API_KEY` vào `.env`; `OPENAI_MODEL` mặc định `gpt-5.6-terra`. API key chỉ dùng ở máy chủ, không nhập vào web hoặc commit lên GitHub. Sau khi restart server, mở AI hỗ trợ → xem dữ liệu gửi → chủ động đồng ý → Yêu cầu AI phân tích. Dùng OpenAI Responses API với Structured Outputs, `store=false`, giới hạn đầu ra và timeout; không cần cài thêm SDK hoặc chạy worker cho phần AI ở mốc này. Hạn mức sử dụng và phí API thuộc tài khoản OpenAI riêng.
+
+Dữ liệu gửi dùng mã việc/môn, số phút, deadline, tùy chọn học và cảnh báo; không gửi tên, email, ghi chú, tài liệu hoặc token Google. Mỗi nhận xét phải dẫn mã căn cứ hợp lệ, được kiểm tra trước khi hiển thị; điều này không bảo đảm diễn giải của AI luôn đúng. Kết quả chỉ để tham khảo, không tự sửa lịch/tiến độ. Lịch sử giữ bản dữ liệu và kết quả theo chủ sở hữu, phát hiện khi dữ liệu đã đổi. Tối đa 5 yêu cầu/ngày/user, cách nhau ít nhất 60 giây; không tự gọi lại khi lỗi. Chi tiết cấu hình, kiểm thử và giới hạn ở phần mốc 10 cuối `HD_Test.md`. Kiểm thử agent dùng API giả lập; chưa gửi dữ liệu hoặc tạo phí trên OpenAI thật.

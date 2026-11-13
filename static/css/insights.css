@@ -1,0 +1,26 @@
+.insight-heading { margin-bottom: 28px; }
+.insight-shell > .study-card { margin-bottom: 24px; }
+.insight-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.insight-metrics .study-card { padding: 20px; }
+.insight-metrics p { margin-top: 0; font-size: 14px; color: var(--muted); }
+.insight-metrics strong { display: block; color: var(--accent); font-size: 34px; }
+.insight-metrics small { font-size: 18px; color: var(--muted); }
+.insight-metrics span, .insight-muted { color: var(--muted); font-size: 14px; }
+.insight-action { border-left: 4px solid var(--accent); }
+.insight-action h2 { margin-top: 14px; }
+.insight-notice { padding: 16px; border-left: 3px solid #b9853b; border-radius: 6px; background: #faf1df; }
+.insight-data { margin: 20px 0; }
+.insight-data summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+.insight-data pre { max-height: 420px; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.insight-consent { display: flex; align-items: flex-start; gap: 12px; }
+.insight-consent input { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 5px; accent-color: var(--accent); }
+.insight-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }
+.insight-point + .insight-point { border-top: 1px solid var(--line); padding-top: 12px; }
+.insight-point p { overflow-wrap: anywhere; }
+.insight-evidence { font-size: 12px; color: var(--muted); }
+.insight-evidence .badge { margin: 3px 0; overflow-wrap: anywhere; }
+.insight-task-list, .insight-history { list-style: none; padding: 0; }
+.insight-task-list li, .insight-history li { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.insight-task-list strong { flex: 1 1 220px; }
+@media (max-width: 900px) { .insight-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .insight-sections { grid-template-columns: 1fr; } .insight-metrics { gap: 10px; } .insight-metrics .study-card { padding: 14px; } .insight-metrics strong { font-size: 28px; } }

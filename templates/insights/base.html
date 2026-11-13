@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+<link rel="stylesheet" href="{% static 'css/insights.css' %}">
+{% endblock %}
+{% block content %}
+<section class="study-shell insight-shell">
+    {% block insight_content %}{% endblock %}
+</section>
+{% endblock %}

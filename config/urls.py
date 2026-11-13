@@ -9,5 +9,6 @@ urlpatterns = [
     path("focus/", include("focus.urls")),
     path("notifications/", include("notifications.urls")),
     path("integrations/", include("integrations.urls")),
+    path("insights/", include("insights.urls")),
     path("", include("core.urls")),
 ]

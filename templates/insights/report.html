@@ -1,0 +1,15 @@
+{% extends 'insights/base.html' %}
+{% block title %}Kết quả AI hỗ trợ — Nhịp Học{% endblock %}
+{% block insight_content %}
+<header class="insight-heading"><p class="eyebrow">AI hỗ trợ học tập</p><h1>Kết quả phân tích</h1><p>Dựa trên dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }} · {{ report.model_name }}</p></header>
+<section class="study-card">
+    <span class="badge">{{ report.get_status_display }}</span>
+    {% if report.status == 'running' %}<p>Yêu cầu đang xử lý. Tải lại kết quả hoặc kiểm tra lịch sử sau. Nếu bị gián đoạn quá 5 phút, có thể tạo yêu cầu mới; API không được tự gọi lại.</p>{% endif %}
+    {% if error %}<p class="insight-notice">{{ error }}</p><p>Yêu cầu lỗi vẫn tính vào giới hạn 5 lần/ngày. Với lỗi mạng, nhà cung cấp có thể đã xử lý yêu cầu; hãy kiểm tra mức sử dụng API trước khi thử lại.</p>{% endif %}
+    {% if changed %}<p class="insight-notice">Dữ liệu đã thay đổi so với bản phân tích này. Xem dữ liệu hiện tại trước khi đưa ra quyết định.</p>{% endif %}
+    <p>AI có thể diễn giải sai dù mã căn cứ hợp lệ. Đối chiếu số liệu trong web; các gợi ý chưa được áp dụng vào lịch hoặc tiến độ.</p>
+    <div class="form-actions"><a class="button" href="{% url 'insights:home' %}">Xem dữ liệu hiện tại</a><a class="text-link" href="{% url 'planner:plan_generate' %}">Xem trước kế hoạch</a>{% if report.status == 'running' %}<a class="text-link" href="{% url 'insights:report' report.pk %}">Tải lại kết quả</a>{% endif %}</div>
+</section>
+{% include 'insights/sections.html' %}
+<section class="study-card"><details class="insight-data"><summary>Dữ liệu đã gửi trong yêu cầu này</summary><pre>{{ payload_json }}</pre></details></section>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'insights/base.html' %}
+{% block title %}AI hỗ trợ học tập — Nhịp Học{% endblock %}
+{% block insight_content %}
+<header class="insight-heading">
+    <p class="eyebrow">Nhìn lại để học có kế hoạch</p>
+    <h1>Hiểu nhịp học của bạn</h1>
+    <p>Đọc số liệu thực tế, nhận gợi ý và quyết định bước tiếp theo.</p>
+</header>
+<div class="insight-metrics">
+    <article class="study-card"><p>Phút học trong 14 ngày</p><strong>{{ totals.minutes }}</strong><span>{{ totals.entries }} bản ghi nhật ký</span></article>
+    <article class="study-card"><p>Ngày có ghi nhận học</p><strong>{{ totals.study_days }} <small>/ 14</small></strong><span>Trung bình {{ totals.daily_average }} phút/ngày</span></article>
+    <article class="study-card"><p>Công việc chưa hoàn thành</p><strong>{{ snapshot.payload.scope.unfinished_tasks }}</strong><span>Phân tích tối đa 20 việc gần hạn nhất</span></article>
+    <article class="study-card"><p>Cảnh báo hiện tại</p><strong>{{ snapshot.payload.scope.total_warnings }}</strong><span>Quá hạn, thiếu lịch hoặc xung đột</span></article>
+</div>
+<section class="study-card insight-action">
+    <span class="badge">Python tính số liệu · AI diễn giải</span>
+    <h2>Thêm một góc nhìn từ AI</h2>
+    <p>AI nhận xét thói quen, tóm tắt việc, gợi ý phân bổ và giải thích cảnh báo dựa trên bản dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }}. Dữ liệu gửi dùng mã việc/môn; không gửi tên, tài khoản, ghi chú hay liên kết tài liệu.</p>
+    <p>Chỉ gửi khi bạn xác nhận. Tối đa 5 yêu cầu/ngày, cách nhau ít nhất 60 giây. Kết quả chỉ để tham khảo; muốn đổi lịch, hãy xem trước phương án và áp dụng trong Lịch tuần.</p>
+    <details class="insight-data"><summary>Xem chính xác dữ liệu sẽ gửi đến OpenAI</summary><pre>{{ payload_json }}</pre></details>
+    {% if configured %}
+        <form class="study-form" method="post" action="{% url 'insights:generate' %}">
+            {% csrf_token %}{{ form.non_field_errors }}{{ form.preview }}{{ form.preview.errors }}
+            <div>{{ form.consent.errors }}<label class="insight-consent">{{ form.consent }}<span>{{ form.consent.label }}</span></label></div>
+            <div class="form-actions"><button class="button" type="submit">Yêu cầu AI phân tích</button><span class="insight-muted">Model: {{ model_name }} · Có thể mất vài chục giây</span></div>
+        </form>
+    {% else %}
+        <p class="insight-notice">Chưa cấu hình OpenAI API key/model. Bạn vẫn xem được phân tích Python bên dưới. Người quản trị cấu hình theo HD_Test.md, mốc 10.</p>
+    {% endif %}
+</section>
+<div class="study-toolbar"><div><p class="eyebrow">Phân tích Python · Không gọi AI</p><h2>Số liệu nói gì?</h2></div><a class="text-link" href="{% url 'focus:statistics' %}">Mở thống kê nhật ký</a></div>
+<p class="insight-muted">Nhật ký: {{ snapshot.payload.period.start }} → {{ snapshot.payload.period.end }}. Phương án bổ sung và quỹ thời gian dùng tuần hiện tại, tính từ thời điểm xem. Các con số chưa xếp đủ không phải kết luận lịch bất khả thi.</p>
+{% include 'insights/sections.html' %}
+<section class="study-card">
+    <h2>Công việc trong bản phân tích</h2>
+    <p>Mã giúp đọc căn cứ; tên việc chỉ hiển thị trong web. Bản phân tích gồm {{ snapshot.payload.scope.included_tasks }}/{{ snapshot.payload.scope.unfinished_tasks }} việc chưa hoàn thành, theo hạn gần rồi ưu tiên cao.</p>
+    <ul class="insight-task-list">
+    {% for task in tasks %}<li><span class="badge">{{ task.ref }}</span><strong>{{ task.title }}</strong><span>Còn {{ task.remaining_minutes }} phút</span></li>{% empty %}<li>Chưa có công việc chưa hoàn thành.</li>{% endfor %}
+    </ul>
+    <div class="form-actions"><a class="button" href="{% url 'planner:plan_generate' %}">Xem trước kế hoạch</a><a class="text-link" href="{% url 'planner:alerts' %}">Xem cảnh báo và xử lý</a></div>
+</section>
+<section class="study-card">
+    <h2>Lịch sử phân tích AI</h2>
+    <ul class="insight-history">{% for report in reports %}<li><a href="{% url 'insights:report' report.pk %}">{{ report.created_at|date:'d/m/Y H:i:s' }}</a><span class="badge">{{ report.get_status_display }}</span></li>{% empty %}<li>Chưa yêu cầu AI phân tích. Mở trang này không tự gọi API.</li>{% endfor %}</ul>
+    <p class="insight-muted">Hiển thị 10 yêu cầu gần nhất. Nếu một yêu cầu bị gián đoạn, sau 5 phút có thể tạo yêu cầu mới; hệ thống không tự gọi lại API.</p>
+</section>
+{% endblock %}

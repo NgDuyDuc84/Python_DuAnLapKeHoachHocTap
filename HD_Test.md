@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 09 — đồng bộ một chiều sang Google Calendar**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 10 — AI hỗ trợ từ dữ liệu học tập thực tế**, ở phần cuối tài liệu.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -1225,3 +1225,114 @@ Phạm vi: kết nối Google bằng OAuth có state/PKCE, mã hóa token, tạo
    Nhánh lúc bắt đầu là `main`; thay nếu bạn đã đổi nhánh. Giữ migration và `.env.example` trong commit, giữ `.env`, OAuth credentials, khóa mã hóa và database/bản sao lưu ngoài Git. Agent không stage/commit/push thay bạn.
 
    Dừng ở mốc 09. Nếu có lỗi, gửi ID test và thông báo thực tế đã che thông tin xác thực. Chỉ chuyển sang mốc 10 — AI hỗ trợ — sau khi bạn kiểm thử và xác nhận.
+
+---
+
+**Mốc 10 — AI hỗ trợ từ dữ liệu học tập thực tế**
+
+Trạng thái: người dùng đã cho phép chuyển từ mốc 09. Đã triển khai mốc 10 và dừng để bạn kiểm thử, commit/push trước khi hoàn thiện/triển khai online.
+
+Phạm vi: trang AI hỗ trợ, tổng hợp nhật ký 14 ngày/việc chưa xong/phương án bổ sung tuần hiện tại/cảnh báo bằng Python; xem trước dữ liệu, chủ động đồng ý gọi OpenAI, bốn nhóm nhận xét có căn cứ và lịch sử riêng. AI không tự sửa lịch hoặc tiến độ. Không cần API key để xem phần phân tích Python.
+
+1. **Cập nhật và chạy**
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test --noinput
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Migration mới: `insights.0001_initial`. Agent đã sao lưu SQLite thành `db.sqlite3-before-m10` trước khi migrate. Không có thư viện mới ở mốc này; dùng Requests đã có. Nếu server cũ đang chạy, khởi động lại để nhận app/settings mới. Không chép đè `.env` hiện tại.
+
+   Đăng nhập rồi mở [AI hỗ trợ](http://127.0.0.1:8000/insights/) từ thanh điều hướng. Phần AI gọi trực tiếp khi bấm yêu cầu, không cần worker riêng; các worker nhắc việc/Calendar vẫn độc lập.
+
+2. **Bật OpenAI thật nếu muốn kiểm thử kết nối**
+
+   Máy hiện tại chưa có `OPENAI_API_KEY`; agent chỉ kiểm thử bằng API giả lập. Để gọi thật, bạn cần tài khoản API có key, quyền dùng model và hạn mức sử dụng phù hợp. Phí API tách khỏi ứng dụng Django.
+
+   Trong `.env` đang bị Git bỏ qua, thêm:
+
+   ```dotenv
+   OPENAI_API_KEY=<API key thật, chỉ lưu trên máy chủ>
+   OPENAI_MODEL=gpt-5.6-terra
+   ```
+
+   Không giữ dấu `<...>` trong giá trị thật. Không dán key vào ô nhập trên web, ảnh chụp hoặc báo lỗi. Dừng và mở lại server sau khi cập nhật. Model này đã được đối chiếu trong [OpenAI Docs](https://developers.openai.com/api/docs/models/gpt-5.6-terra); quyền sử dụng thực tế phụ thuộc tài khoản API. Nếu đổi model, cần model hỗ trợ Responses API, JSON schema strict và reasoning low như request hiện tại.
+
+   Ứng dụng gửi tới `https://api.openai.com/v1/responses`, dùng [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs), đặt `store=false` theo [Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create). `store=false` không đồng nghĩa nhà cung cấp không lưu bất kỳ log nào; việc xử lý/lưu giữ phía dịch vụ còn theo chính sách của OpenAI. Giới hạn ứng dụng là 5 yêu cầu/user/ngày, không thay thế giới hạn chi tiêu của tài khoản API.
+
+3. **Chuẩn bị dữ liệu có thể đối chiếu**
+
+   Dùng tài khoản A với ít nhất hai công việc có hạn và thời lượng còn lại; một việc gần hạn chưa được xếp lịch và một việc khác có buổi đã áp dụng. Có thể thêm việc thử quá hạn để thấy cảnh báo rõ hơn. Tạo vài nhật ký trong 14 ngày gồm hôm nay: chẳng hạn hôm nay 25 phút, hôm qua 50 phút, 8 ngày trước 30 phút. Tổng mong đợi cho ba bản ghi này là 105 phút, 3/14 ngày có ghi nhận, trung bình 7,5 phút/ngày.
+
+   Nếu đã có nhật ký khác trong khoảng này, tính thêm vào tổng. Không dùng số phút buổi trên lịch thay cho nhật ký: đặt lịch và học thực tế là hai dữ liệu riêng. Chuẩn bị tài khoản B không có dữ liệu để đối chiếu quyền và trạng thái trống.
+
+4. **Checklist kiểm thử**
+
+   Ghi `Đạt/Không đạt`, kèm thông báo thực tế theo ID. Các test gọi AI thật cần cấu hình ở phần 2 và bạn tự xem dữ liệu rồi đồng ý gửi.
+
+   | ID | Thao tác | Kết quả cần đạt |
+   |---|---|---|
+   | TC10-01 | Chưa cấu hình key, mở AI hỗ trợ | Có số liệu, nhận xét ghi rõ Phân tích Python/Không gọi AI và hướng dẫn cấu hình; Học tập/Lịch tuần/Pomodoro vẫn dùng được |
+   | TC10-02 | Đối chiếu nhật ký trong 14 ngày gồm hôm nay | Tổng phút, số bản ghi, ngày có ghi nhận và trung bình theo cả 14 ngày khớp; ngày không ghi nhận tính 0 |
+   | TC10-03 | Thêm bản ghi 15 ngày trước, rồi bản ghi trong 14 ngày | Bản ngoài khoảng không cộng; bản trong khoảng được cộng. Phiên nghỉ/hủy không tự tăng số phút |
+   | TC10-04 | Đối chiếu việc gần hạn và phương án trong Lịch tuần | Đúng số phút còn lại/đã dành tương lai/đề xuất thêm/chưa xếp; mở AI hỗ trợ không tạo bản kế hoạch mới |
+   | TC10-05 | Xem việc quá hạn, thiếu lịch hoặc buổi trùng lịch bận | Giải thích khớp trang Cảnh báo; thiếu lịch không bị khẳng định là không thể xếp; buổi chưa ghi nhận không bị coi là đã học |
+   | TC10-06 | Mở Xem chính xác dữ liệu sẽ gửi đến OpenAI | Có H/L/V/C/M, số phút, ngày giờ, tùy chọn và lý do do Python tính. Không có tên việc/môn/học kỳ, username/email, ghi chú, tài liệu, tên lịch bận hoặc token/key |
+   | TC10-07 | Khi đã có key, không tích đồng ý rồi bấm Yêu cầu AI phân tích | Trình duyệt yêu cầu tích checkbox; request thiếu consent bị backend từ chối, không gọi API |
+   | TC10-08 | Xem dữ liệu, tích đồng ý rồi gửi | Nhận bốn nhóm: Tóm tắt, Thói quen học, Gợi ý phân bổ, Giải thích cảnh báo; mỗi nhận xét có mã căn cứ và nhãn local để đối chiếu |
+   | TC10-09 | Đối chiếu trước/sau yêu cầu AI | Lịch/buổi/khóa buổi, thời lượng công việc và nhật ký giữ nguyên. Muốn đổi lịch phải vào Xem trước kế hoạch rồi kiểm tra/áp dụng riêng |
+   | TC10-10 | Tải lại trang kết quả hoặc gửi lại cùng biểu mẫu | Đọc báo cáo đã có, không gọi AI lần nữa và không thêm báo cáo trùng |
+   | TC10-11 | Tạo yêu cầu khác trong vòng 60 giây, hoặc khi một yêu cầu khác đang chạy | Báo cần chờ; không phát sinh lời gọi mới. Sau đủ 60 giây và không có yêu cầu chạy mới được tạo tiếp |
+   | TC10-12 | Mở trang xem trước, sửa số liệu/giờ học/tên việc ở tab khác, rồi xác nhận bản cũ; hoặc đợi quá 10 phút | Yêu cầu xem lại bản dữ liệu mới; bản cũ không được gửi |
+   | TC10-13 | Mở báo cáo thành công, sau đó sửa nhật ký/việc/tùy chọn liên quan rồi tải lại báo cáo | Báo dữ liệu đã thay đổi; nội dung và nhãn trong báo cáo cũ giữ theo thời điểm tạo; có đường về dữ liệu hiện tại |
+   | TC10-14 | Dùng key không hợp lệ hoặc tài khoản chưa có hạn mức, rồi gửi | Lỗi được giải thích, không lộ key/raw provider response; vẫn quay lại được phần Python. Lỗi sau khi tạo yêu cầu được tính vào giới hạn |
+   | TC10-15 | Lỗi mạng hoặc request bị gián đoạn | Không tự gọi lại API. Có lịch sử lỗi/đang xử lý; nếu treo quá 5 phút, yêu cầu mới đánh dấu bản cũ bị gián đoạn. Kiểm tra mức sử dụng API trước khi thử lại vì nhà cung cấp có thể đã xử lý |
+   | TC10-16 | Đăng nhập B và thử mở URL kết quả của A | B không thấy số liệu/tên việc/lịch sử của A; URL kết quả A trả 404. Chưa đăng nhập thì được chuyển tới đăng nhập |
+   | TC10-17 | B chưa có nhật ký/công việc, mở AI hỗ trợ | Thấy 0 và lời nhắc chưa đủ dữ liệu; không tự suy ra không học, không bịa công việc/cảnh báo |
+   | TC10-18 | Thử giao diện ở 375 px | Thẻ số liệu, checkbox, nút, nội dung/căn cứ xuống dòng và không tràn ngang; JSON xem trước có khu vực đọc riêng |
+
+   Các nhánh phản hồi không đúng schema/căn cứ lạ, từ chối, dở dang, giới hạn 5 lần/ngày và kết quả về muộn được kiểm tra bằng test giả lập. Không cần cố gọi API thật nhiều lần chỉ để tạo lỗi hoặc chạm giới hạn; có thể chạy:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py test insights --noinput
+   ```
+
+5. **Phạm vi dữ liệu và giới hạn**
+
+   - Nhật ký gồm hôm nay và 13 ngày trước theo giờ Việt Nam. So sánh hai nhóm 7 ngày liền nhau; không suy ra giờ học hiệu quả hoặc mức hiểu bài vì dữ liệu này chưa được thu thập.
+   - Việc chưa hoàn thành lấy tối đa 20 việc gần hạn nhất, cùng hạn ưu tiên cao. Cảnh báo lấy tối đa 20 mục, từ việc quá hạn/thiếu lịch rồi đến xung đột buổi trong phạm vi 7 ngày của planner. Tổng số và số được đưa vào có trong payload; phần Python tóm tắt tối đa 5 việc và 5 cảnh báo, có thêm nhắc buổi chưa ghi nhận khi cần.
+   - Phân bổ dựa trên thuật toán Bổ sung của tuần hiện tại, giữ mọi buổi đã áp dụng; chưa phải phương án Xếp lại và chưa được lưu/áp dụng. Quỹ L02 là giới hạn khả dụng trước khi thêm các đề xuất; không cộng lần nữa vào số phút đã đề xuất.
+   - Phút trong buổi đặt lịch và phút thực học trong nhật ký không tự thay thế nhau. Đã học đủ phút chưa chứng minh đã hoàn thành công việc. Thiếu nhật ký không chứng minh người dùng không học.
+   - AI chỉ thấy payload dùng mã, không thấy bảng mã/nhãn local. Các nhận xét dẫn H/L/V/C; tên local được gắn trong web để người dùng đối chiếu. Kiểm tra schema/căn cứ không bảo đảm mọi nhận xét hoặc con số AI diễn giải đều đúng.
+   - Mỗi nhóm AI tối đa 5 mục, text tối đa 1200 ký tự, mỗi mục 1–5 mã căn cứ hợp lệ. Kết quả không hợp lệ/từ chối/dở dang không được hiển thị như một phân tích thành công. Không render HTML do AI trả về và không có tool cho AI thao tác ứng dụng.
+   - Tối đa 5 yêu cầu/ngày/user, giãn ít nhất 60 giây. Thiếu key, thiếu đồng ý hoặc bản xem trước không hợp lệ không tạo yêu cầu. Lỗi xảy ra sau khi tạo báo cáo vẫn tính giới hạn. Yêu cầu lỗi không tự retry.
+   - Gọi API trực tiếp ngoài transaction, timeout kết nối 5 giây/đọc 40 giây; thời gian thực tế còn phụ thuộc kết nối/nhà cung cấp. Nếu web bị đóng trong khi xử lý, kiểm tra lịch sử trước khi tạo yêu cầu mới. Bản treo được đánh dấu khi bắt đầu yêu cầu khác sau hơn 5 phút; GET không tự chạy lại.
+   - Lịch sử giữ dữ liệu/nhãn lúc yêu cầu và hiển thị 10 bản gần nhất của chủ sở hữu. Thời gian trôi qua không tự tạo phân tích mới. Dữ liệu học tập thay đổi cần xem lại hiện trạng trước khi dựa vào báo cáo cũ.
+
+6. **Kết quả xác minh của agent**
+
+   - **26 test mới; tổng 245/245 PASS**. Bao phủ khoảng ngày/múi giờ, tổng/so sánh, quyền A/B, payload không có văn bản riêng, nháp/hủy/đã học, quỹ lịch và cảnh báo thực tế, giới hạn payload, consent/CSRF, chữ ký/hết hạn/dữ liệu đổi, idempotency, cooldown/hạn ngày, request treo/kết quả muộn, schema/căn cứ, HTML escape và lỗi API.
+   - Trình duyệt với database tạm: tổng 230 phút/5 ngày → mở JSON đã dùng mã → đồng ý → nhận đủ nhóm báo cáo và căn cứ. Lần tiếp theo giả lập 429 hiển thị lỗi hạn mức; tài khoản trống chỉ thấy số liệu 0 và hướng dẫn. Trang chính/kết quả ở viewport 375 px không tràn ngang.
+   - Chỉ dùng API giả lập, không gửi dữ liệu ra OpenAI thật và không phát sinh phí API. Server QA đã dừng; fixture riêng được dọn, không đưa dữ liệu mẫu vào SQLite thật.
+   - Đã áp dụng migration sau sao lưu `db.sqlite3-before-m10`. `manage.py check`, kiểm tra migration thiếu, `pip check`, whitespace và SQLite integrity: PASS. Dữ liệu người dùng/nghiệp vụ cũ giữ nguyên; Django chỉ bổ sung content type và 4 quyền mặc định cho model mới. Bảng AI thật có 0 báo cáo. Kiểm thử kết nối/model thật vẫn cần bạn thực hiện theo phần 2.
+
+7. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .venv/Scripts/python.exe db.sqlite3 db.sqlite3-before-m10
+   git add insights config/settings.py config/urls.py .env.example templates/base.html templates/insights static/css/insights.css README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: add grounded study insights and opt-in AI reports"
+   git push origin main
+   ```
+
+   Nhánh lúc bắt đầu là `main`; thay nếu bạn đã đổi nhánh. Giữ migration và `.env.example`, không commit `.env` thật, key, database hoặc bản sao lưu. Agent không stage/commit/push thay bạn.
+
+   Dừng ở mốc 10. Nếu lỗi, gửi ID test và thông báo đã che thông tin xác thực. Chỉ chuyển sang phần hoàn thiện/triển khai online sau khi bạn kiểm thử và xác nhận.

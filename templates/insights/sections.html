@@ -1,0 +1,13 @@
+<div class="insight-sections">
+{% for section in sections %}
+    <section class="study-card">
+        <h2>{{ section.title }}</h2>
+        {% for point in section.points %}
+            <div class="insight-point">
+                <p>{{ point.text }}</p>
+                <p class="insight-evidence">Căn cứ: {% for item in point.evidence %}<span class="badge">{{ item.ref }} · {{ item.label }}</span> {% endfor %}</p>
+            </div>
+        {% empty %}<p class="insight-muted">Chưa có nội dung cần nhận xét trong phần này.</p>{% endfor %}
+    </section>
+{% endfor %}
+</div>

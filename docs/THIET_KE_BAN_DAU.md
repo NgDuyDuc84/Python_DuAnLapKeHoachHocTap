@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã hoàn thành các mốc 01–08 và triển khai đồng bộ Google Calendar ở mốc 09; kết nối Google thật cần cấu hình và kiểm thử theo HD_Test.md.
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai đến mốc 10 — AI hỗ trợ. Kết nối Google và OpenAI thật cần cấu hình và kiểm thử theo HD_Test.md.
 
 1. **Phân chia trách nhiệm**
 
@@ -19,7 +19,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
    | focus | Pomodoro, nhật ký và thống kê thời gian học | Đã có đồng hồ bền qua tải lại, thao tác trạng thái, nhật ký và thống kê bằng Python |
    | notifications | Nhắc việc và email | Đã có tùy chọn, hàng đợi, worker, hộp thông báo và lịch sử email |
-   | insights | Phân tích thói quen, AI | Chưa triển khai; thống kê thời gian cơ bản hiện đặt ở focus |
+   | insights | Phân tích thói quen, AI | Đã có tổng hợp Python, xem trước/đồng ý gửi AI, Structured Outputs và lịch sử riêng |
    | integrations | Kết nối lịch bên ngoài | Đã có OAuth, token mã hóa, xem trước và worker đồng bộ một chiều sang Google Calendar |
 
 3. **Dữ liệu nghiệp vụ dự kiến**
@@ -106,6 +106,16 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    ID sự kiện UUID dạng base32hex hợp lệ được lưu trước insert. Nếu mất phản hồi, lần chạy lại tìm đúng ID để cập nhật; 409 kiểm tra dấu nhận diện trước khi sửa. Nếu sự kiện đã bị xóa, lưu ID mới trước khi tạo lại. Hủy/xóa nguồn để lại ánh xạ cho đến khi xác nhận gỡ hoặc sự kiện đã vắng mặt. Tạo lịch không có ID do client đặt: phản hồi không xác định hoặc claim treo lúc tạo chuyển sang trạng thái cần kiểm tra; không tự tạo lịch khác. Người dùng kiểm tra Google rồi POST xác nhận tạo lịch đích mới, bỏ ánh xạ cũ nhưng giữ nguyên lịch/sự kiện cũ trên Google.
 
    Đồng bộ chỉ chạy sau xác nhận, không tự theo mọi chỉnh sửa. Khi lỗi, phần đã ghi lên Google có thể còn đó; cần xem trước và chạy lại để hoàn tất. Request đang ở phía Google lúc ngắt kết nối không thể thu hồi. Mã kiểm thử sử dụng API giả lập; kiểm thử thật phụ thuộc OAuth Client/test user và sự đồng ý cấp quyền của người dùng.
+
+   Mốc 10 thêm `InsightReport`: owner, UUID yêu cầu, thời điểm tạo/kết thúc, model, fingerprint, snapshot dữ liệu/nhãn local, trạng thái, kết quả và mã lỗi an toàn. Unique(owner, request_key) chống gửi lại cùng biểu mẫu; unique owner khi running ngăn nhiều lời gọi đồng thời. Không đăng ký model này vào Django Admin. Mỗi người chỉ xem bản dữ liệu/báo cáo của mình; các thao tác tạo dùng POST và CSRF.
+
+   Snapshot dùng cùng thời điểm tham chiếu: nhật ký 14 ngày gồm hôm nay theo giờ Việt Nam, so sánh 7 ngày trước/7 ngày gần nhất, tổng phút/ngày có ghi nhận/nguồn/môn; tối đa 20 việc chưa xong gần hạn; tùy chọn/quỹ tuần hiện tại; kết quả bổ sung từ calculate_schedule và tối đa 20 cảnh báo build_alerts. Có tổng số và số được đưa vào để công khai phần giới hạn. Phân bổ theo môn giữ tối đa 10 nhãn nhật ký và báo số nhãn còn lại. Không tính nghỉ hoặc phiên hủy; buổi đã qua chưa ghi nhận không tự thành phút học. Không có dữ liệu giờ học hiệu quả hoặc mức hiểu bài.
+
+   Payload OpenAI chỉ gồm mã H/L/V/C/M, số liệu/ngày giờ/tùy chọn và các lý do do Python sinh. Tên việc, tên môn/học kỳ, tài khoản/email, ghi chú, tài liệu, tên lịch bận, khóa API và token Google không nằm trong payload. Bảng mã/nhãn giữ trong snapshot local để hiển thị căn cứ. GET tổng hợp chỉ đọc, không tạo kế hoạch nháp hoặc gọi API. Người dùng mở JSON sẽ gửi, xác nhận bằng checkbox rồi POST bản xem trước có chữ ký (owner, thời điểm, fingerprint, UUID), hiệu lực 10 phút; dữ liệu thay đổi thì yêu cầu xem lại.
+
+   Yêu cầu AI chạy trực tiếp ngoài transaction qua Requests đã có trong dự án, endpoint OpenAI cố định, không theo redirect, timeout kết nối 5 giây/đọc 40 giây, không tự retry. Model mặc định gpt-5.6-terra; Responses API dùng store=false, reasoning low, tối đa 4000 token đầu ra và JSON schema strict, không gắn tool. Bốn nhóm kết quả: tóm tắt, thói quen, phân bổ, cảnh báo. Backend kiểm tra shape, số mục/độ dài, căn cứ phải tồn tại; từ chối kết quả bị từ chối/dở dang/sai cấu trúc/căn cứ lạ và không chép lỗi provider ra web. AI vẫn có thể diễn giải sai dù qua kiểm tra cấu trúc. Không có việc/cảnh báo đầu vào thì không chấp nhận AI tự thêm phần tương ứng.
+
+   Tối đa 5 yêu cầu/user/ngày giờ Việt Nam, giãn ít nhất 60 giây, tính cả lỗi sau khi đã tạo báo cáo. Trùng UUID trả báo cáo hiện tại; đang running chặn yêu cầu khác. Yêu cầu running treo hơn 5 phút được đánh dấu interrupted khi người dùng bắt đầu yêu cầu mới; phản hồi đến muộn không ghi đè trạng thái đó. Không giữ khóa database trong lúc gọi HTTP. Lịch sử hiển thị 10 bản gần nhất, giữ nguyên dữ liệu/nhãn lúc tạo và so fingerprint khi đọc để báo dữ liệu đã đổi. Thiếu key hoặc lỗi API vẫn có phân tích Python được ghi rõ nguồn. Gợi ý chỉ để tham khảo; đổi lịch phải qua kiểm tra/xem trước/áp dụng ở planner, không tự ghi nhật ký/đổi tiến độ. Kiểm thử agent dùng API giả lập; chưa gọi OpenAI thật.
 
 4. **Quy tắc lịch**
 
