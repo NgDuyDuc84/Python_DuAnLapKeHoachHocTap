@@ -2,7 +2,7 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 10 — AI hỗ trợ từ dữ liệu học tập thực tế**, ở phần cuối tài liệu.
+Mốc cần kiểm thử hiện tại: **mốc 11 — giao diện, dữ liệu demo và cấu hình triển khai**, ở phần cuối tài liệu. Theo lựa chọn người dùng: chưa triển khai online.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -1336,3 +1336,99 @@ Phạm vi: trang AI hỗ trợ, tổng hợp nhật ký 14 ngày/việc chưa xo
    Nhánh lúc bắt đầu là `main`; thay nếu bạn đã đổi nhánh. Giữ migration và `.env.example`, không commit `.env` thật, key, database hoặc bản sao lưu. Agent không stage/commit/push thay bạn.
 
    Dừng ở mốc 10. Nếu lỗi, gửi ID test và thông báo đã che thông tin xác thực. Chỉ chuyển sang phần hoàn thiện/triển khai online sau khi bạn kiểm thử và xác nhận.
+
+---
+
+**Mốc 11 — Giao diện, dữ liệu demo và cấu hình triển khai**
+
+Trạng thái: người dùng đã cho phép tiếp tục và chọn **chỉ chuẩn bị cấu hình, chưa triển khai online**. Mốc này không tạo hosting, không tạo dịch vụ có phí và không cung cấp URL online. Dừng sau phần kiểm thử/config để bạn kiểm tra và commit/push.
+
+Phạm vi đã làm: PostgreSQL qua DATABASE_URL, cấu hình production riêng, static manifest/nén bằng WhiteNoise, Waitress, Dockerfile/Compose, CI SQLite/PostgreSQL, health endpoint, trang lỗi 403/404/500, nút trang chủ theo đăng nhập, lệnh dữ liệu demo và tài liệu trình bày/nghiệm thu.
+
+1. **Cập nhật tại máy**
+
+   ```powershell
+   Set-Location -LiteralPath 'D:\Python_DuAnLapKeHoachHocTap'
+   & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+   & .\.venv\Scripts\python.exe manage.py migrate
+   & .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py test --noinput
+   & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+   ```
+
+   Mốc này không có migration mới; lệnh migrate giúp bảo đảm các mốc trước đã áp dụng. Không ghi đè `.env`. DATABASE_URL để trống thì tiếp tục dùng SQLite; chỉ đặt URL khi đã có PostgreSQL. Các dependency mới đã chốt phiên bản trong requirements: dj-database-url, psycopg/psycopg-binary, WhiteNoise và Waitress.
+
+   Chi tiết Waitress, Docker, proxy/HTTPS, cấu hình production và worker: [docs/TRIEN_KHAI.md](docs/TRIEN_KHAI.md). Kịch bản trình bày: [docs/NGHIEM_THU.md](docs/NGHIEM_THU.md).
+
+2. **Tạo dữ liệu demo bằng tài khoản riêng**
+
+   Đăng ký một tài khoản mới qua giao diện, ví dụ `demo`. Không dùng tài khoản hiện có dữ liệu hoặc tài khoản quản trị. Mật khẩu do bạn nhập, không truyền trong lệnh.
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py seed_demo --username demo
+   ```
+
+   Lệnh thêm 2 môn, 5 việc, 2 tài liệu, 1 lịch bận lặp, 1 kế hoạch đã áp dụng, 3 buổi và 5 nhật ký tổng 175 phút. Một việc đã hoàn thành, một việc quá hạn, một buổi khóa và một buổi hủy. Buổi tương lai đầu tiên là ngày mai; terminal in tuần cần chọn trong lịch. Email tắt, không gọi Google/OpenAI. Chạy lại không tạo trùng hoặc đặt lại dữ liệu/mật khẩu.
+
+   Tài khoản có dữ liệu riêng bị từ chối, không tự dọn hoặc trộn dữ liệu. Nếu muốn bắt đầu demo lại từ đầu, dùng một tài khoản mới. Không có thao tác reset/xóa hàng loạt trong lệnh.
+
+3. **Checklist tại máy**
+
+   | ID | Thao tác | Kết quả cần đạt |
+   |---|---|---|
+   | TC11-01 | Chưa đăng nhập, mở trang chủ | Nút Bắt đầu lập kế hoạch dẫn đến đăng ký; có đường đăng nhập cho tài khoản đã có |
+   | TC11-02 | Đăng nhập, quay về trang chủ | Nút Mở lịch học của bạn dẫn vào lịch, không còn lời yêu cầu đăng nhập cho người đã đăng nhập |
+   | TC11-03 | Chạy seed_demo cho tài khoản mới còn trống | Có đúng dữ liệu demo nêu trên; tài khoản khác không bị thay đổi; không có mật khẩu/key được in ra |
+   | TC11-04 | Chạy lại seed_demo cùng tài khoản | In Demo already exists; no changes made. Số môn/việc/buổi/nhật ký không tăng, dữ liệu sửa sau lần tạo đầu không bị đặt lại |
+   | TC11-05 | Thử seed_demo với tài khoản có dữ liệu, staff/admin hoặc username không tồn tại | Từ chối rõ ràng, không ghi dữ liệu. Không thử đổi password để vượt qua điều kiện |
+   | TC11-06 | Mở lịch đúng tuần terminal in; mở môn/việc/tài liệu | Thấy 2 buổi chưa ghi nhận (một khóa), lịch bận lặp; buổi hủy không chiếm lịch; việc hoàn thành không được xếp thêm |
+   | TC11-07 | Mở Nhật ký/Thống kê hoặc AI hỗ trợ ngay sau seed | Tổng nhật ký 14 ngày là 175 phút trong 5 ngày, trung bình 12,5 phút/ngày nếu chưa thêm/sửa nhật ký. Không cần gọi AI để thấy số liệu |
+   | TC11-08 | Chạy đóng gói static rồi thử Waitress theo docs/TRIEN_KHAI.md | Web có CSS/giao diện, đăng nhập/lưu/điều hướng được; không dùng runserver để mô phỏng máy chủ WSGI |
+   | TC11-09 | Mở /health/ khi database dùng được | HTTP 200, JSON chỉ có status ok và Cache-Control no-store; không lộ cấu hình database |
+   | TC11-10 | Với DEBUG=false ở môi trường thử riêng, mở một đường dẫn không tồn tại | Trang 404 tiếng Việt có nút Về trang chủ, không hiện debug/stack trace. DEBUG=true tại máy vẫn có thể hiển thị trang debug của Django |
+   | TC11-11 | Form cũ/token CSRF hết hạn trong môi trường thử | HTTP 403 với hướng dẫn tải lại/mở lại trang; không tự gửi lại thao tác. Trang 500 được xác minh bằng test, không cần cố làm hỏng database thật |
+   | TC11-12 | Thử trang chủ/trang lỗi trên màn hình 375 px | Nội dung/nút xuống dòng và không tràn ngang; quay về trang chủ hoạt động |
+   | TC11-13 | Chạy toàn bộ test và kiểm tra migration | 258 test qua, No changes detected; test dùng database riêng, không sửa SQLite của bạn |
+
+   Muốn tự kiểm tra Waitress bằng HTTP tại máy, xem lệnh dùng `config.settings`, HOST=127.0.0.1, PORT=8001 trong tài liệu triển khai. Không dùng bộ production để bỏ qua yêu cầu HTTPS chỉ nhằm xem thử giao diện.
+
+4. **Checklist PostgreSQL/Docker/production — thực hiện khi có môi trường**
+
+   Máy agent hiện chưa có Docker hoặc PostgreSQL, nên các mục TC11-14 đến TC11-18 chưa được kiểm tra thực tế tại máy. Không cần cài chúng chỉ để đọc mã; nếu bạn có sẵn Docker, làm theo docs/TRIEN_KHAI.md.
+
+   | ID | Thao tác | Kết quả cần đạt |
+   |---|---|---|
+   | TC11-14 | docker compose config --quiet; docker compose up --build -d | Cấu hình hợp lệ, database healthy, migrate kết thúc thành công trước web/hai worker; không có vòng lặp lỗi trong logs |
+   | TC11-15 | Đăng ký/lưu việc trong Compose, khởi động lại web | Dữ liệu còn trong PostgreSQL volume, không ghi vào SQLite local. Web chỉ bind 127.0.0.1:8000; DB không mở cổng ra ngoài |
+   | TC11-16 | Chạy manage.py test --noinput trong container hoặc xem CI PostgreSQL | Toàn bộ test PostgreSQL qua; không dùng kết quả SQLite thay thế cho kết quả này |
+   | TC11-17 | Điền cấu hình production hợp lệ và chạy check --deploy --fail-level WARNING | Không có cảnh báo cấu hình. Thiếu secret/host/HTTPS/PostgreSQL thì dừng với thông báo cấu hình, không âm thầm rơi về SQLite |
+   | TC11-18 | Sau khi push, xem Actions trên GitHub | Job Windows/SQLite và Linux/PostgreSQL, static, deploy checks, Docker build/config đều thành công. Agent chưa push hoặc kích hoạt workflow trong phiên này |
+
+   Compose là môi trường HTTP nội bộ với mật khẩu demo cố định, không phải cấu hình công khai. Khi có yêu cầu triển khai sau này, dùng config.production và file mẫu deploy/production.env.example, secret riêng, PostgreSQL bền vững, reverse proxy HTTPS/cổng ứng dụng private, hai worker và backup. Thay SITE_URL, callback Google, SMTP/API theo môi trường; không đưa secret thật vào file tracked.
+
+5. **Kết quả xác minh của agent**
+
+   - **13 test mới, tổng 258/258 PASS**. Kiểm tra điều kiện cấu hình production, thông báo lỗi không lộ URL/password, local SQLite, health 200/503, CTA theo đăng nhập, trang lỗi, demo có owner/validation/idempotency/rollback, từ chối tài khoản có dữ liệu/quản trị và mốc tuần/năm.
+   - `manage.py check`, `makemigrations --check --dry-run`, `pip check` và `check --deploy --fail-level WARNING` với cấu hình production mẫu: PASS. `check --deploy` kiểm tra cấu hình, không chứng minh đã kết nối PostgreSQL hoặc có chứng chỉ HTTPS thật.
+   - Static đã collect bằng config.assets. Waitress + WhiteNoise chạy DEBUG=false với SQLite QA riêng: /health/ trả 200/no-store, CSS có mã băm trả 200 với cache immutable. Không chạy runserver cho phần QA này.
+   - Seed demo lần đầu tạo dữ liệu, lần hai không ghi thêm; tổng nhật ký 175 phút. Worker nhắc với một việc QA sắp hạn tạo/xử lý 1 nhắc web, chạy lại 0; Calendar worker có 0 yêu cầu. Không gửi email hoặc gọi Google/OpenAI.
+   - Trình duyệt: trang chủ/đăng nhập/CTA vào lịch, lịch demo/khóa buổi, thông báo, số liệu Python, trang 404 và đường quay về đều hoạt động. Trang chủ và trang 404 ở 375 px không tràn ngang. Trang 403/500 được kiểm tra bằng test.
+   - Server QA đã dừng, fixture tạm đã dọn. Không tạo demo vào SQLite chính và không sửa `.env`. Docker build/Compose/PostgreSQL/CI/URL online chưa chạy trong phiên; chưa hoàn thành điều kiện URL thật của đề.
+
+6. **Commit/push sau khi bạn kiểm thử đạt**
+
+   ```powershell
+   git status --short
+   git diff --check
+   git check-ignore .env .env.production .venv/Scripts/python.exe db.sqlite3 staticfiles/css/app.css
+   git add .github/workflows/tests.yml .dockerignore Dockerfile compose.yaml deploy config/settings.py config/assets.py config/production.py core/views.py core/urls.py core/tests.py core/management templates/core/home.html templates/403.html templates/404.html templates/500.html requirements.txt .env.example README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md docs/TRIEN_KHAI.md docs/NGHIEM_THU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "feat: prepare deployment configuration and isolated demo data"
+   git push origin main
+   ```
+
+   Nhánh lúc bắt đầu là main; thay nếu bạn đã đổi nhánh. Chỉ commit file cấu hình mẫu; không stage `.env`, `.env.production`, key, database, backup, `.venv` hoặc staticfiles sinh ra. Agent không stage/commit/push thay bạn.
+
+   Dừng ở mốc 11 để bạn kiểm thử. Phần online chỉ tiếp tục khi bạn yêu cầu; URL thật vẫn còn là điều kiện nghiệm thu của dự án.

@@ -1,0 +1,58 @@
+# Local PostgreSQL smoke environment. This file does not publish a website.
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: nhiphoc
+      POSTGRES_USER: nhiphoc
+      POSTGRES_PASSWORD: local-compose-only
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nhiphoc -d nhiphoc"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  migrate:
+    build: .
+    environment: &app_environment
+      DJANGO_SETTINGS_MODULE: config.settings
+      DJANGO_DEBUG: "false"
+      DJANGO_SECRET_KEY: local-compose-only-not-for-production-change-before-deployment
+      DJANGO_ALLOWED_HOSTS: 127.0.0.1,localhost
+      SITE_URL: http://127.0.0.1:8000
+      DATABASE_URL: postgres://nhiphoc:local-compose-only@db:5432/nhiphoc?sslmode=disable
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["python", "manage.py", "migrate", "--noinput"]
+  web:
+    build: .
+    environment: *app_environment
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  reminders:
+    build: .
+    environment: *app_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["python", "manage.py", "process_reminders", "--watch"]
+  calendar:
+    build: .
+    environment: *app_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["python", "manage.py", "process_calendar_sync", "--watch"]
+volumes:
+  postgres_data:

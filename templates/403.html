@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Cần tải lại trang — Nhịp Học{% endblock %}
+{% block content %}
+<section class="auth-shell"><div class="auth-card">
+    <p class="eyebrow">Yêu cầu chưa được chấp nhận</p>
+    <h1>Cần tải lại trang</h1>
+    <p>Phiên biểu mẫu có thể đã hết hạn hoặc bạn chưa có quyền thực hiện thao tác. Mở lại trang từ ứng dụng, kiểm tra dữ liệu rồi thử lại.</p>
+    <a class="button" href="{% url 'core:home' %}">Về trang chủ</a>
+</div></section>
+{% endblock %}

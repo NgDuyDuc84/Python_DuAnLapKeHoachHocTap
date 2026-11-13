@@ -1,8 +1,9 @@
-"""Settings for local development."""
+"""Shared settings; config.production adds requirements for an HTTPS deployment."""
 
 import os
 from pathlib import Path
 
+import dj_database_url
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -71,14 +73,23 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# SQLite keeps this checkpoint runnable without a database service.
-# PostgreSQL will be configured at the deployment checkpoint.
+# Keep local SQLite available; an explicit URL selects PostgreSQL.
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+if os.getenv("DATABASE_URL"):
+    try:
+        database = dj_database_url.parse(
+            os.environ["DATABASE_URL"], conn_max_age=60, conn_health_checks=True,
+        )
+    except (ValueError, KeyError):
+        raise ImproperlyConfigured("DATABASE_URL is not a valid PostgreSQL URL.") from None
+    if database["ENGINE"] != "django.db.backends.postgresql":
+        raise ImproperlyConfigured("DATABASE_URL must use PostgreSQL.")
+    DATABASES["default"] = database
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -92,13 +103,15 @@ TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:profile"
 LOGOUT_REDIRECT_URL = "core:home"
+CSRF_FAILURE_VIEW = "core.views.csrf_failure"
 
 # Console email makes the local checkpoint testable without sending real messages.
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")

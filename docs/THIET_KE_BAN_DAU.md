@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai đến mốc 10 — AI hỗ trợ. Kết nối Google và OpenAI thật cần cấu hình và kiểm thử theo HD_Test.md.
+Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai chức năng đến mốc 10 và chuẩn bị giao diện/demo/cấu hình production ở mốc 11. Theo lựa chọn người dùng, chưa triển khai online. Kết nối Google và OpenAI thật cần cấu hình và kiểm thử theo HD_Test.md.
 
 1. **Phân chia trách nhiệm**
 
@@ -116,6 +116,12 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    Yêu cầu AI chạy trực tiếp ngoài transaction qua Requests đã có trong dự án, endpoint OpenAI cố định, không theo redirect, timeout kết nối 5 giây/đọc 40 giây, không tự retry. Model mặc định gpt-5.6-terra; Responses API dùng store=false, reasoning low, tối đa 4000 token đầu ra và JSON schema strict, không gắn tool. Bốn nhóm kết quả: tóm tắt, thói quen, phân bổ, cảnh báo. Backend kiểm tra shape, số mục/độ dài, căn cứ phải tồn tại; từ chối kết quả bị từ chối/dở dang/sai cấu trúc/căn cứ lạ và không chép lỗi provider ra web. AI vẫn có thể diễn giải sai dù qua kiểm tra cấu trúc. Không có việc/cảnh báo đầu vào thì không chấp nhận AI tự thêm phần tương ứng.
 
    Tối đa 5 yêu cầu/user/ngày giờ Việt Nam, giãn ít nhất 60 giây, tính cả lỗi sau khi đã tạo báo cáo. Trùng UUID trả báo cáo hiện tại; đang running chặn yêu cầu khác. Yêu cầu running treo hơn 5 phút được đánh dấu interrupted khi người dùng bắt đầu yêu cầu mới; phản hồi đến muộn không ghi đè trạng thái đó. Không giữ khóa database trong lúc gọi HTTP. Lịch sử hiển thị 10 bản gần nhất, giữ nguyên dữ liệu/nhãn lúc tạo và so fingerprint khi đọc để báo dữ liệu đã đổi. Thiếu key hoặc lỗi API vẫn có phân tích Python được ghi rõ nguồn. Gợi ý chỉ để tham khảo; đổi lịch phải qua kiểm tra/xem trước/áp dụng ở planner, không tự ghi nhật ký/đổi tiến độ. Kiểm thử agent dùng API giả lập; chưa gọi OpenAI thật.
+
+   Mốc 11 giữ `config.settings` cho local SQLite/PostgreSQL tùy DATABASE_URL; URL nếu có phải là PostgreSQL. `config.assets` kế thừa settings chung để build static có mã băm/nén; `config.production` kế thừa assets, bắt buộc secret riêng, hosts cụ thể, SITE_URL HTTPS và PostgreSQL, bật secure cookies/HTTPS/HSTS. WhiteNoise đứng ngay sau SecurityMiddleware. Không tin trực tiếp header proxy trong Django; Waitress chỉ xử lý X-Forwarded-Proto từ TRUSTED_PROXY đã cấu hình và xóa header không đáng tin.
+
+   Máy chủ `deploy.serve` dùng Waitress, HOST/PORT từ môi trường, 4 luồng. Docker build static trước và chạy dưới user không phải root; không sao chép .env/database local vào image. Compose chỉ là môi trường PostgreSQL HTTP tại máy, có migration một lượt trước web/hai worker, web bind loopback và database dùng volume riêng. Production cần reverse proxy HTTPS, cổng ứng dụng private và tiến trình migration riêng, không tự migrate trong mỗi worker. Workflow CI chuẩn bị SQLite/Windows và PostgreSQL/Linux cùng kiểm tra build Docker; chưa chạy CI trong phiên.
+
+   `/health/` kiểm tra SELECT 1, trả 200/503 với trạng thái tối thiểu và không cache. Trang chủ đưa người chưa đăng nhập sang đăng ký, người đã đăng nhập vào lịch; trang lỗi 403/404/500 có thông báo và đường quay về. Lệnh `seed_demo --username` chỉ dùng tài khoản active không phải staff/admin, kiểm tra tài khoản còn trống, tạo dữ liệu một transaction và không đổi mật khẩu/gọi dịch vụ ngoài. Chạy lại khi có môn marker demo thì không ghi thêm. Không có schema mới hoặc tự nhập SQLite sang PostgreSQL. Chi tiết cấu hình/kịch bản ở docs/TRIEN_KHAI.md và docs/NGHIEM_THU.md.
 
 4. **Quy tắc lịch**
 

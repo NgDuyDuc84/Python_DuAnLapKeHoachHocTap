@@ -5,8 +5,10 @@
 - [Kế hoạch phát triển](docs/KE_HOACH_PHAT_TRIEN.md)
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
+- [Cấu hình chạy và triển khai](docs/TRIEN_KHAI.md)
+- [Dữ liệu demo và kịch bản nghiệm thu](docs/NGHIEM_THU.md)
 
-Hiện tại: **mốc 10 — AI hỗ trợ từ dữ liệu học tập thực tế**, đang chờ người dùng kiểm thử và push GitHub. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **mốc 11 — hoàn thiện giao diện, dữ liệu demo và cấu hình triển khai**, đang chờ người dùng kiểm thử và push GitHub. Theo lựa chọn của người dùng, **chưa triển khai online**. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -22,7 +24,7 @@ if (-not (Test-Path -LiteralPath .env)) {
 
 Mở [trang chủ local](http://127.0.0.1:8000/). Nếu `.venv` đã tồn tại, bỏ qua lệnh tạo môi trường. Không cần kích hoạt môi trường hoặc đổi Execution Policy. Nếu lệnh `python` lỗi WindowsApps, xem đường dẫn Python thay thế trong `HD_Test.md`.
 
-Mốc này dùng SQLite; PostgreSQL và cấu hình triển khai online được thực hiện ở mốc sau. Đã có tài khoản, quản lý học tập, lịch bận, tùy chọn thời gian học, lịch tuần và thuật toán Python tự xếp buổi học.
+Mặc định local dùng SQLite; đã có cấu hình PostgreSQL/production và Docker để kiểm thử tại máy. URL online vẫn cần triển khai và nghiệm thu sau này. Đã có tài khoản, quản lý học tập, lịch bận, tùy chọn thời gian học, lịch tuần và thuật toán Python tự xếp buổi học.
 
 Các trang chính:
 
@@ -107,3 +109,19 @@ Mốc 10 thêm app `insights` và migration `insights/0001_initial.py`. Chạy `
 Muốn dùng AI thật, thêm `OPENAI_API_KEY` vào `.env`; `OPENAI_MODEL` mặc định `gpt-5.6-terra`. API key chỉ dùng ở máy chủ, không nhập vào web hoặc commit lên GitHub. Sau khi restart server, mở AI hỗ trợ → xem dữ liệu gửi → chủ động đồng ý → Yêu cầu AI phân tích. Dùng OpenAI Responses API với Structured Outputs, `store=false`, giới hạn đầu ra và timeout; không cần cài thêm SDK hoặc chạy worker cho phần AI ở mốc này. Hạn mức sử dụng và phí API thuộc tài khoản OpenAI riêng.
 
 Dữ liệu gửi dùng mã việc/môn, số phút, deadline, tùy chọn học và cảnh báo; không gửi tên, email, ghi chú, tài liệu hoặc token Google. Mỗi nhận xét phải dẫn mã căn cứ hợp lệ, được kiểm tra trước khi hiển thị; điều này không bảo đảm diễn giải của AI luôn đúng. Kết quả chỉ để tham khảo, không tự sửa lịch/tiến độ. Lịch sử giữ bản dữ liệu và kết quả theo chủ sở hữu, phát hiện khi dữ liệu đã đổi. Tối đa 5 yêu cầu/ngày/user, cách nhau ít nhất 60 giây; không tự gọi lại khi lỗi. Chi tiết cấu hình, kiểm thử và giới hạn ở phần mốc 10 cuối `HD_Test.md`. Kiểm thử agent dùng API giả lập; chưa gửi dữ liệu hoặc tạo phí trên OpenAI thật.
+
+Mốc 11 thêm `config.production` yêu cầu PostgreSQL/HTTPS/secret riêng, `config.assets` đóng gói static bằng WhiteNoise, máy chủ WSGI Waitress, Dockerfile/Compose và CI kiểm thử SQLite/PostgreSQL. Đã có `/health/`, trang lỗi 403/404/500 tiếng Việt và nút bắt đầu trên trang chủ đổi theo trạng thái đăng nhập. Không có migration mới ở mốc này. Máy hiện tại chưa có Docker/PostgreSQL; chưa chạy chúng hoặc triển khai URL thật trong phiên này.
+
+Sau khi cài lại dependency, đóng gói static:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+```
+
+Để có dữ liệu trình bày, đăng ký một tài khoản riêng còn trống (không phải quản trị), sau đó:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py seed_demo --username demo
+```
+
+Lệnh không đổi mật khẩu, không ghi đè tài khoản có dữ liệu và chạy lại không tạo trùng. Tạo 2 môn, 5 việc, 2 tài liệu, lịch bận, 3 buổi (một khóa, một hủy) và 175 phút nhật ký; email tắt, không gọi Google/OpenAI. Thay `demo` bằng username tài khoản bạn vừa tạo. Xem [kịch bản nghiệm thu](docs/NGHIEM_THU.md), [cách chạy Waitress/Docker và chuẩn bị production](docs/TRIEN_KHAI.md) cùng checklist mốc 11 cuối `HD_Test.md`.
