@@ -2,9 +2,11 @@
 
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
-Mốc cần kiểm thử hiện tại: **mốc 11 — giao diện, dữ liệu demo và cấu hình triển khai**, ở phần cuối tài liệu. Theo lựa chọn người dùng: chưa triển khai online.
+**Phạm vi mới nhất:** người dùng yêu cầu hoàn tất toàn bộ kế hoạch trừ public website, không dừng giữa các phần của lượt hoàn thiện. Chưa có khóa dịch vụ; hoàn thiện mã và hướng dẫn trước. Checklist cần thử hiện tại là **Hoàn thiện toàn bộ phạm vi source — 15/11/2026** ở cuối tài liệu. Những mục bên dưới giữ nguyên làm lịch sử.
 
-Bản sửa mới nhất: **Bổ sung mốc 11 — CI/PostgreSQL, ngày 15/11/2026**, ở cuối tài liệu. Giữ nguyên các kết quả cũ làm lịch sử.
+Bản sửa trước lượt hoàn thiện: **Bổ sung mốc 11 — CI/PostgreSQL, ngày 15/11/2026**. Giữ nguyên các kết quả cũ làm lịch sử; phần hoàn thiện mới nằm sau mục xác minh CI.
+
+Kết quả CI đã xác minh gần nhất thuộc **commit cfcb3b5**. Bản hoàn thiện mới qua 272 test SQLite và HTTP/worker tại máy, chưa được push/chạy Actions. Các ghi nhận chưa truy cập được Actions bên dưới là lịch sử của lần kiểm tra trước.
 
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
@@ -1505,3 +1507,183 @@ Phạm vi người dùng chọn: kiểm tra CI/sửa lỗi, vẫn chưa triển 
    ```
 
    Agent không stage/commit/push hoặc yêu cầu chạy lại workflow thay bạn. Binaries/database PostgreSQL thử đã được dừng và dọn sau xác minh; giữ .venv, database, secret và log thử ngoài Git. Tiếp tục dừng ở mốc 11 để bạn kiểm thử bản sửa.
+
+---
+
+**Xác minh GitHub Actions — kết thúc phần CI của mốc 11 (15/11/2026)**
+
+1. **Bản mã và bằng chứng**
+
+   Đã đọc nhánh main trên GitHub và kết quả Actions bằng phiên Git đang có tại máy:
+
+   - Commit: `cfcb3b5293e3bee7b9bab101d510be61b82af67e` (`update 12`).
+   - [Workflow Tests — run 43715304135](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135): `completed`, `success`.
+   - [Job sqlite](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135/job/132815431463): `success`.
+   - [Job postgres](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135/job/132815431816): `success`.
+
+   | Phần kiểm tra | Kết quả đã đọc từ Actions |
+   |---|---|
+   | Windows/SQLite: cài dependency, collectstatic, toàn bộ test và kiểm tra migration thiếu | Tất cả thành công |
+   | Linux/PostgreSQL 17: khởi tạo container DB, migrate, collectstatic production, check --deploy, toàn bộ test | Tất cả thành công |
+   | docker build --tag nhiphoc-test . | Thành công |
+   | docker compose config --quiet | Thành công |
+
+   Không có lỗi CI mới cần sửa. Lần này chỉ cập nhật tài liệu, không đổi mã ứng dụng/test/workflow hoặc chạy lại các test đã qua. Không chạy lại workflow, tạo dịch vụ hay triển khai online.
+
+2. **Cách bạn đối chiếu**
+
+   Mở liên kết run ở trên bằng tài khoản có quyền đọc repository. Kiểm tra phần commit đúng `cfcb3b5`, hai job có trạng thái thành công, rồi mở các bước test/build để xem chi tiết. Không dùng kết quả của commit khác làm bằng chứng cho bản này.
+
+   Docker build và Compose config thành công chưa đồng nghĩa đã chạy toàn bộ web/hai worker bằng Compose. Chưa xác minh `docker compose up`, vòng đời dữ liệu qua restart/deploy hoặc URL HTTPS thật. Những phần này vẫn giữ nguyên phạm vi chưa triển khai theo lựa chọn của bạn.
+
+3. **Lưu cập nhật tài liệu nếu bạn muốn**
+
+   ```powershell
+   git diff --check
+   git add README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md docs/TRIEN_KHAI.md docs/NGHIEM_THU.md
+   git diff --cached --stat
+   git commit -m "docs: record successful CI verification for cfcb3b5"
+   git push origin main
+   ```
+
+   Kết quả ở trên thuộc commit mã nguồn `cfcb3b5`; commit tài liệu mới sẽ có SHA/lần chạy CI riêng. Agent không commit/push thay bạn. Phần CI đang dang dở đã được xác minh; phần online chỉ tiếp tục khi bạn yêu cầu.
+
+---
+
+## Hoàn thiện toàn bộ phạm vi source — 15/11/2026
+
+Đây là checklist hiện tại. Theo yêu cầu mới, agent hoàn thiện liên tục toàn bộ kế hoạch, trừ public website. Người dùng chọn **chưa có khóa, hoàn thiện mã và hướng dẫn trước**. Không coi Google/SMTP/OpenAI thật hoặc URL online là đã nghiệm thu. Không có migration mới, không đổi `.env` hoặc dữ liệu SQLite cá nhân; agent không commit/push.
+
+### Phần vừa bổ sung
+
+- `/` sau đăng nhập là Tổng quan: buổi hôm nay/đã học, phút nhật ký trong 7 ngày gồm hôm nay, số việc quá hạn và nhắc web chưa đọc.
+- Tối đa 6 buổi chưa ghi nhận sắp tới (gồm buổi đang diễn ra) và 6 việc quá hạn/đến hạn trong 7 ngày. Chỉ tính buổi của kế hoạch đã áp dụng; buổi hủy không được tính.
+- Lối trở lại phiên học/nghỉ đang chạy hoặc tạm dừng; hướng dẫn bắt đầu cho tài khoản chưa có việc.
+- Đăng nhập mặc định vào Tổng quan; đường `next` nội bộ vẫn hoạt động. Trang tài khoản giữ ở `/accounts/profile/`.
+- `/huong-dan/` có 6 bước sử dụng và liên kết chức năng, dùng được cả khi chưa đăng nhập. Các liên kết cần quyền sẽ yêu cầu đăng nhập.
+- `deploy/smoke.py` kiểm tra HTTP thật; chế độ đầy đủ tạo hai tài khoản thử và đi qua hành trình chính, có lựa chọn chờ nhắc từ worker.
+- CI bổ sung chạy Compose, web và hai worker, kiểm tra hành trình rồi dọn dữ liệu CI. Chưa chạy workflow mới trên GitHub.
+- `docs/BAO_CAO_DU_AN.md`: đối chiếu yêu cầu, giải pháp, dữ liệu/kiến trúc, thuật toán, kết quả và dàn ý bảo vệ.
+
+### 1. Cập nhật và chạy tại máy
+
+Tại thư mục dự án, giữ nguyên `.env`/database. Nếu đang chạy server, Ctrl+C trong terminal của server đó rồi chạy lại:
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py check
+& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+& .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+& .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Mong đợi: không lỗi cấu hình, `No changes detected`, static được đóng gói và web mở tại [localhost](http://127.0.0.1:8000/). Chỉ chạy migrate khi dựng database mới hoặc còn migration các mốc trước chưa áp dụng. Không chép đè `.env` bằng file mẫu.
+
+### 2. Checklist kiểm thử bằng tay
+
+Dùng tài khoản thử riêng để số liệu dễ đối chiếu; tự chọn mật khẩu. Tài khoản thật đã có dữ liệu sẽ có số liệu tương ứng, không nhất thiết bằng các số của tài khoản trống dưới đây.
+
+| # | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| 1 | Chưa đăng nhập, mở `/` và bấm Cách sử dụng | Trang giới thiệu và hướng dẫn 6 bước mở được; không có dữ liệu cá nhân |
+| 2 | Đăng ký tài khoản A mới, đăng nhập | Vào Tổng quan, 4 số liệu bằng 0, có hướng dẫn thêm dữ liệu; Tài khoản và Đăng xuất hoạt động |
+| 3 | Mở các liên kết thêm môn/việc/lịch bận/giờ học từ Tổng quan | Đúng biểu mẫu tương ứng, không có liên kết chết |
+| 4 | Thêm môn Python; thêm việc 60 phút, chia nhỏ, hạn thứ Sáu của một tuần tương lai; thêm việc 30 phút có hạn hôm qua | Tổng quan có 1 việc quá hạn, hiện việc đó; danh sách Công việc lọc Quá hạn đúng |
+| 5 | Tạo lịch bận thứ Hai tuần đã chọn 09:00–10:00. Đặt ngày học cả tuần, 08:00–18:00, tối đa 120 phút/ngày, buổi 30/nghỉ 10 | Lịch tuần hiển thị lịch bận; tùy chọn giữ sau tải lại |
+| 6 | Tạo kế hoạch Bổ sung cho tuần đó, xem trước rồi áp dụng | Việc tương lai được xếp 60 phút, không trùng lịch bận, không quá hạn/giới hạn; việc đã quá hạn có báo chưa bố trí. Bản nháp chưa xuất hiện trên lịch trước khi áp dụng |
+| 7 | Khóa một buổi, chỉnh giờ một buổi hợp lệ, thử chỉnh trùng lịch bận; xem trước Xếp lại | Khóa/chỉnh giờ hợp lệ lưu được, giờ trùng bị từ chối; Xếp lại giữ buổi khóa/chỉnh tay. Kiểm tra báo cáo trước khi áp dụng |
+| 8 | Nhập nhật ký 25 phút hôm nay cho việc của A; mở Tổng quan và Thống kê | Tổng phút 7 ngày tăng 25; với tài khoản chưa có nhật ký khác là 25. Thời lượng công việc còn lại không tự giảm |
+| 9 | Bắt đầu Pomodoro, tạm dừng, về Tổng quan, bấm Trở lại đồng hồ | Đúng phiên đang chạy/tạm dừng, không tạo phiên thứ hai; tải lại vẫn khôi phục. Hủy phiên thử không thêm nhật ký |
+| 10 | Tạo một việc thử có hạn sau khoảng 2 giờ; chạy worker nhắc ở terminal riêng bằng lệnh dưới | Sau một lượt worker, thông báo web xuất hiện. Tổng quan tăng số chưa đọc; đánh dấu đã đọc rồi về Tổng quan thì số giảm. Email vẫn tắt |
+| 11 | Đăng nhập B trong phiên trình duyệt khác; mở URL sửa việc/kế hoạch/phiên Pomodoro của A | 404; danh sách, Tổng quan, thống kê và lịch sử của B không lộ dữ liệu A. User thường không vào được quản trị |
+| 12 | Chọn Hoàn thành cho việc quá hạn của A | Phút còn lại về 0; không còn trong nhóm quá hạn ở Tổng quan. Nhật ký học trước đó vẫn giữ |
+| 13 | Mở Đồng bộ và AI hỗ trợ khi chưa cấu hình key | Web thông báo cần cấu hình; AI vẫn có phân tích Python; không tự gọi nhà cung cấp, đổi lịch hoặc gửi email |
+| 14 | Thu màn hình về khoảng 375px, mở Tổng quan, hướng dẫn và các liên kết thao tác | Đọc được, các khối xếp xuống dòng, không tràn ngang; nút và liên kết bấm được |
+| 15 | Tắt rồi chạy lại web/worker; đăng nhập lại | Dữ liệu đã lưu còn; các thay đổi không phụ thuộc trình duyệt mở. Worker nhắc và Calendar là hai tiến trình riêng |
+
+Lệnh worker nhắc để thử nhanh, tại terminal thứ hai dùng cùng cấu hình/database:
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py process_reminders --watch --interval 5
+```
+
+Dừng Ctrl+C sau khi thử. Có thể dùng mặc định 60 giây khi vận hành. Worker Calendar ở terminal khác:
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py process_calendar_sync --watch
+```
+
+Chưa có kết nối/job Google thì worker này không đồng bộ gì ra ngoài. Các checklist chi tiết mốc 03–10 ở trên vẫn dùng để thử sửa/xóa, lỗi đầu vào và từng quy tắc; bảng này là hành trình nghiệm thu chung.
+
+### 3. Kiểm thử tự động
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
+& .\.venv\Scripts\python.exe -m pip check
+git diff --check
+```
+
+Mong đợi cho bản hiện tại: **272 test, OK**, `No broken requirements found`, không lỗi whitespace. Django tự tạo/xóa database test riêng; không xóa database cá nhân. Nếu chọn DATABASE_URL, dùng PostgreSQL kiểm thử riêng với quyền tạo database test. Không trỏ bài test vào production.
+
+Chạy riêng phần mới:
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test core.test_dashboard core.test_smoke accounts --noinput
+```
+
+Test mới kiểm tra ngày Việt Nam qua ranh giới UTC, số phút đúng 7 ngày, buổi nháp/hủy, trạng thái nhắc, phân quyền owner, thoát HTML và việc GET Tổng quan chỉ đọc/không gọi API. Test công cụ smoke chặn URL ngoài loopback và không theo link/redirect sang host hoặc cổng khác.
+
+### 4. Kiểm thử HTTP thật / CI mới
+
+- Chỉ đọc web đang chạy: `python -m deploy.smoke --base-url http://127.0.0.1:8000`.
+- Bài đầy đủ có `--allow-test-data` **tạo hai tài khoản/dữ liệu dùng một lần**, chỉ chạy ở môi trường QA riêng. `--expect-reminders` cần worker nhắc đang chạy, cùng database. Không dùng bài tạo dữ liệu trên SQLite cá nhân đang làm việc.
+- Cách dựng Compose riêng, các bước `PASS` và cách dừng giữ dữ liệu: [TRIEN_KHAI.md — HTTP](docs/TRIEN_KHAI.md#kiểm-thử-hành-trình-http-tại-máy).
+- Máy không có Docker vẫn kiểm thử đầy đủ bằng Django test và checklist tay. Nếu muốn chạy HTTP smoke không qua Docker, dựng một bản clone/database QA riêng, migrate và chạy web/hai worker trong môi trường đó; `--base-url` phải trỏ đúng bản QA. Không sửa `.env` cá nhân để phục vụ bài thử.
+- Sau push, mở Actions đúng SHA mới: hai job SQLite/PostgreSQL phải xanh; job PostgreSQL phải qua Start isolated local web and workers, HTTP journey/reminder và Verify long-running services. Xem log khi lỗi. Run cũ `43715304135` không chứng minh phần Compose mới đã chạy.
+
+### 5. Khóa dịch vụ: hoàn thiện hướng dẫn trước
+
+| Dịch vụ | Cấu hình khi đã có thông tin | Nơi xem hướng dẫn chi tiết / kết quả cần chứng minh |
+|---|---|---|
+| SMTP | `EMAIL_BACKEND` SMTP, `EMAIL_HOST/PORT/HOST_USER/HOST_PASSWORD`, TLS hoặc SSL đúng nhà cung cấp, `DEFAULT_FROM_EMAIL`, `SITE_URL` | Mốc 08: bật email cho tài khoản thử, worker bàn giao và hộp thư thật nhận; console không được tính là SMTP |
+| Google Calendar | OAuth Client loại Web, bật Calendar API, test user, callback trùng `GOOGLE_REDIRECT_URI`; `GOOGLE_CLIENT_ID/SECRET`, khóa Fernet `GOOGLE_TOKEN_ENCRYPTION_KEY` ổn định | Mốc 09: cấp quyền, đồng bộ buổi, kiểm tra tạo/sửa/gỡ trong lịch riêng, ngắt kết nối; test giả lập không thay kiểm thử Google thật |
+| OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL` có quyền sử dụng; restart web | Mốc 10: xem payload, đồng ý và yêu cầu; kiểm tra kết quả/lịch sử/căn cứ, lỗi và hạn mức. Không có key vẫn thử được phân tích Python |
+
+Chỉ cấu hình khóa trong `.env` bị Git bỏ qua hoặc môi trường tiến trình; không nhập khóa vào chat/giao diện người dùng, không chụp ảnh khóa. Chưa có khóa thì ghi `Chưa cấu hình/chưa thử thật`, không cần dừng việc nghiệm thu phần lõi. Các lệnh tạo khóa và checklist lỗi đã có trong phần mốc tương ứng ở trên.
+
+### 6. Kết quả agent đã kiểm chứng
+
+- **272/272 test SQLite qua**, gồm 12 test mới; không có migration bị thiếu; Django check, pip check, collectstatic và diff check qua.
+- Đã chạy web bằng **Waitress**, DEBUG tắt, static manifest/WhiteNoise, database SQLite QA riêng cùng **hai worker thật**; HTTP smoke qua đủ hành trình và nhận nhắc trong web. Không gửi SMTP, gọi Google/OpenAI hoặc dùng database cá nhân cho dữ liệu thử.
+- Đã kiểm tra trình duyệt: đăng nhập về Tổng quan, số liệu/demo, hướng dẫn và quay lại Pomodoro đang chạy/hủy; giao diện desktop và **375px**. Đo chiều rộng tài liệu bằng chiều rộng viewport, không có tràn ngang.
+- Kết quả PostgreSQL/CI **đã xác minh trước lượt này**: commit `cfcb3b5`, 260 test qua SQLite/PostgreSQL tại máy và hai job Actions thành công, gồm Docker build/Compose config. Bản mới thêm 12 test **chưa chạy lại trên PostgreSQL/Actions**, không dùng kết quả cũ thay thế.
+- **Chưa chạy Compose runtime tại máy** vì chưa có Docker; workflow đã bổ sung bài này nhưng cần push để chạy. **Chưa kiểm thử SMTP/Google/OpenAI thật** vì người dùng chưa có khóa. **Chưa public website** theo phạm vi yêu cầu.
+
+Ảnh QA được lưu ở thư mục artifact trên máy, dùng dữ liệu giả. Dữ liệu/process QA do agent tạo được dừng/dọn sau kiểm thử; các ảnh không chứa key hoặc dữ liệu tài khoản thật.
+
+### 7. Bàn giao và lưu lên GitHub sau khi bạn kiểm thử
+
+Đọc [báo cáo](docs/BAO_CAO_DU_AN.md) và [kịch bản demo](docs/NGHIEM_THU.md). Điền kết quả thật của bạn:
+
+- Commit/SHA: …
+- Tài khoản thử / ngày thử (không ghi mật khẩu): …
+- Checklist tay đạt / lỗi cần sửa: …
+- Test SQLite / PostgreSQL / Compose: …
+- SMTP / Google / OpenAI: chưa cấu hình hoặc kết quả thật …
+- Public website: chưa thực hiện theo phạm vi hiện tại.
+
+Agent giữ thay đổi ở working tree để bạn xem. Lưu source và tài liệu bằng các lệnh sau khi đã kiểm thử:
+
+```powershell
+git status --short
+git diff --check
+git add .github/workflows/tests.yml accounts/tests.py accounts/views.py config/settings.py
+git add core/dashboard.py core/test_dashboard.py core/test_smoke.py core/urls.py core/views.py
+git add deploy/smoke.py static/css/dashboard.css templates/base.html templates/core/dashboard.html templates/core/guide.html
+git add README.md HD_Test.md docs/BAO_CAO_DU_AN.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md docs/TRIEN_KHAI.md docs/NGHIEM_THU.md
+git diff --cached --stat
+git diff --cached --check
+git commit -m "feat: complete study overview and end-to-end verification"
+git push origin main
+```
+
+Kiểm tra danh sách stage không có `.env`, khóa, database, `.venv` hoặc dữ liệu QA. Thao tác commit/push source không public website. Sau push cần xem Actions của SHA mới; Google/SMTP/OpenAI thật vẫn chờ khóa và public website vẫn ngoài phạm vi hiện tại.

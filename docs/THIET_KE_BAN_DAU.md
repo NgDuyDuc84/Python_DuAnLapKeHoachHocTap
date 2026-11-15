@@ -1,10 +1,10 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. Tên Nhịp Học là tên hiển thị tạm thời. Đã triển khai chức năng đến mốc 10 và chuẩn bị giao diện/demo/cấu hình production ở mốc 11. Theo lựa chọn người dùng, chưa triển khai online. Kết nối Google và OpenAI thật cần cấu hình và kiểm thử theo HD_Test.md.
+Tài liệu ghi thiết kế và lịch sử triển khai. Các module chức năng đã có; lượt hoàn thiện ngày 15/11/2026 bổ sung Tổng quan, hướng dẫn sử dụng và kiểm thử HTTP. Theo lựa chọn người dùng, chưa public website và chưa có khóa dịch vụ thật. SMTP/Google/OpenAI cần cấu hình, kiểm thử theo HD_Test.md; xem bảng đối chiếu hiện tại trong BAO_CAO_DU_AN.md.
 
 1. **Phân chia trách nhiệm**
 
-   Python xử lý tài khoản, kiểm tra quyền, lưu dữ liệu, thời gian/lịch lặp, thuật toán lập kế hoạch, thống kê, cảnh báo, thông báo và gọi API. Django Templates dựng trang từ dữ liệu máy chủ. JavaScript chỉ cần cho các tương tác như kéo thả lịch và đồng hồ Pomodoro.
+   Python xử lý tài khoản, kiểm tra quyền, lưu dữ liệu, thời gian/lịch lặp, thuật toán lập kế hoạch, thống kê, cảnh báo, thông báo và gọi API. Django Templates dựng trang từ dữ liệu máy chủ. JavaScript hỗ trợ đồng hồ Pomodoro; chỉnh giờ buổi học dùng biểu mẫu có kiểm tra phía Python.
 
    Trong từng module: `models.py` biểu diễn dữ liệu; `forms.py` kiểm tra biểu mẫu; `views.py` nhận request; nghiệp vụ phức tạp đặt ở `services/`. Không chuyển thuật toán xếp lịch sang trình duyệt.
 
@@ -13,7 +13,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    | Module | Vai trò | Trạng thái hiện tại |
    |---|---|---|
    | config | Settings, URL, WSGI/ASGI | Đã tạo cho local |
-   | core | Trang chủ và giao diện chung | Đã tạo |
+   | core | Trang chủ, Tổng quan và giao diện chung | Đã có Tổng quan theo owner, hướng dẫn sử dụng, health, trang lỗi và dữ liệu demo |
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
@@ -123,7 +123,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
 
    `/health/` kiểm tra SELECT 1, trả 200/503 với trạng thái tối thiểu và không cache. Trang chủ đưa người chưa đăng nhập sang đăng ký, người đã đăng nhập vào lịch; trang lỗi 403/404/500 có thông báo và đường quay về. Lệnh `seed_demo --username` chỉ dùng tài khoản active không phải staff/admin, kiểm tra tài khoản còn trống, tạo dữ liệu một transaction và không đổi mật khẩu/gọi dịch vụ ngoài. Chạy lại khi có môn marker demo thì không ghi thêm. Không có schema mới hoặc tự nhập SQLite sang PostgreSQL. Chi tiết cấu hình/kịch bản ở docs/TRIEN_KHAI.md và docs/NGHIEM_THU.md.
 
-   Bổ sung kiểm tra CI ngày 15/11/2026: PostgreSQL làm lộ việc test command worker đóng kết nối của transaction do TestCase quản lý; SQLite in-memory bỏ qua close nên trước đó không thấy lỗi. Các test nghiệp vụ command chỉ giả lập dọn kết nối trong wrapper TestCase; hai test TransactionTestCase riêng buộc kết nối hết hạn rồi chạy cleanup thật và kiểm tra kết quả. Không sửa cơ chế cleanup của worker độc lập. Toàn bộ 260 test đã qua trên SQLite và PostgreSQL 17.12 portable tại máy; Docker/GitHub Actions và URL online chưa được xác nhận. PostgreSQL thử nghiệm chỉ dùng loopback và database riêng.
+   Bổ sung kiểm tra CI ngày 15/11/2026: PostgreSQL làm lộ việc test command worker đóng kết nối của transaction do TestCase quản lý; SQLite in-memory bỏ qua close nên trước đó không thấy lỗi. Các test nghiệp vụ command chỉ giả lập dọn kết nối trong wrapper TestCase; hai test TransactionTestCase riêng buộc kết nối hết hạn rồi chạy cleanup thật và kiểm tra kết quả. Không sửa cơ chế cleanup của worker độc lập. Toàn bộ 260 test đã qua trên SQLite và PostgreSQL 17.12 portable tại máy; Actions của commit cfcb3b5 cũng thành công cho SQLite/Windows, PostgreSQL/Linux, Docker build và Compose config. Chưa chạy toàn bộ ứng dụng qua Compose hoặc URL online. PostgreSQL thử nghiệm tại máy chỉ dùng loopback và database riêng.
 
 4. **Quy tắc lịch**
 
@@ -141,7 +141,7 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
    |---|---|
    | Trang chủ | Giới thiệu ngắn và cách sử dụng; đã có ở mốc 01 |
    | Tài khoản | Đăng ký, đăng nhập/đăng xuất, đổi mật khẩu |
-   | Tổng quan | Hôm nay, deadline gần, cảnh báo, thao tác chính |
+   | Tổng quan | Đã có: buổi hôm nay, phút học 7 ngày, việc quá hạn, nhắc chưa đọc, buổi/việc sắp tới, phiên tập trung và thao tác chính |
    | Môn học/công việc | Nhập, sửa, lọc và quản lý tiến độ |
    | Lịch tuần | Lịch bận, buổi học, tạo và chỉnh phương án |
    | Tài liệu | Liên kết theo môn hoặc công việc |

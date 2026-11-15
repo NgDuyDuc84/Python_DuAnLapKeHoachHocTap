@@ -49,3 +49,17 @@ jobs:
       - run: python manage.py test --noinput
       - run: docker build --tag nhiphoc-test .
       - run: docker compose config --quiet
+      - name: Start isolated local web and workers
+        run: docker compose -p ci-smoke up --build --detach
+      - name: Verify complete HTTP journey and reminder worker
+        run: python -m deploy.smoke --allow-test-data --expect-reminders
+      - name: Verify long-running services
+        run: |
+          docker compose -p ci-smoke ps --status running --services > running-services.txt
+          python -c "from pathlib import Path; assert set(Path('running-services.txt').read_text().split()) == {'db', 'web', 'reminders', 'calendar'}"
+      - name: Show local service logs on failure
+        if: failure()
+        run: docker compose -p ci-smoke logs --no-color --tail=120
+      - name: Remove isolated CI services and data
+        if: always()
+        run: docker compose -p ci-smoke down --volumes --remove-orphans

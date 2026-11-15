@@ -7,8 +7,9 @@
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 - [Cấu hình chạy và triển khai](docs/TRIEN_KHAI.md)
 - [Dữ liệu demo và kịch bản nghiệm thu](docs/NGHIEM_THU.md)
+- [Báo cáo kỹ thuật và đối chiếu yêu cầu](docs/BAO_CAO_DU_AN.md)
 
-Hiện tại: **mốc 11 — hoàn thiện giao diện, dữ liệu demo và cấu hình triển khai**, đang chờ người dùng kiểm thử và push GitHub. Theo lựa chọn của người dùng, **chưa triển khai online**. Tên hiển thị tạm thời của ứng dụng là **Nhịp Học**.
+Hiện tại: **đã hoàn thiện phạm vi mã nguồn của kế hoạch, trừ public website**. Đã có Tổng quan sau đăng nhập, hướng dẫn trong web và công cụ kiểm thử hành trình HTTP qua web/worker. Bản hiện tại qua **272 test SQLite** và kiểm thử HTTP trên Waitress tại máy. SMTP, Google Calendar và OpenAI thật chưa được xác minh vì chưa có khóa. CI mới bổ sung chạy Compose cần xác minh sau lần push tiếp theo; kết quả CI đã thành công của commit `cfcb3b5` vẫn được giữ làm lịch sử. Tên hiển thị của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -28,6 +29,8 @@ Mặc định local dùng SQLite; đã có cấu hình PostgreSQL/production và
 
 Các trang chính:
 
+- [Tổng quan](http://127.0.0.1:8000/): sau đăng nhập, xem buổi hôm nay, phút học 7 ngày, việc quá hạn, thông báo chưa đọc, buổi sắp tới và Pomodoro đang hoạt động.
+- [Cách sử dụng](http://127.0.0.1:8000/huong-dan/): hướng dẫn 6 bước từ nhập việc đến điều chỉnh kế hoạch.
 - [Đăng ký](http://127.0.0.1:8000/accounts/register/): tên đăng nhập duy nhất, email và mật khẩu.
 - [Đăng nhập](http://127.0.0.1:8000/accounts/login/): dùng tên đăng nhập.
 - [Tài khoản của bạn](http://127.0.0.1:8000/accounts/profile/): yêu cầu đăng nhập, có liên kết đổi mật khẩu.
@@ -110,7 +113,7 @@ Muốn dùng AI thật, thêm `OPENAI_API_KEY` vào `.env`; `OPENAI_MODEL` mặc
 
 Dữ liệu gửi dùng mã việc/môn, số phút, deadline, tùy chọn học và cảnh báo; không gửi tên, email, ghi chú, tài liệu hoặc token Google. Mỗi nhận xét phải dẫn mã căn cứ hợp lệ, được kiểm tra trước khi hiển thị; điều này không bảo đảm diễn giải của AI luôn đúng. Kết quả chỉ để tham khảo, không tự sửa lịch/tiến độ. Lịch sử giữ bản dữ liệu và kết quả theo chủ sở hữu, phát hiện khi dữ liệu đã đổi. Tối đa 5 yêu cầu/ngày/user, cách nhau ít nhất 60 giây; không tự gọi lại khi lỗi. Chi tiết cấu hình, kiểm thử và giới hạn ở phần mốc 10 cuối `HD_Test.md`. Kiểm thử agent dùng API giả lập; chưa gửi dữ liệu hoặc tạo phí trên OpenAI thật.
 
-Mốc 11 thêm `config.production` yêu cầu PostgreSQL/HTTPS/secret riêng, `config.assets` đóng gói static bằng WhiteNoise, máy chủ WSGI Waitress, Dockerfile/Compose và CI kiểm thử SQLite/PostgreSQL. Đã có `/health/`, trang lỗi 403/404/500 tiếng Việt và nút bắt đầu trên trang chủ đổi theo trạng thái đăng nhập. Không có migration mới ở mốc này. Bổ sung ngày 15/11/2026: đã sửa lỗi quản lý kết nối trong test worker và chạy **260/260 test trên SQLite, 260/260 trên PostgreSQL 17.12 portable**. Docker và URL online chưa chạy; trạng thái Actions trên GitHub chưa đọc được trong phiên hiện tại. Xem phần bổ sung CI cuối `HD_Test.md`.
+Mốc 11 thêm `config.production` yêu cầu PostgreSQL/HTTPS/secret riêng, `config.assets` đóng gói static bằng WhiteNoise, máy chủ WSGI Waitress, Dockerfile/Compose và CI kiểm thử SQLite/PostgreSQL. Đã có `/health/`, trang lỗi 403/404/500 tiếng Việt và nút bắt đầu trên trang chủ đổi theo trạng thái đăng nhập. Không có migration mới ở mốc này. Bổ sung ngày 15/11/2026: đã sửa lỗi quản lý kết nối trong test worker và chạy **260/260 test trên SQLite, 260/260 trên PostgreSQL 17.12 portable**. [GitHub Actions của bản sửa cfcb3b5](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135) cũng thành công cho cả hai job, Docker build và Compose config. Chưa chạy toàn bộ ứng dụng bằng Compose hoặc triển khai URL online. Xem phần xác minh CI cuối `HD_Test.md`.
 
 Sau khi cài lại dependency, đóng gói static:
 
@@ -124,4 +127,13 @@ Sau khi cài lại dependency, đóng gói static:
 & .\.venv\Scripts\python.exe manage.py seed_demo --username demo
 ```
 
-Lệnh không đổi mật khẩu, không ghi đè tài khoản có dữ liệu và chạy lại không tạo trùng. Tạo 2 môn, 5 việc, 2 tài liệu, lịch bận, 3 buổi (một khóa, một hủy) và 175 phút nhật ký; email tắt, không gọi Google/OpenAI. Thay `demo` bằng username tài khoản bạn vừa tạo. Xem [kịch bản nghiệm thu](docs/NGHIEM_THU.md), [cách chạy Waitress/Docker và chuẩn bị production](docs/TRIEN_KHAI.md) cùng checklist mốc 11 cuối `HD_Test.md`.
+Lệnh không đổi mật khẩu, không ghi đè tài khoản có dữ liệu và chạy lại không tạo trùng. Tạo 2 môn, 5 việc, 2 tài liệu, lịch bận, 3 buổi (một khóa, một hủy) và 175 phút nhật ký; email tắt, không gọi Google/OpenAI. Thay `demo` bằng username tài khoản bạn vừa tạo. Thống kê mặc định chỉ cộng 7 ngày gần nhất nên có thể ít hơn 175 phút; mở rộng khoảng ngày để xem toàn bộ. Xem [kịch bản nghiệm thu](docs/NGHIEM_THU.md), [cách chạy Waitress/Docker và chuẩn bị production](docs/TRIEN_KHAI.md) cùng checklist hoàn thiện cuối `HD_Test.md`.
+
+Kiểm tra kỹ thuật thông thường:
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
+& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+```
+
+Đã có `python -m deploy.smoke` để kiểm tra health/static tại localhost. Chế độ `--allow-test-data` tạo hai tài khoản và dữ liệu thử, chỉ chạy trên database kiểm thử riêng theo [hướng dẫn HTTP/Compose](docs/TRIEN_KHAI.md#kiểm-thử-hành-trình-http-tại-máy). Không có migration mới cho Tổng quan. Sau cập nhật, khởi động lại server và chạy lại `collectstatic` nếu dùng Waitress/WhiteNoise.

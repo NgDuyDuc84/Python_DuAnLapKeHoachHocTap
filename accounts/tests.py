@@ -68,20 +68,20 @@ class AccountFlowTests(TestCase):
         for name in ("accounts:register", "accounts:login"):
             with self.subTest(name=name):
                 self.assertRedirects(
-                    self.client.get(reverse(name)), reverse("accounts:profile")
+                    self.client.get(reverse(name)), reverse("core:home")
                 )
         response = self.client.post(
             reverse("accounts:register"), self.registration_data()
         )
-        self.assertRedirects(response, reverse("accounts:profile"))
+        self.assertRedirects(response, reverse("core:home"))
         self.assertEqual(User.objects.count(), 3)
 
-    def test_login_opens_own_profile(self):
+    def test_login_opens_dashboard_and_profile_is_accessible(self):
         response = self.client.post(
             reverse("accounts:login"),
             {"username": self.student.username, "password": self.password},
         )
-        self.assertRedirects(response, reverse("accounts:profile"))
+        self.assertRedirects(response, reverse("core:home"))
         response = self.client.get(reverse("accounts:profile"))
         self.assertContains(response, self.student.email)
         self.assertContains(response, reverse("accounts:logout"))
@@ -115,7 +115,7 @@ class AccountFlowTests(TestCase):
                         "next": target,
                     },
                 )
-                self.assertRedirects(response, reverse("accounts:profile"))
+                self.assertRedirects(response, reverse("core:home"))
 
     def test_login_preserves_safe_next_url(self):
         target = reverse("accounts:password_change")
@@ -189,7 +189,7 @@ class AccountFlowTests(TestCase):
                 "csrfmiddlewaretoken": strict_client.cookies["csrftoken"].value,
             },
         )
-        self.assertRedirects(response, reverse("accounts:profile"))
+        self.assertRedirects(response, reverse("core:home"))
 
     def test_password_change_keeps_current_session_and_revokes_other_session(self):
         self.client.login(username=self.student.username, password=self.password)
@@ -227,7 +227,7 @@ class AccountFlowTests(TestCase):
             reverse("accounts:login"),
             {"username": self.student.username, "password": self.new_password},
         )
-        self.assertRedirects(response, reverse("accounts:profile"))
+        self.assertRedirects(response, reverse("core:home"))
 
     def test_invalid_password_change_preserves_existing_password(self):
         self.client.force_login(self.student)

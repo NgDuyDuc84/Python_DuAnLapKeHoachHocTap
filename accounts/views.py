@@ -15,7 +15,7 @@ class RegisterView(SuccessMessageMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
-            return redirect("accounts:profile")
+            return redirect("core:home")
         return super().dispatch(request, *args, **kwargs)
 
 

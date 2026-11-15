@@ -17,8 +17,8 @@
                 <span class="brand-mark" aria-hidden="true">n.</span> Nhịp Học
             </a>
             <nav aria-label="Điều hướng chính">
-                <a href="{% url 'core:home' %}">Trang chủ</a>
-                <a href="{% url 'core:home' %}#cach-su-dung">Cách sử dụng</a>
+                <a href="{% url 'core:home' %}"{% if request.resolver_match.url_name == 'home' and request.resolver_match.namespace == 'core' %} aria-current="page"{% endif %}>{% if user.is_authenticated %}Tổng quan{% else %}Trang chủ{% endif %}</a>
+                <a href="{% url 'core:guide' %}">Cách sử dụng</a>
                 {% if user.is_authenticated %}
                     <a href="{% url 'studies:task_list' %}">Học tập</a>
                     <a href="{% url 'planner:week' %}">Lịch tuần</a>

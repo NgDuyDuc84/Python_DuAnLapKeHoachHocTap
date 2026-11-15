@@ -2,6 +2,8 @@
 
 Định hướng đã thống nhất: Django/Python xử lý nghiệp vụ, PostgreSQL cho bản online, giao diện Django Templates và JavaScript tối thiểu cho lịch/Pomodoro. Các giai đoạn không gắn với lịch trình hay số thành viên.
 
+**Phạm vi hiện tại, ngày 15/11/2026:** người dùng yêu cầu hoàn tất toàn bộ kế hoạch, trừ public website; không còn dừng giữa các mốc trong lượt hoàn thiện này. Người dùng chưa có khóa SMTP/Google/OpenAI và chọn hoàn thiện mã cùng hướng dẫn trước. Mã nguồn các nhóm chức năng dưới đây đã có; bổ sung cuối gồm Tổng quan sau đăng nhập, hướng dẫn trong web, bài kiểm thử HTTP và tài liệu báo cáo. Phần dịch vụ thật/URL online chưa được coi là đã nghiệm thu. Xem [bảng đối chiếu](BAO_CAO_DU_AN.md) và checklist hoàn thiện cuối HD_Test.md.
+
 1. Chốt quy tắc nghiệp vụ, dữ liệu và màn hình.
 2. Dựng bộ khung Django, giao diện chung và môi trường triển khai.
 3. Làm tài khoản, quyền người dùng/quản trị và bảo vệ dữ liệu theo chủ sở hữu.
@@ -20,6 +22,8 @@ Phần lõi phải hoạt động độc lập với AI. Thuật toán không đ
 Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc việc, đồng bộ và AI đều phải hoàn thành trước nghiệm thu. Bản khung local chưa phải sản phẩm hoàn chỉnh theo đề.
 
 **Quy trình từng mốc**
+
+Đây là quy trình lịch sử đã dùng từ mốc 01–11. Yêu cầu hoàn thiện toàn bộ ở trên thay thế việc dừng sau từng mốc cho lượt hiện tại.
 
 - Mỗi mốc có phạm vi, kiểm tra kỹ thuật và checklist trong `HD_Test.md`.
 - Dừng sau mốc để người dùng kiểm thử, commit và push GitHub.
@@ -46,8 +50,10 @@ Các chức năng quản lý tài khoản, lịch, tài liệu, Pomodoro, nhắc
 
 **Mốc 10:** đã triển khai trang AI hỗ trợ, tổng hợp nhật ký 14 ngày/việc/phương án bổ sung/cảnh báo bằng Python, nhận xét không cần API và yêu cầu AI có bước xem trước/đồng ý. Dùng OpenAI Responses API với JSON schema, kiểm tra căn cứ, dữ liệu dùng mã thay tên, lịch sử theo owner, báo thay đổi dữ liệu và giới hạn số lần gọi. AI không tự đổi lịch/tiến độ. Đã kiểm thử API giả lập; API thật cần OPENAI_API_KEY theo `HD_Test.md`. Người dùng đã cho phép chuyển sang mốc 11.
 
-**Mốc 11 hiện tại:** theo lựa chọn của người dùng, chỉ hoàn thiện tại máy và chuẩn bị cấu hình, chưa triển khai online. Đã thêm cấu hình PostgreSQL/production, static manifest, Waitress, Docker/Compose, CI, health endpoint, giao diện lỗi và đường bắt đầu phù hợp trạng thái đăng nhập. Có lệnh demo dành cho tài khoản riêng còn trống và tài liệu chạy/nghiệm thu. Bổ sung ngày 15/11/2026: đã tái hiện và sửa lỗi kết nối của test worker trên PostgreSQL; 260 test qua trên SQLite và PostgreSQL 17.12 portable, cùng các bước migration/static/deploy checks. Docker chưa chạy; chưa đọc được trạng thái Actions của repository trong phiên hiện tại. Đang chờ người dùng kiểm thử và push bản sửa.
+**Mốc 11 hiện tại:** theo lựa chọn của người dùng, chỉ hoàn thiện tại máy và chuẩn bị cấu hình, chưa triển khai online. Đã thêm cấu hình PostgreSQL/production, static manifest, Waitress, Docker/Compose, CI, health endpoint, giao diện lỗi và đường bắt đầu phù hợp trạng thái đăng nhập. Có lệnh demo dành cho tài khoản riêng còn trống và tài liệu chạy/nghiệm thu. Bổ sung ngày 15/11/2026: đã tái hiện và sửa lỗi kết nối của test worker trên PostgreSQL; 260 test qua trên SQLite và PostgreSQL 17.12 portable, cùng các bước migration/static/deploy checks. Bản sửa `cfcb3b5` đã được push và xác minh Actions thành công: SQLite/Windows, PostgreSQL/Linux, Docker build và Compose config. Chưa chạy toàn bộ ứng dụng qua Compose hoặc triển khai URL thật. Không có lỗi CI mới cần sửa ở commit này.
 
-**Phần online còn lại:** khi người dùng yêu cầu triển khai, chọn hosting, chạy PostgreSQL thật và CI, vận hành hai worker, cấu hình HTTPS/SMTP/OAuth/API theo môi trường và kiểm thử trên URL thật. Đây vẫn là điều kiện bắt buộc theo đề, chưa được coi là hoàn thành ở mốc 11.
+**Hoàn thiện cuối:** đã thêm Tổng quan chỉ đọc dữ liệu riêng, hướng dẫn 6 bước, chuyển đăng nhập mặc định về Tổng quan; giữ `next` nội bộ. Công cụ `deploy.smoke` kiểm tra health/static hoặc tạo hai tài khoản thử để đi qua toàn bộ hành trình HTTP; có lựa chọn chờ worker nhắc. Bổ sung CI khởi động Compose và kiểm tra web/hai worker sau bộ test. Đã chạy 272 test SQLite, HTTP qua Waitress + hai worker và kiểm tra giao diện máy tính/375px. Phần CI mới cần được push/chạy để xác minh; máy hiện tại chưa có Docker. Đã bổ sung báo cáo và hướng dẫn nghiệm thu tổng thể, giữ nguyên checklist cũ.
+
+**Phần online còn lại, ngoài phạm vi hiện tại:** khi người dùng yêu cầu triển khai, chọn hosting, vận hành PostgreSQL bền vững và hai worker, cấu hình HTTPS/SMTP/OAuth/API theo môi trường và kiểm thử trên URL thật. Đây vẫn là điều kiện bắt buộc theo đề khi nộp sản phẩm online, chưa được coi là đã hoàn thành.
 
 PostgreSQL và bản online giữ thành hạng mục triển khai riêng, được thực hiện sau các mốc chức năng ưu tiên theo yêu cầu người dùng; URL online vẫn là điều kiện bắt buộc trước nghiệm thu. Các module mới chỉ tạo khi đến mốc cần dùng.

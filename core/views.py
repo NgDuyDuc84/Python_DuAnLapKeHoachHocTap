@@ -3,9 +3,19 @@ from django.db import DatabaseError, connection
 from django.http import JsonResponse
 from django.views.decorators.http import require_safe
 
+from .dashboard import build_dashboard
+
 
 def home(request):
+    if request.user.is_authenticated:
+        response = render(request, "core/dashboard.html", build_dashboard(request.user))
+        response["Cache-Control"] = "no-store"
+        return response
     return render(request, "core/home.html")
+
+
+def guide(request):
+    return render(request, "core/guide.html")
 
 
 @require_safe

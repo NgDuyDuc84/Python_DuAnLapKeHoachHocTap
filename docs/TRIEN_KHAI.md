@@ -1,6 +1,8 @@
 # Cấu hình chạy và triển khai Nhịp Học
 
-Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Bổ sung ngày 15/11/2026: đã chạy 260 test trên SQLite và 260 test trên PostgreSQL 17.12 portable, cùng migration/static/deploy checks và hai worker trên database PostgreSQL tạm. Không cài dịch vụ Windows hoặc đổi SQLite mặc định. Docker vẫn chưa chạy; trạng thái CI trên GitHub chưa đọc được do phiên truy cập chưa có quyền và API hết hạn mức. Kết quả tại máy không thay thế xác nhận từ GitHub Actions.
+Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Bổ sung ngày 15/11/2026: đã chạy 260 test trên SQLite và 260 test trên PostgreSQL 17.12 portable, cùng migration/static/deploy checks và hai worker trên database PostgreSQL tạm. Không cài dịch vụ Windows hoặc đổi SQLite mặc định. Đã xác minh [Actions của commit cfcb3b5](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135): job SQLite/Windows và PostgreSQL/Linux, Docker build, Compose config đều thành công. Chưa chạy toàn bộ ứng dụng bằng `docker compose up` hoặc kiểm thử URL online.
+
+**Lượt hoàn thiện cuối:** 272 test hiện tại qua trên SQLite; hành trình HTTP qua Waitress với database QA riêng và hai worker cũng qua, gồm nhận nhắc trong web. Workflow mới đã thêm chạy Compose và hành trình này trên CI nhưng chưa được xác minh trên GitHub cho mã mới. Máy hiện tại không có Docker; không khẳng định đã chạy Compose. Không cần khóa dịch vụ để thử phần lõi.
 
 ## Ba chế độ
 
@@ -75,6 +77,32 @@ docker compose exec web python manage.py test --noinput
 ```
 
 Dừng bằng `docker compose down`; volume PostgreSQL vẫn giữ dữ liệu. Không dùng tùy chọn xóa volume nếu muốn giữ dữ liệu. Lần cập nhật mã/migration, chạy lại `docker compose up --build -d` và kiểm tra trạng thái dịch vụ migrate trước khi thao tác.
+
+## Kiểm thử hành trình HTTP tại máy
+
+`deploy.smoke` là chương trình Python kiểm tra web đang chạy. Chỉ nhận HTTP loopback (`127.0.0.1`, `localhost`, `::1`); không truy cập URL online. Mặc định chỉ đọc health, trang chủ và CSS:
+
+```powershell
+& .\.venv\Scripts\python.exe -m deploy.smoke --base-url http://127.0.0.1:8000
+```
+
+Chế độ đầy đủ **tạo hai tài khoản dùng một lần và dữ liệu thử**, không tự xóa chúng. Chỉ dùng với database QA riêng hoặc Compose riêng, không chạy trên database cá nhân đang dùng. Email của hai tài khoản là `@example.test`, email nhắc mặc định tắt; không gọi Google/OpenAI hoặc mở liên kết tài liệu.
+
+Với Docker đã cài, dùng project thử riêng (cổng 8000 phải trống):
+
+```powershell
+docker compose -p nhiphoc-test up --build -d
+& .\.venv\Scripts\python.exe -m deploy.smoke --allow-test-data --expect-reminders
+docker compose -p nhiphoc-test ps
+docker compose -p nhiphoc-test logs --tail 50 reminders calendar
+docker compose -p nhiphoc-test down
+```
+
+Project này dùng volume riêng với Compose mặc định. Lệnh dừng trên giữ volume để xem lại dữ liệu. Không chạy cùng lúc hai project cùng bind cổng 8000. Nếu không dùng Docker, trỏ `--base-url` vào Waitress/runserver có **database thử riêng**, chạy worker nhắc trong cùng môi trường; xem cấu hình Django test trong HD_Test.md. Không cần sửa `.env` cá nhân để chạy test tự động bằng `manage.py test`.
+
+Các bước mong đợi đều in `PASS`: health/static → đăng ký/đăng nhập/Tổng quan → môn/việc/tài liệu/lịch bận/giờ học → xem trước/áp dụng/khóa buổi → Pomodoro/nhật ký/thống kê → trang hỗ trợ/quyền tài khoản thứ hai → nhận nhắc. Công cụ chờ web/database sẵn sàng tối đa 60 giây; `--expect-reminders` chờ thông báo tối đa 90 giây và cần worker đang chạy. Bỏ cờ này nếu chỉ thử web; không coi đó là đã xác minh worker.
+
+CI PostgreSQL/Linux sẽ khởi động Compose trong project `ci-smoke`, chạy công cụ đầy đủ, kiểm tra `db/web/reminders/calendar` còn hoạt động và dọn volume thử của runner khi kết thúc. Bước dọn này chỉ áp dụng dữ liệu CI dùng một lần. CI Windows vẫn kiểm tra SQLite. Cần kiểm tra Actions của commit chứa thay đổi mới sau khi push; kết quả `cfcb3b5` ở trên chỉ xác nhận workflow cũ.
 
 ## Production được chuẩn bị ra sao
 
