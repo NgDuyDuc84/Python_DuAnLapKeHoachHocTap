@@ -4,6 +4,8 @@ Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commi
 
 Mốc cần kiểm thử hiện tại: **mốc 11 — giao diện, dữ liệu demo và cấu hình triển khai**, ở phần cuối tài liệu. Theo lựa chọn người dùng: chưa triển khai online.
 
+Bản sửa mới nhất: **Bổ sung mốc 11 — CI/PostgreSQL, ngày 15/11/2026**, ở cuối tài liệu. Giữ nguyên các kết quả cũ làm lịch sử.
+
 **Mốc 01 — Thiết kế và bộ khung Django chạy local**
 
 Trạng thái: người dùng đã cho phép chuyển sang mốc 02. Giữ checklist và kết quả kỹ thuật bên dưới làm lịch sử của mốc 01.
@@ -1432,3 +1434,74 @@ Phạm vi đã làm: PostgreSQL qua DATABASE_URL, cấu hình production riêng,
    Nhánh lúc bắt đầu là main; thay nếu bạn đã đổi nhánh. Chỉ commit file cấu hình mẫu; không stage `.env`, `.env.production`, key, database, backup, `.venv` hoặc staticfiles sinh ra. Agent không stage/commit/push thay bạn.
 
    Dừng ở mốc 11 để bạn kiểm thử. Phần online chỉ tiếp tục khi bạn yêu cầu; URL thật vẫn còn là điều kiện nghiệm thu của dự án.
+
+---
+
+**Bổ sung mốc 11 — Kiểm tra CI và sửa lỗi PostgreSQL (15/11/2026)**
+
+Phạm vi người dùng chọn: kiểm tra CI/sửa lỗi, vẫn chưa triển khai online. Lần kiểm tra bắt đầu từ commit local `ba4ca9d`.
+
+1. **Lỗi đã tái hiện và bản sửa**
+
+   SQLite qua 258 test nhưng ba test command được chạy thử riêng trên PostgreSQL báo `django.db.utils.OperationalError: the connection is closed`. Worker gọi `close_old_connections()` trong khi test `TestCase` đang giữ transaction; PostgreSQL đóng kết nối đó. SQLite in-memory bỏ qua close nên che khuất vấn đề.
+
+   Bản sửa chỉ chạm test và tài liệu:
+
+   - Test command trong `notifications/tests.py` và `integrations/tests.py` giả lập cleanup kết nối khi ở trong transaction của TestCase.
+   - Hai test mới trong `core/test_workers.py` dùng TransactionTestCase, cho phép cleanup thật ngoài transaction wrapper. Ép kết nối hết hạn, chạy worker, xác minh kết nối PostgreSQL cũ đã đóng và dữ liệu/kết quả được lưu đúng qua kết nối mới.
+   - Không sửa hoặc bỏ cơ chế dọn kết nối của worker khi chạy độc lập. Không có migration, dependency hoặc thay đổi giao diện/nghiệp vụ mới.
+
+2. **Kiểm tra tại máy**
+
+   Từ thư mục dự án:
+
+   ```powershell
+   & .\.venv\Scripts\python.exe manage.py test notifications integrations core.test_workers --noinput
+   & .\.venv\Scripts\python.exe manage.py test --noinput
+   & .\.venv\Scripts\python.exe manage.py check
+   & .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+   & .\.venv\Scripts\python.exe -m pip check
+   ```
+
+   Toàn bộ test hiện có: **260**. Khi DATABASE_URL để trống, dùng database SQLite test riêng. Muốn xác minh PostgreSQL, dùng môi trường/database thử riêng đã cấu hình DATABASE_URL; tài khoản cần quyền tạo database test. Có thể dùng Compose đã chuẩn bị ở mốc 11:
+
+   ```powershell
+   docker compose exec web python manage.py test notifications integrations core.test_workers --noinput
+   docker compose exec web python manage.py test --noinput
+   ```
+
+   Máy hiện chưa có Docker nên agent dùng PostgreSQL 17.12 portable từ nguồn [EDB được PostgreSQL giới thiệu](https://www.postgresql.org/download/windows/), chạy loopback với database tạm. Không cài dịch vụ Windows, không đổi .env và không dùng database SQLite thật của bạn. Không cần tải binaries này vào Git hoặc giữ nó để chạy ứng dụng; chỉ cần PostgreSQL/Docker nếu muốn tự lặp lại phép kiểm tra database đó.
+
+3. **Kết quả và giới hạn xác minh**
+
+   | Hạng mục | Kết quả |
+   |---|---|
+   | Trước sửa, test worker chọn lọc trên PostgreSQL | Tái hiện 3 lỗi connection is closed |
+   | Sau sửa, 4 test command cũ + 2 test kết nối mới trên PostgreSQL | 6/6 PASS |
+   | Toàn bộ test SQLite tại máy | 260/260 PASS |
+   | Toàn bộ test PostgreSQL 17.12 tại máy | 260/260 PASS |
+   | PostgreSQL: migrate từ database rỗng | PASS |
+   | PostgreSQL: collectstatic bằng config.production | PASS |
+   | PostgreSQL: check --deploy --fail-level WARNING | PASS |
+   | PostgreSQL: kiểm tra migration thiếu và chạy hai worker một lượt trên hàng đợi rỗng | PASS, mỗi worker xử lý 0 |
+   | GitHub Actions của repository | Chưa xác minh: API hết hạn mức; trang Actions trả 404 trong phiên chưa đăng nhập |
+   | Docker build/Compose/Linux runner | Chưa chạy tại máy; cần đọc kết quả Actions sau khi push |
+   | URL online | Chưa triển khai theo lựa chọn người dùng |
+
+   Kết quả PostgreSQL ở đây là trên Windows portable, không thay thế xác minh job Linux/Docker. Không thể kết luận Actions đã xanh chỉ từ kết quả tại máy. Nếu Actions còn lỗi, gửi tên job/bước và phần log lỗi đã che key/token để đối chiếu; không sửa theo phỏng đoán.
+
+4. **Kiểm tra trên GitHub sau khi bạn push**
+
+   Mở repository → Actions → workflow Tests của commit mới. Kiểm tra job `sqlite` và `postgres`. Job PostgreSQL cần qua migration, static, deploy checks, toàn bộ test, Docker build và Compose config. Đối chiếu đúng commit; không lấy kết quả lần chạy cũ làm kết quả bản sửa.
+
+   ```powershell
+   git status --short
+   git diff --check
+   git add notifications/tests.py integrations/tests.py core/test_workers.py README.md HD_Test.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md docs/TRIEN_KHAI.md docs/NGHIEM_THU.md
+   git diff --cached --stat
+   git diff --cached --check
+   git commit -m "test: verify worker connections on PostgreSQL"
+   git push origin main
+   ```
+
+   Agent không stage/commit/push hoặc yêu cầu chạy lại workflow thay bạn. Binaries/database PostgreSQL thử đã được dừng và dọn sau xác minh; giữ .venv, database, secret và log thử ngoài Git. Tiếp tục dừng ở mốc 11 để bạn kiểm thử bản sửa.

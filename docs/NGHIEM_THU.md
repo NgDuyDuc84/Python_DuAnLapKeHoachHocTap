@@ -42,7 +42,7 @@ Lệnh in tuần có buổi học để bạn chọn đúng tuần; buổi tươ
 - Backend, kiểm tra quyền, thời gian, thuật toán, tổng hợp thống kê, worker và tích hợp API được viết bằng Python. Django Templates dựng giao diện; JavaScript hỗ trợ đồng hồ.
 - Thuật toán tham lam xét deadline/ưu tiên, ràng buộc lịch/quỹ ngày/chia buổi/nghỉ; chưa chứng minh tối ưu toàn cục. Phần chưa xếp được hiển thị rõ.
 - AI không có quyền tự sửa lịch/tiến độ. Kiểm tra mã căn cứ không bảo đảm diễn giải luôn đúng.
-- OAuth, SMTP và AI thật cần thông tin cấu hình cùng kiểm thử dịch vụ tương ứng. PostgreSQL/Docker chưa chạy trên máy hiện tại; CI chỉ được xác nhận sau khi GitHub chạy thành công.
+- OAuth, SMTP và AI thật cần thông tin cấu hình cùng kiểm thử dịch vụ tương ứng. Ngày 15/11/2026 đã xác minh 260 test trên PostgreSQL 17.12 portable và SQLite; Docker chưa chạy. CI chỉ được xác nhận sau khi đọc được kết quả GitHub tương ứng với commit cần kiểm tra.
 - Không để key, token, `.env`, database hoặc bản sao lưu trong commit/ảnh trình bày.
 
 ## Điều kiện nghiệm thu online còn lại

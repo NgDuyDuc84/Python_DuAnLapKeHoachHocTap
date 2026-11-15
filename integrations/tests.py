@@ -475,7 +475,9 @@ class CalendarTests(TestCase):
         job.refresh_from_db()
         self.assertEqual(job.status, "stale")
 
-    def test_worker_command_and_empty_queue(self):
+    # TestCase owns its transaction; real connection cleanup is covered by WorkerConnectionTests.
+    @patch("integrations.management.commands.process_calendar_sync.close_old_connections")
+    def test_worker_command_and_empty_queue(self, _close_connections):
         self.new_job()
         with patch("integrations.services.GoogleCalendarClient", return_value=self.google):
             output = StringIO()
@@ -483,7 +485,8 @@ class CalendarTests(TestCase):
         self.assertIn("processed 1 sync job", output.getvalue())
         self.assertEqual(run_cycle(), 0)
 
-    def test_worker_output_supports_legacy_windows_terminal_encoding(self):
+    @patch("integrations.management.commands.process_calendar_sync.close_old_connections")
+    def test_worker_output_supports_legacy_windows_terminal_encoding(self, _close_connections):
         output = TextIOWrapper(BytesIO(), encoding="cp1252")
         call_command("process_calendar_sync", stdout=output)
         output.flush()

@@ -123,6 +123,8 @@ Tài liệu gồm thiết kế đã triển khai và các phần dự kiến. T�
 
    `/health/` kiểm tra SELECT 1, trả 200/503 với trạng thái tối thiểu và không cache. Trang chủ đưa người chưa đăng nhập sang đăng ký, người đã đăng nhập vào lịch; trang lỗi 403/404/500 có thông báo và đường quay về. Lệnh `seed_demo --username` chỉ dùng tài khoản active không phải staff/admin, kiểm tra tài khoản còn trống, tạo dữ liệu một transaction và không đổi mật khẩu/gọi dịch vụ ngoài. Chạy lại khi có môn marker demo thì không ghi thêm. Không có schema mới hoặc tự nhập SQLite sang PostgreSQL. Chi tiết cấu hình/kịch bản ở docs/TRIEN_KHAI.md và docs/NGHIEM_THU.md.
 
+   Bổ sung kiểm tra CI ngày 15/11/2026: PostgreSQL làm lộ việc test command worker đóng kết nối của transaction do TestCase quản lý; SQLite in-memory bỏ qua close nên trước đó không thấy lỗi. Các test nghiệp vụ command chỉ giả lập dọn kết nối trong wrapper TestCase; hai test TransactionTestCase riêng buộc kết nối hết hạn rồi chạy cleanup thật và kiểm tra kết quả. Không sửa cơ chế cleanup của worker độc lập. Toàn bộ 260 test đã qua trên SQLite và PostgreSQL 17.12 portable tại máy; Docker/GitHub Actions và URL online chưa được xác nhận. PostgreSQL thử nghiệm chỉ dùng loopback và database riêng.
+
 4. **Quy tắc lịch**
 
    - Múi giờ mặc định: `Asia/Ho_Chi_Minh`; timestamp có múi giờ và được lưu nhất quán qua Django.

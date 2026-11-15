@@ -353,7 +353,9 @@ class ReminderTests(TestCase):
         self.client.force_login(self.other)
         self.assertNotContains(self.client.get(history), self.task.title)
 
-    def test_command_once_is_idempotent_and_watch_can_stop_without_traceback(self):
+    # TestCase owns its transaction; real connection cleanup is covered by WorkerConnectionTests.
+    @patch("notifications.management.commands.process_reminders.close_old_connections")
+    def test_command_once_is_idempotent_and_watch_can_stop_without_traceback(self, _close_connections):
         output = io.StringIO()
         call_command("process_reminders", stdout=output)
         self.assertIn("Đã tạo 4 nhắc", output.getvalue())
@@ -365,7 +367,8 @@ class ReminderTests(TestCase):
         with self.assertRaises(CommandError):
             call_command("process_reminders", interval=0, stdout=output)
 
-    def test_watch_continues_after_database_busy_and_one_shot_reports_failure(self):
+    @patch("notifications.management.commands.process_reminders.close_old_connections")
+    def test_watch_continues_after_database_busy_and_one_shot_reports_failure(self, _close_connections):
         output, errors = io.StringIO(), io.StringIO()
         command = "notifications.management.commands.process_reminders"
         with patch(f"{command}.run_cycle", side_effect=[OperationalError("database is locked"), {"created": 0, "delivered": 0}]), patch(f"{command}.time.sleep", side_effect=[None, KeyboardInterrupt]):

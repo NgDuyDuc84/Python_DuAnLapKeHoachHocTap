@@ -1,6 +1,6 @@
 # Cấu hình chạy và triển khai Nhịp Học
 
-Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Máy hiện tại chưa có Docker/PostgreSQL; phần đã kiểm tra là Django/SQLite, Waitress, static manifest và cấu hình production. CI PostgreSQL/Docker đã được thêm nhưng chưa chạy trên GitHub trong phiên này.
+Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Bổ sung ngày 15/11/2026: đã chạy 260 test trên SQLite và 260 test trên PostgreSQL 17.12 portable, cùng migration/static/deploy checks và hai worker trên database PostgreSQL tạm. Không cài dịch vụ Windows hoặc đổi SQLite mặc định. Docker vẫn chưa chạy; trạng thái CI trên GitHub chưa đọc được do phiên truy cập chưa có quyền và API hết hạn mức. Kết quả tại máy không thay thế xác nhận từ GitHub Actions.
 
 ## Ba chế độ
 
@@ -77,6 +77,21 @@ docker compose exec web python manage.py test --noinput
 Dừng bằng `docker compose down`; volume PostgreSQL vẫn giữ dữ liệu. Không dùng tùy chọn xóa volume nếu muốn giữ dữ liệu. Lần cập nhật mã/migration, chạy lại `docker compose up --build -d` và kiểm tra trạng thái dịch vụ migrate trước khi thao tác.
 
 ## Production được chuẩn bị ra sao
+
+### Lưu ý khi kiểm thử worker
+
+Test nghiệp vụ dùng Django `TestCase` được bao bởi transaction. Không để `close_old_connections()` của worker đóng kết nối do transaction này quản lý; các test gọi command trong trường hợp đó chỉ giả lập bước dọn kết nối. Hai test `core.test_workers.WorkerConnectionTests` dùng `TransactionTestCase`, thực thi việc đóng/mở lại kết nối thật và xác minh dữ liệu/kết quả còn đúng trên PostgreSQL. Mã worker khi chạy độc lập vẫn giữ nguyên.
+
+Để chạy lại phần hồi quy trong môi trường kiểm thử đã có DATABASE_URL đến PostgreSQL (hoặc qua `docker compose exec web`):
+
+```powershell
+python manage.py test notifications integrations core.test_workers --noinput
+python manage.py test --noinput
+```
+
+Dùng database thử riêng với tài khoản có quyền tạo database test, không trỏ vào database production. Django tạo/xóa database test; không cần đưa mật khẩu hoặc URL database vào log gửi hỗ trợ. Tham khảo [TestCase và TransactionTestCase](https://docs.djangoproject.com/en/5.2/topics/testing/tools/#transactiontestcase).
+
+### Thành phần cấu hình
 
 Các thành phần đã có:
 
