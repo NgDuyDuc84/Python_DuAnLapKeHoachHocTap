@@ -349,7 +349,7 @@ class ReminderTests(TestCase):
         Reminder.objects.filter(pk=reminder.pk).update(status="uncertain", last_error="Kiểm tra hộp thư")
         history = reverse("notifications:email_history")
         self.assertContains(self.client.get(history), "Đã kiểm tra hộp thư, yêu cầu gửi lại")
-        self.assertContains(self.client.get(history), "kiểm thử")
+        self.assertContains(self.client.get(history), "Gửi email nhắc việc hiện chưa khả dụng.")
         self.client.force_login(self.other)
         self.assertNotContains(self.client.get(history), self.task.title)
 

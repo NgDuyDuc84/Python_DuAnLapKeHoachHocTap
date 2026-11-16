@@ -89,8 +89,8 @@ class InsightTests(TestCase):
     @patch("insights.provider.requests.post")
     def test_get_and_missing_config_do_not_call_provider(self, post):
         response = self.preview()
-        self.assertContains(response, "Chưa cấu hình OpenAI")
-        self.assertContains(response, "Phân tích Python")
+        self.assertContains(response, "AI hỗ trợ hiện chưa khả dụng.")
+        self.assertContains(response, "Số liệu nói gì?")
         self.post_analysis()
         post.assert_not_called()
         self.assertEqual(InsightReport.objects.count(), 0)
@@ -99,6 +99,7 @@ class InsightTests(TestCase):
     def test_no_consent_rejected_and_form_gets_fresh_matching_preview(self, post):
         response = self.post_analysis(consent="")
         self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "<h1>Hiểu nhịp học của bạn</h1>", status_code=400, html=True)
         token = response.context["form"]["preview"].value()
         signed = signing.loads(token, salt=SALT)
         self.assertEqual(signed["hash"], fingerprint(response.context["snapshot"]))

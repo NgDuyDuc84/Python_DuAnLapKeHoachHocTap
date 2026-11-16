@@ -7,11 +7,6 @@
 {% endblock %}
 {% block settings_content %}
 <section class="study-shell sync-shell">
-    <header class="study-heading">
-        <p class="eyebrow">Lịch học luôn trong tầm tay</p>
-        <h1>Google Calendar</h1>
-        <p>Đưa buổi học sang lịch Google riêng mang tên <strong>Nhịp Học</strong>.</p>
-    </header>
     <div class="sync-grid">
         <section class="study-card">
             <span class="badge">{% if connection.is_connected %}Đã kết nối{% else %}Chưa kết nối{% endif %}</span>
@@ -28,7 +23,8 @@
                     <button class="button button-primary" type="submit">{% if connection.is_connected %}Cấp lại quyền Google{% else %}Kết nối Google{% endif %}</button>
                 </form>
             {% else %}
-                <p class="sync-notice">Chưa cấu hình Google OAuth. Người quản trị cần thêm OAuth Client và khóa mã hóa theo hướng dẫn mốc 09 trong HD_Test.md.</p>
+                {% if navigation.show_technical_details %}<p class="sync-notice">Chưa cấu hình Google OAuth. Người quản trị cần thêm OAuth Client và khóa mã hóa theo hướng dẫn mốc 09 trong HD_Test.md.</p>{% else %}<p class="sync-notice">Kết nối Google hiện chưa khả dụng.</p>{% endif %}
+                <button class="button" type="button" disabled>Kết nối Google</button>
             {% endif %}
             {% if connection.is_connected %}
                 <form class="sync-disconnect" method="post" action="{% url 'integrations:disconnect' %}">
@@ -38,11 +34,10 @@
             {% endif %}
         </section>
         <aside class="study-card sync-policy">
-            <p class="eyebrow">Đồng bộ một chiều</p>
             <h2>Bạn duyệt trước mỗi lần</h2>
             <ol>
                 <li>Chọn tuần và xem các buổi sẽ đưa sang Google.</li>
-                <li>Xác nhận để worker xử lý yêu cầu.</li>
+                <li>Xác nhận để hệ thống đồng bộ các buổi học.</li>
                 <li>Kiểm tra kết quả và mở lịch Google của bạn.</li>
             </ol>
             <p>Giờ và nội dung trong web là nguồn chính. Đồng bộ lại sẽ cập nhật sự kiện Google theo web; buổi hủy hoặc xóa sẽ được gỡ.</p>
@@ -71,7 +66,7 @@
         </section>
         {% if preview != None %}
             <section class="study-card">
-                <p class="eyebrow">Tuần bắt đầu {{ week|date:'d/m/Y' }} · Giờ Việt Nam</p>
+                <p class="study-meta">Tuần bắt đầu {{ week|date:'d/m/Y' }} · Giờ Việt Nam</p>
                 <h2>Những thay đổi bạn sắp gửi</h2>
                 <p><strong>{{ preview.desired|length }}</strong> buổi sẽ tạo hoặc cập nhật · <strong>{{ preview.deletions|length }}</strong> sự kiện sẽ gỡ.</p>
                 {% if connection.calendar_state == 'empty' and preview.desired %}<p>Lần đồng bộ này sẽ tạo một lịch Google riêng mang tên Nhịp Học.</p>{% endif %}

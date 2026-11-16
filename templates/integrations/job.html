@@ -7,12 +7,12 @@
 {% endblock %}
 {% block settings_content %}
 <section class="study-shell sync-shell">
-    <header class="study-heading"><p class="eyebrow">Google Calendar</p><h1>Yêu cầu đồng bộ</h1><p>Tuần bắt đầu {{ job.week_start|date:'d/m/Y' }}</p></header>
+    <p class="study-meta">Tuần bắt đầu {{ job.week_start|date:'d/m/Y' }}</p>
     <section class="study-card">
         <span class="badge">{{ job.get_status_display }}</span>
         <h2>{% if job.status == 'success' %}Lịch học đã được gửi{% else %}Theo dõi đợt đồng bộ{% endif %}</h2>
         {% if job.status == 'pending' or job.status == 'running' %}
-            <p>Yêu cầu đang chờ hoặc đang được worker xử lý. Tải lại để kiểm tra kết quả.</p>
+            <p>Yêu cầu đang chờ hoặc đang được hệ thống xử lý. Tải lại để kiểm tra kết quả.</p>
         {% endif %}
         {% if error %}<p class="sync-notice">{{ error }}</p><p>Các thay đổi đã xử lý trước khi dừng có thể đã xuất hiện trên Google. Xem trước và đồng bộ lại để hoàn tất phần còn lại.</p>{% endif %}
         {% if job.results %}<p><strong>{{ job.results.updated }}</strong> buổi đã tạo/cập nhật · <strong>{{ job.results.deleted }}</strong> sự kiện đã gỡ hoặc đã vắng mặt.</p>{% endif %}

@@ -1,10 +1,6 @@
 {% extends "studies/base.html" %}
 
 {% block study_content %}
-<div class="study-toolbar">
-    <p>Ghi việc cần làm, theo dõi hạn nộp và cập nhật thời gian còn lại.</p>
-    <a class="button" href="{% url 'studies:task_create' %}">Thêm công việc</a>
-</div>
 {% include "studies/filters.html" %}
 <div class="study-list">
     {% for task in object_list %}

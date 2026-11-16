@@ -3,7 +3,7 @@
 {% block focus_content %}
 {% if action_error %}<div class="form-errors" role="alert">{{ action_error }}</div>{% endif %}
 <div class="timer-card">
-    <p class="eyebrow">{% if session.phase == 'work' %}HỌC 25 PHÚT{% else %}NGHỈ 5 PHÚT{% endif %}</p>
+    <p class="focus-note">{% if session.phase == 'work' %}Học 25 phút{% else %}Nghỉ 5 phút{% endif %}</p>
     <h2>{{ session.task_title }}</h2>
     <p>{{ session.subject_label|default:"Chưa gắn môn" }} · <span id="timer-status">{{ session.get_status_display }}</span></p>
     <div id="focus-timer" class="timer-clock" role="timer" aria-label="Thời gian còn lại" data-state-url="{% url 'focus:state' session.pk %}">{{ remaining_label }}</div>

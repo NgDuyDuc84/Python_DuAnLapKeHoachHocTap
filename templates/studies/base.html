@@ -5,13 +5,8 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/studies.css' %}">{% endblock %}
 {% block content %}
 <section class="study-shell" aria-labelledby="study-title">
-    <p class="eyebrow">KHÔNG GIAN HỌC TẬP</p>
-    <h1 id="study-title">{{ view.page_title }}</h1>
-    <nav class="section-tabs" aria-label="Nội dung học tập">
-        <a href="{% url 'studies:subject_list' %}" {% if 'subject' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Môn học</a>
-        <a href="{% url 'studies:task_list' %}" {% if 'task' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Công việc</a>
-        <a href="{% url 'studies:material_list' %}" {% if 'material' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Tài liệu</a>
-    </nav>
+    {% include "components/page_header.html" with title=view.page_title description=navigation.description action=navigation.action title_id="study-title" only %}
+    {% include "components/section_tabs.html" with tabs=navigation.tabs current_tab=navigation.current_tab tabs_label=navigation.tabs_label only %}
     {% block study_content %}{% endblock %}
 </section>
 {% endblock %}

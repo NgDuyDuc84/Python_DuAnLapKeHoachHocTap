@@ -2,12 +2,24 @@
 {% load static %}
 {% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/notifications.css' %}">{% endblock %}
 {% block settings_content %}
-<h1>{{ view.page_title }}</h1>
-<p class="notification-note">{{ email_mode }}</p>
-<p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. Cần dịch vụ nền hoạt động để xử lý nhắc.</p>
+{% if navigation.show_technical_details %}<p class="notification-note">{{ email_mode }}</p>{% elif not navigation.email_available %}<p class="notification-note">Gửi email nhắc việc hiện chưa khả dụng. Bạn vẫn có thể nhận thông báo trong ứng dụng.</p>{% endif %}
+<p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. {% if navigation.show_technical_details %}Cần dịch vụ nền hoạt động để xử lý nhắc.{% endif %}</p>
 <div class="study-form-card"><form method="post" class="study-form">{% csrf_token %}
     {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
-    {% for field in form %}<div class="form-field">{% if field.field.widget.input_type == 'checkbox' %}<div class="checkbox-row">{{ field }}{{ field.label_tag }}</div>{% else %}{{ field.label_tag }}{{ field }}{% endif %}{{ field.errors }}</div>{% endfor %}
+    {% for field in form %}
+    <div class="form-field">
+        {% if field.name == 'email_enabled' and not navigation.email_available %}
+            <fieldset class="email-unavailable" disabled aria-describedby="email-availability">
+                <div class="checkbox-row">{{ field }}{{ field.label_tag }}</div>
+            </fieldset>
+            {% if field.value %}<input type="hidden" name="{{ field.html_name }}" value="on">{% endif %}
+            <p id="email-availability" class="field-help">Email nhắc việc hiện chưa khả dụng; tùy chọn đã lưu được giữ nguyên.</p>
+        {% elif field.field.widget.input_type == 'checkbox' %}
+            <div class="checkbox-row">{{ field }}{{ field.label_tag }}</div>
+        {% else %}{{ field.label_tag }}{{ field }}{% endif %}
+        {{ field.errors }}
+    </div>
+    {% endfor %}
     <button class="button" type="submit">Lưu tùy chọn nhắc</button>
 </form></div>
 <p class="notification-note">Tắt kênh sẽ chặn nhắc chưa gửi; lịch sử đã nhận vẫn được giữ. Thay giờ deadline/buổi sẽ có nhắc cho thời điểm mới; đổi độ nhắc sớm không gửi lại một nhắc đã xử lý cho cùng thời điểm.</p>

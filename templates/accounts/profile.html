@@ -2,24 +2,19 @@
 
 {% block title %}Tài khoản của bạn — Nhịp Học{% endblock %}
 {% block settings_content %}
-<section class="auth-shell profile-shell" aria-labelledby="profile-title">
+<section class="auth-shell profile-shell">
     <div class="auth-card">
-        <p class="eyebrow">TÀI KHOẢN CỦA BẠN</p>
-        <h1 id="profile-title">Chào {{ user.username }}.</h1>
-        <p class="auth-intro">Thông tin tài khoản và cài đặt mật khẩu của bạn ở đây.</p>
         <dl class="profile-details">
             <div><dt>Tên đăng nhập</dt><dd>{{ user.username }}</dd></div>
             <div><dt>Email</dt><dd>{{ user.email|default:"Chưa cập nhật" }}</dd></div>
-            <div><dt>Vai trò</dt><dd>{% if user.is_staff %}Quản trị viên{% else %}Người dùng{% endif %}</dd></div>
+            {% if user.is_staff %}<div><dt>Vai trò</dt><dd>Quản trị viên</dd></div>{% endif %}
         </dl>
         <div class="profile-actions">
-            <a class="button" href="{% url 'studies:task_list' %}">Vào không gian học tập</a>
             <a class="text-link" href="{% url 'accounts:password_change' %}">Đổi mật khẩu</a>
             {% if user.is_staff %}
                 <a class="text-link" href="{% url 'admin:index' %}">Mở trang quản trị</a>
             {% endif %}
         </div>
-        <p class="availability-note">Quản lý môn học, công việc và tài liệu trong không gian học tập của bạn.</p>
     </div>
 </section>
 {% endblock %}

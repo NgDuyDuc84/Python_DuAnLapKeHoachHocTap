@@ -39,6 +39,7 @@ class NavigationStateTests(SimpleTestCase):
             "planner": (
                 "planner:week", "planner:plan_generate", "planner:plan_detail",
                 "planner:session_move", "planner:session_record", "planner:alerts",
+                "planner:preferences", "planner:busy_list", "planner:busy_create", "planner:busy_update", "planner:busy_delete",
             ),
             "studies": tuple(f"studies:{name}" for name in (
                 "subject_list", "subject_create", "subject_update", "subject_delete",
@@ -53,8 +54,7 @@ class NavigationStateTests(SimpleTestCase):
             "notifications": ("notifications:inbox", "notifications:email_history"),
             "settings": (
                 "accounts:profile", "accounts:password_change", "accounts:password_change_done",
-                "planner:preferences", "planner:busy_list", "planner:busy_create",
-                "planner:busy_update", "planner:busy_delete", "notifications:preferences",
+                "notifications:preferences",
                 "integrations:google", "integrations:job",
             ),
         }
@@ -102,21 +102,15 @@ class NavigationPageTests(TestCase):
     def setUp(self):
         self.client.force_login(self.owner)
 
-    def test_settings_pages_share_sidebar_and_keep_forms_and_csrf(self):
+    def test_settings_pages_share_three_tabs_and_keep_forms_and_csrf(self):
         pages = (
             ("accounts:profile", [], "account", False),
             ("accounts:password_change", [], "account", True),
-            ("planner:preferences", [], "time", True),
-            ("planner:busy_list", [], "busy", False),
-            ("planner:busy_create", [], "busy", True),
-            ("planner:busy_update", [self.event.pk], "busy", True),
-            ("planner:busy_delete", [self.event.pk], "busy", True),
             ("notifications:preferences", [], "reminders", True),
             ("integrations:google", [], "google", False),
         )
         targets = {
-            "account": "accounts:profile", "time": "planner:preferences",
-            "busy": "planner:busy_list", "reminders": "notifications:preferences",
+            "account": "accounts:profile", "reminders": "notifications:preferences",
             "google": "integrations:google",
         }
         for name, args, active, has_form in pages:
@@ -124,10 +118,10 @@ class NavigationPageTests(TestCase):
                 response = self.client.get(reverse(name, args=args))
                 self.assertEqual(response.status_code, 200)
                 self.assertTemplateUsed(response, "components/settings_layout.html")
-                if name.startswith("planner:"):
-                    self.assertContains(response, "css/planner.css")
                 links = NavigationParser(response.content.decode(), "Cài đặt").links
-                self.assertEqual(len(links), 5)
+                self.assertEqual(len(links), 3)
+                self.assertNotContains(response, "settings-sidebar")
+                self.assertTemplateUsed(response, "components/page_header.html")
                 self.assertEqual(
                     [link["href"] for link in links if link.get("aria-current") == "page"],
                     [reverse(targets[active])],

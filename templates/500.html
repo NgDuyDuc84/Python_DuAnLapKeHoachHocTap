@@ -2,9 +2,6 @@
 {% block title %}Chưa xử lý được yêu cầu — Nhịp Học{% endblock %}
 {% block content %}
 <section class="auth-shell"><div class="auth-card">
-    <p class="eyebrow">Có sự cố khi xử lý</p>
-    <h1>Vui lòng thử lại sau</h1>
-    <p>Nếu vừa lưu dữ liệu hoặc gửi yêu cầu, hãy kiểm tra kết quả trước khi gửi lại. Nếu lỗi tiếp diễn, báo người quản trị thời điểm và trang đang mở.</p>
-    <a class="button" href="{% url 'core:home' %}">Về Tổng quan</a>
+    {% include "components/page_header.html" with title="Vui lòng thử lại sau" description="Nếu vừa lưu dữ liệu hoặc gửi yêu cầu, hãy kiểm tra kết quả trước khi gửi lại. Nếu lỗi tiếp diễn, báo người quản trị thời điểm và trang đang mở." action_name="core:home" action_label="Về Tổng quan" only %}
 </div></section>
 {% endblock %}

@@ -2,7 +2,7 @@
 {% block notification_content %}
 <div class="study-toolbar"><p>{{ unread_count }} thông báo chưa đọc · <a class="text-link" href="{% url 'notifications:preferences' %}" aria-label="Cài đặt nhắc việc">⚙ Tùy chọn nhắc</a></p><form method="post" action="{% url 'notifications:read_all' %}">{% csrf_token %}<button class="button" type="submit">Đánh dấu tất cả đã đọc</button></form></div>
 <form method="get" class="study-filters"><div class="form-field">{{ filter_form.state.label_tag }}{{ filter_form.state }}{{ filter_form.state.errors }}</div><div class="filter-actions"><button class="button" type="submit">Lọc thông báo</button></div></form>
-<p class="notification-note">Nhắc deadline và buổi học được tạo khi dịch vụ nền hoạt động. Tải lại trang để xem thông báo mới. Đây là lịch sử nhắc tại thời điểm gửi; nội dung công việc/lịch hiện tại có thể đã thay đổi.</p>
+<p class="notification-note">{% if navigation.show_technical_details %}Nhắc deadline và buổi học được tạo khi dịch vụ nền hoạt động.{% endif %} Tải lại trang để xem thông báo mới. Đây là lịch sử nhắc tại thời điểm gửi; nội dung công việc/lịch hiện tại có thể đã thay đổi.</p>
 <div class="study-list">
 {% for reminder in reminders %}
 <article id="reminder-{{ reminder.pk }}" class="study-card{% if not reminder.read_at %} notification-unread{% endif %}">
@@ -11,7 +11,7 @@
     <p class="card-description">{{ reminder.message|linebreaksbr }}</p>
     <div class="card-actions">{% if reminder.target_url %}<a class="text-link" href="{{ reminder.target_url }}">Mở nội dung liên quan</a>{% endif %}{% if not reminder.read_at %}<form method="post" action="{% url 'notifications:read' reminder.pk %}">{% csrf_token %}<button class="notification-link" type="submit">Đánh dấu đã đọc</button></form>{% endif %}</div>
 </article>
-{% empty %}<p class="empty-state">Chưa có thông báo trong danh sách này. Kiểm tra tùy chọn nhắc và dịch vụ nền nếu đang chờ nhắc.</p>{% endfor %}
+{% empty %}<p class="empty-state">Chưa có thông báo trong danh sách này. Kiểm tra Cài đặt nhắc việc nếu bạn đang chờ thông báo.</p>{% endfor %}
 </div>
 {% include "notifications/pagination.html" %}
 {% endblock %}

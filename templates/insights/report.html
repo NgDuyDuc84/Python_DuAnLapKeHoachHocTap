@@ -1,7 +1,8 @@
 {% extends 'insights/base.html' %}
 {% block title %}Kết quả AI hỗ trợ — Nhịp Học{% endblock %}
 {% block insight_content %}
-<header class="insight-heading"><p class="eyebrow">AI hỗ trợ học tập</p><h1>Kết quả phân tích</h1><p>Dựa trên dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }} · {{ report.model_name }}</p></header>
+{% include "components/page_header.html" with title=navigation.title description=navigation.description only %}
+<p class="study-meta">Dựa trên dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }}</p>
 <section class="study-card">
     <span class="badge">{{ report.get_status_display }}</span>
     {% if report.status == 'running' %}<p>Yêu cầu đang xử lý. Tải lại kết quả hoặc kiểm tra lịch sử sau. Nếu bị gián đoạn quá 5 phút, có thể tạo yêu cầu mới; API không được tự gọi lại.</p>{% endif %}

@@ -136,7 +136,7 @@ class CalendarTests(TestCase):
     @override_settings(GOOGLE_CLIENT_ID="", GOOGLE_TOKEN_ENCRYPTION_KEY="")
     def test_unconfigured_does_not_break_web_or_start_oauth(self):
         self.assertFalse(configured())
-        self.assertContains(self.client.get(reverse("integrations:google")), "Chưa cấu hình Google OAuth")
+        self.assertContains(self.client.get(reverse("integrations:google")), "Kết nối Google hiện chưa khả dụng.")
         self.assertRedirects(self.client.post(reverse("integrations:connect")), reverse("integrations:google"))
 
     def test_oauth_uses_offline_pkce_state_and_limited_scope(self):

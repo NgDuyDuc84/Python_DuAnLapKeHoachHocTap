@@ -12,7 +12,7 @@ from .services import task_labels
 
 
 class FocusStartForm(forms.Form):
-    task = forms.ModelChoiceField(label="Công việc cần tập trung", queryset=Task.objects.none())
+    task = forms.ModelChoiceField(label="Công việc cần tập trung", queryset=Task.objects.none(), empty_label="Chọn công việc…")
     request_key = forms.UUIDField(widget=forms.HiddenInput, initial=uuid.uuid4)
 
     def __init__(self, *args, user, **kwargs):

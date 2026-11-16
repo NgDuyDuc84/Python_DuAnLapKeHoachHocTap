@@ -1,6 +1,5 @@
 {% extends "focus/base.html" %}
 {% block focus_content %}
-<div class="study-toolbar"><p>Phút đã học từ Pomodoro và nhật ký nhập tay.</p><a class="button" href="{% url 'focus:log_create' %}">Thêm nhật ký</a></div>
 {% include "focus/range_filter.html" %}
 <p class="focus-note">Tên việc/môn lưu tại lúc ghi nhận; đổi tên hoặc xóa công việc không xóa lịch sử. Nhật ký Pomodoro tính toàn bộ phút vào ngày bắt đầu phiên, kể cả qua nửa đêm.</p>
 <div class="study-list">

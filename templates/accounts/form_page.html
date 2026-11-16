@@ -3,9 +3,7 @@
 {% block content %}
 <section class="auth-shell" aria-labelledby="form-title">
     <div class="auth-card">
-        <p class="eyebrow">KHÔNG GIAN CÁ NHÂN</p>
-        <h1 id="form-title">{% block form_heading %}{% endblock %}</h1>
-        <p class="auth-intro">{% block form_intro %}{% endblock %}</p>
+        {% include "components/page_header.html" with title=navigation.title description=navigation.description title_id="form-title" only %}
         {% block account_form %}{% endblock %}
         <div class="auth-links">{% block form_footer %}{% endblock %}</div>
     </div>

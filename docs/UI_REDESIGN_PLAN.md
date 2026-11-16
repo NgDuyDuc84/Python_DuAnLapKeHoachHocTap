@@ -1,6 +1,6 @@
 # Nhịp Học — Kế hoạch tổ chức lại UI
 
-Ngày lập: **16/11/2026**. Dựa trên `DANH_SACH_TINH_NANG_VA_TRANG_UI.md` và ảnh chụp trang Lịch tuần.
+Ngày lập: **16/11/2026**. Cập nhật sau dùng thử Pha 1: các quyết định điều hướng dưới đây ghi đè bản ban đầu. Dựa trên `DANH_SACH_TINH_NANG_VA_TRANG_UI.md` và ảnh chụp trang Lịch tuần.
 
 **Phạm vi:** tổ chức lại điều hướng, cách gom trang và các thành phần dùng chung của toàn bộ ứng dụng. **Không đổi** nội dung trang Lịch tuần (`/planner/`) vì trang này đã được chỉnh xong; mọi thứ còn lại được sắp xếp xoay quanh nó.
 
@@ -25,13 +25,14 @@ Thanh trên:  Tổng quan | Lịch học tập | Môn & Việc | Tập trung | T
                          (giữ nguyên)
 
 Tổng quan      /
-Lịch học tập   /planner/            ← GIỮ NGUYÊN
+Lịch học tập   /planner/            ← GIỮ NGUYÊN thân Lịch tuần
+              Các trang khác: Lịch tuần | Tạo kế hoạch | Cảnh báo | Lịch bận | Giờ học
 Môn & Việc     tab: Công việc | Môn học | Tài liệu
 Tập trung      /focus/  →  phiên đang chạy
 Thống kê       tab: Biểu đồ | Nhật ký | AI hỗ trợ
 🔔 Thông báo   tab: Thông báo | Email đã gửi
 👤 Menu        Tài khoản, Cài đặt, Quản trị (nếu là staff), Đăng xuất
-Cài đặt        4 nhóm: Tài khoản | Thời gian (Giờ học, Lịch bận) | Nhắc việc | Kết nối Google
+Cài đặt        3 tab dạng pill: Tài khoản | Nhắc việc | Kết nối Google (không có sidebar)
 ```
 
 Thanh trên giữ 5 mục nhưng mỗi mục có nghĩa rõ ràng; mọi thứ còn lại nằm trong tab hoặc menu avatar.
@@ -47,10 +48,10 @@ Thanh trên giữ 5 mục nhưng mỗi mục có nghĩa rõ ràng; mọi thứ c
 | Thêm/Sửa môn, việc, tài liệu | Drawer/dialog trong trang Môn & Việc | Dùng lại `form_fields.html` |
 | Cập nhật tiến độ | Hành động nhanh ở menu `⋯` của dòng công việc | Bỏ trang riêng |
 | Các trang xác nhận xóa (studies, planner, focus log) | 1 dialog xác nhận dùng chung | Giữ mô tả ảnh hưởng theo từng loại |
-| Tạo kế hoạch + Chi tiết kế hoạch | Luồng 3 bước (mục 4.3) | Giữ URL |
-| Chỉnh giờ / Ghi nhận buổi học | Thẻ nhỏ có "← Quay lại lịch" | Giữ URL, chỉ đổi cách trình bày |
-| Cảnh báo `/planner/alerts/` | Khối "Cần xử lý" trên Tổng quan + link xem đầy đủ | Giữ trang |
-| Giờ học + Danh sách/Thêm/Sửa lịch bận | Cài đặt → Thời gian | Nút "+ Thêm lịch bận" trên Lịch giữ nguyên |
+| Tạo kế hoạch + Chi tiết kế hoạch | Lịch học tập → Tạo kế hoạch; luồng 3 bước ở Pha 3 (mục 4.3) | Giữ URL và thanh 5 tab của khu Lịch |
+| Chỉnh giờ / Ghi nhận buổi học | Lịch học tập → tab Lịch tuần; thẻ nhỏ ở Pha 4 | Giữ URL và thanh 5 tab của khu Lịch, chỉ đổi cách trình bày |
+| Cảnh báo `/planner/alerts/` | Lịch học tập → Cảnh báo; Tổng quan có thể dẫn tới trang này | Giữ trang và URL; phần giải thích đầu trang gập trong details; link "Cài đặt nhắc việc" dẫn tới tùy chọn nhắc |
+| Giờ học + Danh sách/Thêm/Sửa/Xóa lịch bận | Lịch học tập → Giờ học / Lịch bận | Giữ URL/view; dùng chung 5 tab của khu Lịch, mục Lịch học tập trên thanh trên luôn active; nút "+ Thêm lịch bận" trên Lịch giữ nguyên |
 | Pomodoro (bắt đầu, phiên) | **Tập trung** | Giữ; thêm chip "đang học" ở thanh trên |
 | Nhật ký (xem/thêm/sửa/xóa) | Thống kê → Nhật ký | Chỉ đổi thanh tab |
 | Thống kê | Thống kê → Biểu đồ | Chỉ đổi thanh tab |
@@ -92,12 +93,15 @@ Gom 7 khối hiện tại thành 4 vùng:
 
 ### 4.4. Cài đặt
 
-Menu dọc bên trái, 4 nhóm:
+Không có sidebar trái. Dùng component tab dạng pill như Môn & Việc / Thống kê, gồm đúng 3 mục:
 
 - **Tài khoản:** thông tin tài khoản + đổi mật khẩu.
-- **Thời gian:** Giờ học; Lịch bận.
 - **Nhắc việc:** tùy chọn kênh web/email và độ nhắc sớm.
-- **Kết nối Google:** trạng thái, kết nối/ngắt, lịch sử đồng bộ.
+- **Kết nối Google:** trạng thái, kết nối/ngắt, lịch sử đồng bộ và chi tiết yêu cầu.
+
+Giờ học và mọi trang Lịch bận thuộc **Lịch học tập**, không nằm trong Cài đặt. Link Cài đặt ở avatar dẫn tới Tài khoản. Đổi mật khẩu active tab Tài khoản; chi tiết yêu cầu đồng bộ active tab Kết nối Google. Tiêu đề, mô tả và tối đa một nút chính nằm trong page header chung, đặt ngoài thẻ nội dung. Trang Tài khoản không có nút "Vào không gian học tập"; chỉ staff thấy dòng Vai trò.
+
+Thông báo kỹ thuật về Google/email/dịch vụ nền chỉ dành cho staff hoặc DEBUG. Người dùng thường thấy lời giải thích thân thiện. Nút kết nối Google bị vô hiệu khi chưa cấu hình; checkbox email bị vô hiệu khi backend hiện tại chỉ dùng kiểm thử, kèm chú thích và giữ nguyên giá trị tùy chọn đã có.
 
 ### 4.5. Thống kê, Thông báo, Tập trung
 
@@ -162,14 +166,18 @@ Menu dọc bên trái, 4 nhóm:
 | Mục | URL thuộc về mục này |
 | --- | --- |
 | Tổng quan | `/` |
-| Lịch học tập | `/planner/`, `/planner/plans/*`, `/planner/sessions/*`, `/planner/alerts/` |
+| Lịch học tập | `/planner/`, `/planner/plans/*`, `/planner/sessions/*`, `/planner/alerts/`, `/planner/busy/*`, `/planner/preferences/` |
 | Môn & Việc | `/studies/*` |
 | Tập trung | `/focus/` và `/focus/sessions/*` |
 | Thống kê | `/focus/statistics/`, `/focus/logs/*`, `/insights/*` |
 | Thông báo (chuông) | `/notifications/`, `/notifications/email/` |
-| Cài đặt (avatar) | `/accounts/profile/`, `/accounts/password-change/*`, `/planner/preferences/`, `/planner/busy/*`, `/notifications/preferences/`, `/integrations/google/*` |
+| Cài đặt (avatar) | `/accounts/profile/`, `/accounts/password-change/*`, `/notifications/preferences/`, `/integrations/google/*` |
 
-`components/section_tabs.html` nhận danh sách tab và tab hiện tại; dùng cho Thống kê, Thông báo và Môn & Việc. Layout Cài đặt (`components/settings_layout.html`) có menu dọc 4 nhóm như mục 4.4; các trang Cài đặt kế thừa layout này nhưng **giữ URL và view hiện có**.
+`components/section_tabs.html` nhận danh sách tab và tab hiện tại; dùng cho Lịch học tập, Cài đặt, Thống kê, Thông báo và Môn & Việc. Layout Cài đặt (`components/settings_layout.html`) chỉ có 3 tab Tài khoản | Nhắc việc | Kết nối Google, không có sidebar như mục 4.4; các trang Cài đặt kế thừa layout này nhưng **giữ URL và view hiện có**.
+
+Mọi trang Lịch học tập **trừ Lịch tuần** dùng cùng thứ tự tab: **Lịch tuần | Tạo kế hoạch | Cảnh báo | Lịch bận | Giờ học**. Tạo/chi tiết kế hoạch active Tạo kế hoạch; chỉnh giờ/ghi nhận buổi học active Lịch tuần; cảnh báo active Cảnh báo; danh sách/thêm/sửa/xóa lịch bận active Lịch bận; giờ học active Giờ học. Không thêm badge cảnh báo nếu phải tính thêm dữ liệu tốn kém; chỉ dùng cùng nguồn với trang Cảnh báo khi không phát sinh truy vấn đáng kể.
+
+**Dọn hiển thị sau Pha 1:** bỏ eyebrow trên mọi trang trừ các template Lịch tuần được bảo vệ; dùng page header chung có tiêu đề, một dòng mô tả, tối đa một nút chính bên phải. Môn & Việc giữ các URL hiện tại, thứ tự Công việc | Môn học | Tài liệu, mặc định Công việc; học kỳ dạng số hiển thị có nhãn. Tập trung dùng nhãn rỗng “Chọn công việc…” và mô tả 1–2 câu. Tạo kế hoạch đặt form trước, mô tả chế độ ngay dưới lựa chọn và cập nhật khi đổi; phần giải thích cũ gập trong “Cách hệ thống xếp lịch”. Link “Điều chỉnh giờ học” giữ `planner:preferences`. Những thay đổi này không triển khai gộp studies/drawer/redirect/stepper của Pha 2–3.
 
 **Lưu ý với Lịch tuần:** nếu `planner/week.html` đang kế thừa `planner/base.html`, phải giữ cấu trúc block tương thích để thân trang Lịch không đổi. Kiểm tra trang `/planner/` hiển thị như cũ (chỉ khác thanh trên).
 

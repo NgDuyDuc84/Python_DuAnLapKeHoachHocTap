@@ -1,10 +1,6 @@
 {% extends "studies/base.html" %}
 
 {% block study_content %}
-<div class="study-toolbar">
-    <p>Lưu liên kết bài giảng và tài liệu theo môn học hoặc công việc.</p>
-    <a class="button" href="{% url 'studies:material_create' %}">Thêm tài liệu</a>
-</div>
 {% include "studies/filters.html" %}
 <div class="study-grid">
     {% for material in object_list %}

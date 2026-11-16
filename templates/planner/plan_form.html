@@ -1,21 +1,24 @@
 {% extends "planner/base.html" %}
+{% load static %}
 
 {% block planner_content %}
-<div class="calendar-note">
-    <p>Hệ thống xếp công việc chưa hoàn thành theo deadline gần nhất, cùng hạn thì ưu tiên cao trước. Lịch bận, ngày học, quỹ phút mỗi ngày và nghỉ giữa buổi là các giới hạn bắt buộc.</p>
-    <p><strong>Bổ sung</strong> giữ mọi buổi đã áp dụng. <strong>Xếp lại</strong> thay các buổi tự động chưa bắt đầu trong tuần đã chọn; giữ buổi khóa, đã chỉnh tay, đang học và đã học. Các tuần khác được giữ nguyên.</p>
-    <p>Chỉ khi bấm <strong>Áp dụng</strong> mới thay đổi lịch. Nếu buổi được giữ đang xung đột, hãy mở khóa/chỉnh giờ/hủy trực tiếp; thuật toán không tự di chuyển các buổi này.</p>
-</div>
 <div class="study-form-card">
     <form method="post" class="study-form">
         {% csrf_token %}
         {{ form.non_field_errors }}
         <div class="form-field">{{ form.week.label_tag }}{{ form.week }}{{ form.week.errors }}</div>
-        <div class="form-field">{{ form.mode.label_tag }}{{ form.mode }}{{ form.mode.errors }}</div>
+        <div class="form-field">{{ form.mode.label_tag }}{{ form.mode }}{{ form.mode.errors }}<p id="plan-mode-help" class="field-help" aria-live="polite">{% include "components/plan_mode_description.html" with mode=form.mode.value only %}</p></div>
         <p class="field-help">Chọn tuần hiện tại hoặc tương lai. Hệ thống chỉ xếp từ thời điểm hiện tại và trước deadline.</p>
         <div class="form-actions"><button class="button" type="submit">Tạo bản xem trước</button><a class="text-link" href="{% url 'planner:preferences' %}">Điều chỉnh giờ học</a></div>
     </form>
 </div>
+<details class="explanation"><summary>Cách hệ thống xếp lịch</summary>
+<div class="calendar-note">
+    <p>Hệ thống xếp công việc chưa hoàn thành theo deadline gần nhất, cùng hạn thì ưu tiên cao trước. Lịch bận, ngày học, quỹ phút mỗi ngày và nghỉ giữa buổi là các giới hạn bắt buộc.</p>
+    <p><strong>Bổ sung</strong>: <span id="plan-mode-add">{% include "components/plan_mode_description.html" with mode="add" only %}</span> <strong>Xếp lại</strong>: <span id="plan-mode-replace">{% include "components/plan_mode_description.html" with mode="replace" only %}</span></p>
+    <p>Chỉ khi bấm <strong>Áp dụng</strong> mới thay đổi lịch. Nếu buổi được giữ đang xung đột, hãy mở khóa/chỉnh giờ/hủy trực tiếp; thuật toán không tự di chuyển các buổi này.</p>
+</div>
+</details>
 <h2 class="plan-section-title">10 kế hoạch gần nhất</h2>
 <div class="study-list">
     {% for plan in recent_plans %}
@@ -25,4 +28,5 @@
         </article>
     {% empty %}<div class="empty-state">Chưa có kế hoạch. Thêm công việc và chọn giờ học trước khi xếp lịch.</div>{% endfor %}
 </div>
+<script src="{% static 'js/plan_form.js' %}" defer></script>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "notifications/base.html" %}
 {% block notification_content %}
-<p class="notification-note">{{ email_mode }}</p>
+{% if navigation.show_technical_details %}<p class="notification-note">{{ email_mode }}</p>{% elif not navigation.email_available %}<p class="notification-note">Gửi email nhắc việc hiện chưa khả dụng. Bạn vẫn có thể nhận thông báo trong ứng dụng.</p>{% endif %}
 <p class="notification-note">Email lỗi được tự thử tối đa 3 lần, cách nhau ít nhất 1 phút. Kết quả chưa xác nhận không được tự gửi lại: hãy kiểm tra hộp thư để tránh nhận trùng. Mỗi lần yêu cầu gửi lại sẽ được kiểm tra theo dữ liệu và tùy chọn hiện tại.</p>
 <div class="study-list">
 {% for reminder in reminders %}
@@ -12,7 +12,7 @@
     {% if reminder.last_error %}<p class="notification-warning">{{ reminder.last_error }}</p>{% endif %}
     {% if reminder.can_retry %}<form method="post" action="{% url 'notifications:retry_email' reminder.pk %}" class="form-actions">{% csrf_token %}<button class="button" type="submit">Đã kiểm tra hộp thư, yêu cầu gửi lại</button></form>{% endif %}
 </article>
-{% empty %}<p class="empty-state">Chưa có email nhắc. Bật email trong Tùy chọn nhắc và chờ dịch vụ nền xử lý việc/buổi đến thời điểm nhắc.</p>{% endfor %}
+{% empty %}<p class="empty-state">Chưa có email nhắc. Bạn có thể chọn nhận email trong Cài đặt nhắc việc khi tính năng khả dụng.</p>{% endfor %}
 </div>
 {% include "notifications/pagination.html" %}
 {% endblock %}

@@ -1,10 +1,6 @@
-{% extends "planner/settings_base.html" %}
+{% extends "planner/base.html" %}
 
 {% block planner_content %}
-<div class="study-toolbar">
-    <p>Lịch lên lớp, ca làm và hoạt động cá nhân. Các lịch chồng nhau được gộp khi tính khoảng trống.</p>
-    <a class="button" href="{% url 'planner:busy_create' %}">Thêm lịch bận</a>
-</div>
 <div class="study-list">
     {% for event in object_list %}
         <article class="study-card">

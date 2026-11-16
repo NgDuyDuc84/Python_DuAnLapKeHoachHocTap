@@ -1,15 +1,5 @@
-.settings-shell { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 32px; margin-block: 36px 64px; }
-.settings-sidebar { align-self: start; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: white; }
-.settings-sidebar h2 { margin: 0 0 16px; font-size: 22px; }
-.settings-navigation { display: grid; gap: 12px; }
-.settings-group { display: grid; gap: 4px; }
-.settings-group + .settings-group { padding-top: 12px; border-top: 1px solid var(--line); }
-.settings-group h3 { margin: 0; padding: 8px 12px; color: var(--muted); font-size: 13px; }
-.settings-group a { padding: 8px 12px; border-radius: 8px; }
-.settings-group a[aria-current="page"] { background: #eaf2e7; color: var(--accent); font-weight: 700; }
+.settings-shell { margin-block: 40px 64px; }
 .settings-content { min-width: 0; }
-.settings-content .study-shell, .settings-content .auth-shell { margin: 0; padding-block: 0; }
-.settings-content h1 { margin-bottom: 24px; }
-@media (max-width: 800px) {
-    .settings-shell { grid-template-columns: 1fr; gap: 24px; margin-block: 24px 48px; }
-}
+.settings-content > .study-shell, .settings-content .auth-shell { margin: 0; padding-block: 0; }
+.settings-content > .auth-card, .settings-content .profile-shell { max-width: 760px; }
+.email-unavailable { margin: 0; padding: 0; border: 0; }

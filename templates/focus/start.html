@@ -1,6 +1,5 @@
 {% extends "focus/base.html" %}
 {% block focus_content %}
-<p class="focus-note">Một phiên học 25 phút, sau đó có thể nghỉ 5 phút. Tạm dừng không tính vào phút học. Bạn có thể lưu và kết thúc sớm; hủy phiên sẽ không ghi nhật ký.</p>
 {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
 {% if active %}
     <div class="study-card"><h2>Bạn đang có một phiên {{ active.get_phase_display|lower }}</h2><p>{{ active.task_title }} · {{ active.get_status_display }}</p><a class="button" href="{% url 'focus:session' active.pk %}">Tiếp tục phiên hiện tại</a></div>
