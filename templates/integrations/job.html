@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends "components/settings_layout.html" %}
 {% load static %}
 {% block title %}Kết quả đồng bộ — Nhịp Học{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/integrations.css' %}">
 {% endblock %}
-{% block content %}
+{% block settings_content %}
 <section class="study-shell sync-shell">
     <header class="study-heading"><p class="eyebrow">Google Calendar</p><h1>Yêu cầu đồng bộ</h1><p>Tuần bắt đầu {{ job.week_start|date:'d/m/Y' }}</p></header>
     <section class="study-card">

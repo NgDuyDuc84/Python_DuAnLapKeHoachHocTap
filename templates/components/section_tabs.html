@@ -1,0 +1,7 @@
+{% if tabs %}
+<nav class="section-tabs" aria-label="{{ tabs_label }}">
+    {% for tab in tabs %}
+    <a href="{% url tab.url %}"{% if tab.key == current_tab %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+    {% endfor %}
+</nav>
+{% endif %}

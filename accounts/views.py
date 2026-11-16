@@ -1,4 +1,6 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import PasswordChangeDoneView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -22,3 +24,9 @@ class RegisterView(SuccessMessageMixin, CreateView):
 @login_required
 def profile(request):
     return render(request, "accounts/profile.html")
+
+
+class PasswordChangeDoneRedirectView(PasswordChangeDoneView):
+    def get(self, request, *args, **kwargs):
+        messages.success(request, "Đổi mật khẩu thành công.")
+        return redirect("accounts:profile")

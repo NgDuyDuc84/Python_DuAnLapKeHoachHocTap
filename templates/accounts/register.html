@@ -3,5 +3,5 @@
 {% block title %}Đăng ký — Nhịp Học{% endblock %}
 {% block form_heading %}Bắt đầu với Nhịp Học{% endblock %}
 {% block form_intro %}Tạo tài khoản để có không gian học tập riêng của bạn. Các trường bên dưới đều cần được điền.{% endblock %}
-{% block submit_label %}Tạo tài khoản{% endblock %}
+{% block account_form %}{% include "accounts/form_fields.html" with submit_label="Tạo tài khoản" %}{% endblock %}
 {% block form_footer %}Đã có tài khoản? <a href="{% url 'accounts:login' %}">Đăng nhập</a>{% endblock %}

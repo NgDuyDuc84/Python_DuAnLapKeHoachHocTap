@@ -1,5 +1,8 @@
-{% extends "notifications/base.html" %}
-{% block notification_content %}
+{% extends "components/settings_layout.html" %}
+{% load static %}
+{% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/notifications.css' %}">{% endblock %}
+{% block settings_content %}
+<h1>{{ view.page_title }}</h1>
 <p class="notification-note">{{ email_mode }}</p>
 <p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. Cần dịch vụ nền hoạt động để xử lý nhắc.</p>
 <div class="study-form-card"><form method="post" class="study-form">{% csrf_token %}

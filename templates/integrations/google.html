@@ -1,11 +1,11 @@
-{% extends 'base.html' %}
+{% extends "components/settings_layout.html" %}
 {% load static %}
 {% block title %}Google Calendar — Nhịp Học{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/studies.css' %}">
+{{ block.super }}
 <link rel="stylesheet" href="{% static 'css/integrations.css' %}">
 {% endblock %}
-{% block content %}
+{% block settings_content %}
 <section class="study-shell sync-shell">
     <header class="study-heading">
         <p class="eyebrow">Lịch học luôn trong tầm tay</p>

@@ -205,7 +205,13 @@ class AccountFlowTests(TestCase):
                 "is_superuser": "on",
             },
         )
-        self.assertRedirects(response, reverse("accounts:password_change_done"))
+        self.assertRedirects(
+            response, reverse("accounts:password_change_done"),
+            fetch_redirect_response=False,
+        )
+        response = self.client.get(response.url, follow=True)
+        self.assertRedirects(response, reverse("accounts:profile"))
+        self.assertContains(response, "Đổi mật khẩu thành công.")
         self.assertEqual(
             self.client.get(reverse("accounts:profile")).status_code, 200
         )

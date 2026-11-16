@@ -46,7 +46,7 @@ class DashboardTests(TestCase):
     def test_anonymous_landing_and_public_guide_have_working_navigation(self):
         response = self.client.get(reverse("core:home"))
         self.assertTemplateUsed(response, "core/home.html")
-        self.assertContains(response, reverse("core:guide"))
+        self.assertNotContains(response, 'aria-label="Điều hướng chính"')
         response = self.client.get(reverse("core:guide"))
         self.assertContains(response, "Lập kế hoạch cùng Nhịp Học")
         self.assertContains(response, reverse("planner:preferences"))

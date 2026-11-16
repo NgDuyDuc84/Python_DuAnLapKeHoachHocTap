@@ -120,7 +120,7 @@ class ReadinessTests(TestCase):
     def test_errors_have_navigation_and_no_internal_details(self):
         response = self.client.get("/missing-synthetic-page/")
         self.assertEqual(response.status_code, 404)
-        self.assertContains(response, "Về trang chủ", status_code=404)
+        self.assertContains(response, "Về Tổng quan", status_code=404)
         client = Client(enforce_csrf_checks=True)
         response = client.post(reverse("accounts:logout"))
         self.assertEqual(response.status_code, 403)
