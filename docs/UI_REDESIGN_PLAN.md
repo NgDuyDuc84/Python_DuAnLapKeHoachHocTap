@@ -195,7 +195,7 @@ Tạo `components/confirm_delete.html`. Các template xác nhận xóa hiện c�
 ### 8.5. Form
 
 - Trường chọn môn: `empty_label` tiếng Việt (ví dụ "Chọn môn học" hoặc "Không gắn môn") thay cho `---------`.
-- Ngày giờ: `<input type="datetime-local">` hiển thị theo ngôn ngữ trình duyệt/hệ điều hành, thuộc tính `lang` không đảm bảo kết quả. Muốn cố định dd/mm/yyyy và 24h thì tách thành ô Ngày + ô Giờ, hoặc dùng bộ chọn ngày cục bộ có locale `vi`. Chọn cách ít xâm lấn nhất, giữ nguyên parsing/validation phía server và múi giờ `Asia/Ho_Chi_Minh`, và cập nhật test form nếu cần.
+- Ngày giờ: đã thống nhất bằng Flatpickr 4.6.13 cục bộ và một controller `static/js/datetime_inputs.js` trong layout chung. Locale tiếng Việt `vi` (alias từ `vn` của upstream), hiển thị `dd/mm/yyyy`, `HH:mm` hoặc `dd/mm/yyyy HH:mm`; giữ giá trị gửi lên là ISO như cũ. Không tạo widget riêng ở từng trang hoặc đổi parsing/validation Django. Khi JS/thư viện khởi tạo lỗi, trở về input date/time/datetime-local gốc; không dựa vào thuộc tính lang để ép định dạng native. Giữ múi giờ server `Asia/Ho_Chi_Minh` và các test nhận ISO.
 - Bố cục form 1 cột, nhóm trường, nút Lưu (chính) + Hủy.
 
 ### 8.6. Luồng kế hoạch

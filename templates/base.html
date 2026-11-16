@@ -9,6 +9,7 @@
     <title>{% block title %}Nhịp Học — Kế hoạch học tập cá nhân{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
+    <link rel="stylesheet" href="{% static 'vendor/flatpickr/flatpickr.min.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -78,5 +79,8 @@
         <span>Mỗi ngày một bước, học tập có kế hoạch.</span>
     </footer>
     {% if user.is_authenticated %}<script src="{% static 'js/header.js' %}" defer></script>{% endif %}
+    <script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}" defer></script>
+    <script src="{% static 'vendor/flatpickr/vn.js' %}" defer></script>
+    <script src="{% static 'js/datetime_inputs.js' %}" defer></script>
 </body>
 </html>
