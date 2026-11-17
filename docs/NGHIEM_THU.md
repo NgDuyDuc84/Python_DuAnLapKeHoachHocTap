@@ -28,7 +28,7 @@ Lệnh in tuần có buổi học để bạn chọn đúng tuần; buổi tươ
 
 ## Trạng thái hoàn thiện cuối
 
-Ngày 15/11/2026: mã các chức năng của kế hoạch đã có, bổ sung Tổng quan và hướng dẫn ngay trong web. Bản hiện tại qua 272 test SQLite, hành trình HTTP trên Waitress + hai worker, và kiểm tra Tổng quan ở máy tính/375px. Chưa có khóa SMTP/Google/OpenAI nên không đánh dấu dịch vụ thật đã đạt. Public website nằm ngoài yêu cầu hiện tại; yêu cầu URL online của đề vẫn phải làm trước khi nộp nếu thầy yêu cầu. Workflow Compose mới cần xác minh sau push. [Báo cáo kỹ thuật](BAO_CAO_DU_AN.md) có bảng đối chiếu từng yêu cầu và phần giải thích để bảo vệ.
+Ngày 15/11/2026: mã các chức năng của kế hoạch đã có, bổ sung Tổng quan và thanh bên Học tập trong lịch chia Sáng/Chiều/Tối. Mục Cách sử dụng đã bỏ theo yêu cầu. Bản hiện tại qua 286 test SQLite, hành trình HTTP trên Waitress + hai worker, và kiểm tra Tổng quan ở máy tính/375px. Chưa có khóa SMTP/Google/OpenAI nên không đánh dấu dịch vụ thật đã đạt. Public website nằm ngoài yêu cầu hiện tại; yêu cầu URL online của đề vẫn phải làm trước khi nộp nếu thầy yêu cầu. Workflow Compose mới cần xác minh sau push. [Báo cáo kỹ thuật](BAO_CAO_DU_AN.md) có bảng đối chiếu từng yêu cầu và phần giải thích để bảo vệ.
 
 ## Kịch bản trình bày
 

@@ -1,15 +1,20 @@
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count
+from django.core.paginator import Paginator
+from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from studies.views import OwnedFormMixin, OwnedObjectMixin
+from studies.forms import MaterialForm, SubjectForm, TaskForm
+from studies.models import Material, Subject, Task
 
 from .forms import (BusyEventForm, PlanWeekForm, SessionLockForm, SessionMoveForm,
                     SessionRecordForm, StudyPreferenceForm, WeekForm)
@@ -23,11 +28,47 @@ from .services.sessions import move_session, record_session, set_session_lock
 class WeekView(LoginRequiredMixin, TemplateView):
     template_name = "planner/week.html"
     page_title = "Lịch tuần của bạn"
+    panels = {
+        "tasks": (Task, TaskForm, "công việc"),
+        "subjects": (Subject, SubjectForm, "môn học"),
+        "materials": (Material, MaterialForm, "tài liệu"),
+    }
+
+    def sidebar_object(self, model, pk):
+        if not pk.isdecimal() or len(pk) > 18:
+            raise Http404
+        return get_object_or_404(model, owner=self.request.user, pk=int(pk))
+
+    def sidebar_url(self, week, panel):
+        return reverse("planner:week") + "?" + urlencode({"week": week.isoformat(), "panel": panel})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        form = WeekForm(self.request.GET or {"week": timezone.localdate().isoformat()})
+        form = WeekForm({"week": self.request.GET.get("week", timezone.localdate().isoformat())})
         context["week_form"] = form
+        panel = self.request.GET.get("panel", "tasks")
+        if panel not in self.panels:
+            raise Http404
+        model, form_class, label = self.panels[panel]
+        mode = kwargs.get("sidebar_mode", self.request.GET.get("action", ""))
+        if mode not in ("", "new", "edit", "delete"):
+            raise Http404
+        obj = kwargs.get("sidebar_object")
+        if obj is None and mode in ("edit", "delete"):
+            obj = self.sidebar_object(model, self.request.GET.get("id", ""))
+        sidebar_form = kwargs.get("sidebar_form")
+        if sidebar_form is None and mode in ("new", "edit"):
+            sidebar_form = form_class(user=self.request.user, instance=obj)
+        query = self.request.GET.get("q", "").strip()[:200]
+        objects = model.objects.filter(owner=self.request.user)
+        if panel != "subjects":
+            objects = objects.select_related("subject")
+        if query:
+            objects = objects.filter(**{("name" if panel == "subjects" else "title") + "__icontains": query})
+        page = Paginator(objects, 8).get_page(self.request.GET.get("page"))
+        context.update({"sidebar_panel": panel, "sidebar_label": label, "sidebar_mode": mode,
+                        "sidebar_form": sidebar_form, "sidebar_object": obj,
+                        "sidebar_page": page, "sidebar_query": query})
         if form.is_valid():
             monday = form.cleaned_data["week"]
             preferences = get_preferences(self.request.user)
@@ -37,8 +78,33 @@ class WeekView(LoginRequiredMixin, TemplateView):
                 "next_week": (monday + timedelta(days=7)).isoformat(),
                 "preferences": preferences,
                 "days": build_week(self.request.user, monday, preferences),
+                "sidebar_url": self.sidebar_url(monday, panel),
             })
         return context
+
+    def post(self, request, *args, **kwargs):
+        week_form = WeekForm({"week": request.GET.get("week", timezone.localdate().isoformat())})
+        panel = request.GET.get("panel", "tasks")
+        if panel not in self.panels or not week_form.is_valid():
+            return HttpResponseBadRequest("Tuần hoặc mục học tập không hợp lệ.")
+        model, form_class, label = self.panels[panel]
+        pk = request.POST.get("object_id", "")
+        obj = self.sidebar_object(model, pk) if pk else None
+        operation = request.POST.get("operation")
+        if operation == "delete" and obj is not None:
+            obj.delete()
+            messages.success(request, f"Đã xóa {label}.")
+        elif operation == "save":
+            form = form_class(request.POST, user=request.user, instance=obj)
+            if not form.is_valid():
+                return self.render_to_response(self.get_context_data(
+                    sidebar_mode="edit" if obj else "new", sidebar_object=obj, sidebar_form=form,
+                ))
+            form.save()
+            messages.success(request, f"Đã lưu {label}.")
+        else:
+            return HttpResponseBadRequest("Thao tác không hợp lệ.")
+        return redirect(self.sidebar_url(week_form.cleaned_data["week"], panel) + "#hoc-tap")
 
 
 class PreferenceView(OwnedFormMixin, UpdateView):

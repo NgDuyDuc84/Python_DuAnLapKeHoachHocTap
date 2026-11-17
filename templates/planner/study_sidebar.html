@@ -1,0 +1,52 @@
+<aside class="calendar-sidebar" id="hoc-tap" aria-label="Học tập">
+    <h2 class="sidebar-caption">Học tập</h2>
+    <nav class="sidebar-tabs" aria-label="Nội dung học tập">
+        <a href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks#hoc-tap"{% if sidebar_panel == 'tasks' %} aria-current="page"{% endif %}>Công việc</a>
+        <a href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=subjects#hoc-tap"{% if sidebar_panel == 'subjects' %} aria-current="page"{% endif %}>Môn học</a>
+        <a href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=materials#hoc-tap"{% if sidebar_panel == 'materials' %} aria-current="page"{% endif %}>Tài liệu</a>
+    </nav>
+    <div class="sidebar-content{% if sidebar_form %} sidebar-form-content{% endif %}">
+        {% if sidebar_form %}
+        <div class="sidebar-editor">
+            <div class="sidebar-editor-heading"><h3>{% if sidebar_object %}Sửa{% else %}Thêm{% endif %} {{ sidebar_label }}</h3><a class="text-link" href="{{ sidebar_url }}#hoc-tap">Đóng</a></div>
+            <form class="study-form" method="post" action="{{ sidebar_url }}#hoc-tap">
+                {% csrf_token %}<input type="hidden" name="operation" value="save">
+                {% if sidebar_object %}<input type="hidden" name="object_id" value="{{ sidebar_object.pk }}">{% endif %}
+                {% include "studies/form_fields.html" with form=sidebar_form %}
+                <div class="form-actions"><button class="button" type="submit">Lưu {{ sidebar_label }}</button><a class="text-link" href="{{ sidebar_url }}#hoc-tap">Hủy</a></div>
+            </form>
+        </div>
+        {% elif sidebar_mode == 'delete' %}
+        <div class="sidebar-editor"><h3>Xóa {{ sidebar_label }}?</h3><p class="sidebar-object-name">{{ sidebar_object }}</p>
+            {% if sidebar_panel == 'tasks' %}<p>Các buổi học của việc này cũng bị xóa. Tài liệu, nhật ký và phiên Pomodoro được giữ, bỏ liên kết với công việc.</p>
+            {% elif sidebar_panel == 'subjects' %}<p>Công việc và tài liệu được giữ, bỏ liên kết với môn này.</p>
+            {% else %}<p>Chỉ xóa liên kết đã lưu, tệp ở website gốc được giữ.</p>{% endif %}
+            <p>Thao tác xóa không thể hoàn tác.</p>
+            <form class="form-actions" method="post" action="{{ sidebar_url }}#hoc-tap">{% csrf_token %}<input type="hidden" name="operation" value="delete"><input type="hidden" name="object_id" value="{{ sidebar_object.pk }}"><button class="button button-danger" type="submit">Xác nhận xóa</button><a class="text-link" href="{{ sidebar_url }}#hoc-tap">Hủy</a></form>
+        </div>
+        {% else %}
+        <a class="button sidebar-add" href="{{ sidebar_url }}&amp;action=new#hoc-tap">+ Thêm {{ sidebar_label }}</a>
+        <form class="sidebar-search" method="get" action="{% url 'planner:week' %}#hoc-tap">
+            <input type="hidden" name="week" value="{{ week_start|date:'Y-m-d' }}"><input type="hidden" name="panel" value="{{ sidebar_panel }}">
+            <label class="sr-only" for="sidebar-search">Tìm {{ sidebar_label }}</label><input id="sidebar-search" name="q" value="{{ sidebar_query }}" placeholder="Tìm {{ sidebar_label }}…" maxlength="200"><button type="submit" aria-label="Tìm kiếm">Tìm</button>
+        </form>
+        <p class="sidebar-count">{{ sidebar_page.paginator.count }} {{ sidebar_label }}</p>
+        <ul class="sidebar-list">
+            {% for entry in sidebar_page %}
+            <li>
+                {% if sidebar_panel == 'subjects' %}<strong class="sidebar-object-name">{{ entry.name }}</strong><p>{{ entry.semester|default:"Chưa có học kỳ" }}{% if entry.is_archived %} · Đã lưu trữ{% endif %}</p>
+                {% else %}<strong class="sidebar-object-name">{{ entry.title }}</strong><p>{{ entry.subject.name|default:"Chưa gắn môn" }}</p>
+                    {% if sidebar_panel == 'tasks' %}<p>Hạn {{ entry.deadline|date:"d/m · H:i" }} · Còn {{ entry.remaining_minutes }} phút</p><span class="badge{% if entry.is_overdue %} badge-danger{% endif %}">{{ entry.get_status_display }}{% if entry.is_overdue %} · Quá hạn{% endif %}</span>{% endif %}
+                {% endif %}
+                <div class="sidebar-entry-actions">
+                    <a class="text-link" href="{{ sidebar_url }}&amp;action=edit&amp;id={{ entry.pk }}#hoc-tap" aria-label="Sửa {{ entry }}">Sửa</a>
+                    <a class="delete-link" href="{{ sidebar_url }}&amp;action=delete&amp;id={{ entry.pk }}#hoc-tap" aria-label="Xóa {{ entry }}">Xóa</a>
+                    {% if sidebar_panel == 'materials' %}<a class="text-link" href="{{ entry.url }}" target="_blank" rel="noopener noreferrer">Mở tài liệu ↗</a>{% endif %}
+                </div>
+            </li>
+            {% empty %}<li class="sidebar-empty">{% if sidebar_query %}Không tìm thấy {{ sidebar_label }} phù hợp.{% else %}Chưa có {{ sidebar_label }}. Thêm mới để bắt đầu.{% endif %}</li>{% endfor %}
+        </ul>
+        {% if sidebar_page.has_other_pages %}<nav class="sidebar-pagination" aria-label="Trang danh sách học tập">{% if sidebar_page.has_previous %}<a class="text-link" href="{{ sidebar_url }}&amp;q={{ sidebar_query|urlencode }}&amp;page={{ sidebar_page.previous_page_number }}#hoc-tap">← Trước</a>{% endif %}<span>{{ sidebar_page.number }}/{{ sidebar_page.paginator.num_pages }}</span>{% if sidebar_page.has_next %}<a class="text-link" href="{{ sidebar_url }}&amp;q={{ sidebar_query|urlencode }}&amp;page={{ sidebar_page.next_page_number }}#hoc-tap">Sau →</a>{% endif %}</nav>{% endif %}
+        {% endif %}
+    </div>
+</aside>

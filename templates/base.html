@@ -84,10 +84,6 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
-    <footer class="site-footer container">
-        <span>Nhịp Học</span>
-        <span>Mỗi ngày một bước, học tập có kế hoạch.</span>
-    </footer>
     {% if user.is_authenticated %}<script src="{% static 'js/header.js' %}" defer></script>{% endif %}
     <script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}" defer></script>
     <script src="{% static 'vendor/flatpickr/vn.js' %}" defer></script>

@@ -81,6 +81,26 @@ def available_intervals(day, preferences, blocked, now):
     return subtract_busy(start, end, blocked)
 
 
+def day_periods(day, items):
+    boundaries = [at_time(day, time.min), at_time(day, time(12)), at_time(day, time(18)),
+                  at_time(day + timedelta(days=1), time.min)]
+    periods = []
+    for index, label in enumerate(("Sáng", "Chiều", "Tối")):
+        start, end = boundaries[index:index + 2]
+        entries = []
+        for item in items:
+            if item["kind"] == "deadline":
+                if start <= item["starts_at"] < end:
+                    entries.append(item)
+            elif item["starts_at"] < end and item["ends_at"] > start:
+                clipped_start, clipped_end = max(start, item["starts_at"]), min(end, item["ends_at"])
+                entries.append({**item, "starts_at": clipped_start, "ends_at": clipped_end,
+                                "start_label": clipped_start.strftime("%H:%M"),
+                                "end_label": "24:00" if clipped_end == boundaries[-1] else clipped_end.strftime("%H:%M")})
+        periods.append({"label": label, "items": sorted(entries, key=lambda entry: entry["starts_at"])})
+    return periods
+
+
 def build_week(user, monday, preferences, now=None):
     now = now or timezone.now()
     week_start = at_time(monday, time.min)
@@ -107,7 +127,7 @@ def build_week(user, monday, preferences, now=None):
                 start, end = max(occurrence.starts_at, day_start), min(occurrence.ends_at, day_end)
                 blocked.append((start, end))
                 items.append({
-                    "kind": "busy", "event": occurrence.event, "starts_at": start,
+                    "kind": "busy", "event": occurrence.event, "starts_at": start, "ends_at": end,
                     "start_label": start.strftime("%H:%M"),
                     "end_label": "24:00" if end == day_end else end.strftime("%H:%M"),
                 })
@@ -126,7 +146,7 @@ def build_week(user, monday, preferences, now=None):
                 end = timezone.localtime(min(session.ends_at, day_end))
                 used_minutes += int((end - start).total_seconds() // 60)
                 items.append({
-                    "kind": "study", "session": session, "starts_at": start,
+                    "kind": "study", "session": session, "starts_at": start, "ends_at": end,
                     "start_label": start.strftime("%H:%M"),
                     "end_label": "24:00" if end == day_end else end.strftime("%H:%M"),
                 })
@@ -142,6 +162,7 @@ def build_week(user, monday, preferences, now=None):
             "is_today": day == timezone.localtime(now).date(),
             "is_past": day < timezone.localtime(now).date(),
             "items": sorted(items, key=lambda item: item["starts_at"]), "free": free,
+            "periods": day_periods(day, items),
             "capacity_minutes": min(sum(item["minutes"] for item in free), max(0, preferences.max_daily_minutes - used_minutes)),
         })
     return days

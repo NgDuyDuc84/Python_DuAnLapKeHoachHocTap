@@ -43,13 +43,12 @@ class DashboardTests(TestCase):
             **kwargs,
         })
 
-    def test_anonymous_landing_and_public_guide_have_working_navigation(self):
+    def test_anonymous_landing_no_longer_has_usage_guide(self):
         response = self.client.get(reverse("core:home"))
         self.assertTemplateUsed(response, "core/home.html")
-        self.assertNotContains(response, 'aria-label="Điều hướng chính"')
-        response = self.client.get(reverse("core:guide"))
-        self.assertContains(response, "Lập kế hoạch cùng Nhịp Học")
-        self.assertContains(response, reverse("planner:preferences"))
+        self.assertNotContains(response, "Cách sử dụng")
+        self.assertNotContains(response, "cach-su-dung")
+        self.assertEqual(self.client.get("/huong-dan/").status_code, 404)
 
     def test_empty_account_has_onboarding_and_zero_metrics(self):
         self.client.force_login(self.other)

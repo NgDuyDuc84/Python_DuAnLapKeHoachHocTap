@@ -14,10 +14,6 @@ def home(request):
     return render(request, "core/home.html")
 
 
-def guide(request):
-    return render(request, "core/guide.html")
-
-
 @require_safe
 def health(request):
     try:

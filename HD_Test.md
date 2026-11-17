@@ -1,5 +1,13 @@
 **Hướng dẫn kiểm thử theo từng mốc**
 
+**Bản mới nhất: Thu gọn lịch học tập — 15/11/2026**, xem checklist cuối tài liệu.
+
+**Bản mới nhất: Sửa cache CSS local — 15/11/2026.** Xem checklist cuối tài liệu; URL CSS/JS local đổi phiên bản khi file thay đổi.
+
+**Bản mới nhất: Bố cục lịch theo mẫu — 15/11/2026**, ở cuối tài liệu. Bản này thay thế bố cục sidebar cố định và vị trí chuông của các lượt trước.
+
+**Bản cần kiểm thử hiện tại: Menu tài khoản và chuông thông báo — 15/11/2026**, ở cuối tài liệu. Chuông nằm bên trái và menu tài khoản/đăng xuất nằm bên phải thanh trên cùng, mở khi bấm biểu tượng. Giữ các thay đổi Lịch & học tập của lượt trước. Bản hiện tại qua **289 test SQLite** và HTTP/worker tại máy; chưa commit/push hoặc xác minh CI của bản sửa này. Các checklist bên dưới giữ làm lịch sử.
+
 Sau mỗi mốc, người dùng kiểm thử, ghi nhận kết quả rồi commit/push GitHub. Chỉ chuyển mốc khi người dùng xác nhận. Khi có mốc mới, bổ sung vào tài liệu và giữ lịch sử các mốc cũ.
 
 **Phạm vi mới nhất:** người dùng yêu cầu hoàn tất toàn bộ kế hoạch trừ public website, không dừng giữa các phần của lượt hoàn thiện. Chưa có khóa dịch vụ; hoàn thiện mã và hướng dẫn trước. Checklist cần thử hiện tại là **Hoàn thiện toàn bộ phạm vi source — 15/11/2026** ở cuối tài liệu. Những mục bên dưới giữ nguyên làm lịch sử.
@@ -1687,3 +1695,244 @@ git push origin main
 ```
 
 Kiểm tra danh sách stage không có `.env`, khóa, database, `.venv` hoặc dữ liệu QA. Thao tác commit/push source không public website. Sau push cần xem Actions của SHA mới; Google/SMTP/OpenAI thật vẫn chờ khóa và public website vẫn ngoài phạm vi hiện tại.
+
+---
+
+## Điều chỉnh Lịch & học tập — 15/11/2026
+
+Phạm vi theo yêu cầu mới: bỏ mục Cách sử dụng, đưa Học tập vào thanh bên của Lịch tuần và chia mỗi ngày thành **Sáng / Chiều / Tối**. Giao diện không thêm các hàng mốc giờ; giờ của từng lịch vẫn hiển thị. Không thay thuật toán xếp lịch hoặc cấu trúc database.
+
+### 1. Khởi động bản mới
+
+Dừng và khởi động lại server đang dùng. Giữ nguyên `.env` và database cá nhân, không cần migration mới.
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py check
+& .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+& .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Mở [Lịch & học tập](http://127.0.0.1:8000/planner/). Nếu CSS còn bản cũ, tải lại trang bằng Ctrl+F5. Với Waitress, chạy lại collectstatic và restart tiến trình theo TRIEN_KHAI.md.
+
+### 2. Checklist giao diện và chức năng
+
+| # | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| 1 | Mở trang chủ khi chưa đăng nhập, rồi đăng nhập vào Tổng quan | Không còn Cách sử dụng/Hướng dẫn sử dụng hoặc khối hướng dẫn cũ. `/huong-dan/` trả 404 |
+| 2 | Bấm Lịch & học tập trên thanh điều hướng | Trên máy tính, thanh bên Học tập ở trái và lịch tuần ở phải; có ba mục Công việc / Môn học / Tài liệu |
+| 3 | Chuyển đến một tuần tương lai; vào Môn học → Thêm môn học, nhập tên và lưu | Biểu mẫu ở thanh bên, lịch vẫn bên cạnh. Môn mới xuất hiện; tuần đang xem được giữ |
+| 4 | Vào Công việc → Thêm công việc; chọn môn vừa tạo, nhập hạn thuộc tuần đang xem, ưu tiên và số phút | Lưu được ngay tại trang lịch. Việc có trong thanh bên; mốc deadline xuất hiện đúng ngày/buổi. Buổi học được bố trí sau khi tạo và áp dụng kế hoạch |
+| 5 | Bấm Sửa hoặc bấm tên deadline trên lịch; đổi hạn từ một giờ buổi chiều sang một giờ buổi tối | Biểu mẫu mở ở thanh bên. Lưu xong deadline chuyển đúng ô Tối, không đổi tuần |
+| 6 | Nhập thời lượng 0 hoặc để thiếu trường bắt buộc | Có lỗi nhập liệu, không tạo bản ghi sai; giữ dữ liệu vừa nhập và lịch đang xem. Trình duyệt có thể chặn trước khi gửi form |
+| 7 | Vào Tài liệu, thêm URL HTTP/HTTPS và gắn môn/công việc; thử sửa | Thêm/sửa ngay ở thanh bên, tên và liên kết đúng; thao tác không rời Lịch tuần |
+| 8 | Tìm theo tên trong từng mục; thử danh sách hơn 8 bản ghi và chuyển trang | Chỉ hiện dữ liệu phù hợp của tài khoản hiện tại; phân trang giữ tuần, mục và từ khóa |
+| 9 | Bấm Xóa trên một bản ghi thử, sau đó Hủy | Hiện xác nhận trong thanh bên; chưa xóa khi chỉ mở hoặc bấm Hủy |
+| 10 | Tạo một bản ghi dùng một lần rồi xác nhận xóa | Bản ghi thử được xóa, lịch vẫn ở tuần đang xem. Xóa môn giữ việc/tài liệu; xóa việc xóa các buổi của việc đó và giữ tài liệu/nhật ký theo quy tắc cũ |
+| 11 | Quan sát một tuần có lịch sáng, chiều, tối | Mỗi ngày đủ ba khu vực Sáng/Chiều/Tối; lịch bận, buổi học và deadline vẫn khác màu. Các khu vực tương ứng thẳng hàng trên máy tính |
+| 12 | Tạo lịch bận thử kéo dài qua trưa hoặc qua chiều/tối; thử ca qua đêm | Hiện phần thời gian tương ứng ở các buổi/ngày liên quan, không mất đoạn; vẫn chỉ là một bản ghi lịch bận |
+| 13 | Tạo và áp dụng một phương án tuần như trước | Các buổi hiện trong đúng phần ngày; khóa, chỉnh giờ, ghi nhận, hủy và cảnh báo tiếp tục hoạt động |
+| 14 | Đăng nhập B, thử mở link sửa/xóa bản ghi của A trong thanh bên | Trả 404; không hiển thị hoặc sửa/xóa dữ liệu A. Form không cho chọn môn/công việc của A |
+| 15 | Thu màn hình về khoảng 375px, thử thêm/sửa dữ liệu và xem các ngày | Thanh bên chuyển lên trên lịch, có cuộn riêng khi dài. Lịch xếp từng ngày; không tràn ngang toàn trang. Ở màn hình trung gian, có thể cuộn ngang riêng khu vực lịch |
+
+Thử xóa với dữ liệu tạo riêng để kiểm thử. Các đường dẫn quản lý học tập cũ được giữ để liên kết từ những phần khác tiếp tục hoạt động; điều hướng chính và thanh bên dùng trang Lịch & học tập mới.
+
+### 3. Kiểm thử kỹ thuật
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test planner.test_workspace core.test_dashboard studies --noinput
+& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
+& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+git diff --check
+```
+
+Mong đợi: test qua; toàn bộ hiện có **286 test**, `No changes detected`, không lỗi whitespace. `planner/test_workspace.py` thêm 14 test về chia buổi, ca qua đêm, deadline đúng ranh giới, buổi nháp/hủy, CRUD trong thanh bên, giữ tuần, phân trang, dữ liệu lỗi, quyền sở hữu và CSRF.
+
+`deploy.smoke` đã bỏ URL Cách sử dụng và thêm bước tạo môn/sửa việc trong thanh bên, giữ tuần và kiểm tra Sáng/Chiều/Tối. Chỉ chạy `--allow-test-data` ở database QA riêng theo hướng dẫn HTTP trong TRIEN_KHAI.md; công cụ có tạo dữ liệu thử.
+
+### 4. Kết quả agent đã kiểm chứng
+
+- **286/286 test SQLite qua**, bao gồm toàn bộ kiểm tra cũ và 14 test mới.
+- Django check, migration dry-run, collectstatic và diff check qua; không có migration mới.
+- HTTP qua Waitress với database QA riêng và hai worker qua toàn bộ hành trình, gồm bước thanh bên mới và nhận nhắc trong web.
+- Trình duyệt: bỏ Cách sử dụng; vào Lịch & học tập; chọn tuần; thêm môn, công việc và tài liệu trong thanh bên; sửa deadline trên điện thoại từ Chiều sang Tối; lịch cập nhật và giữ đúng tuần.
+- Giao diện desktop và viewport 375px đã kiểm tra; chiều rộng nội dung không vượt chiều rộng trang. Có ảnh QA trong thư mục artifact, dùng dữ liệu giả.
+- Chưa chạy lại PostgreSQL/Compose hoặc CI của bản sửa này. Các kết quả CI trước đó ở trên thuộc SHA cũ, không thay thế lần chạy mới. Chưa thay cấu hình khóa dịch vụ hoặc public website.
+
+### 5. Lưu sau khi bạn kiểm thử
+
+Agent dừng tại bản sửa này để bạn đánh giá giao diện, chưa commit/push. Sau khi xem diff và kiểm thử đạt:
+
+```powershell
+git status --short
+git diff --check
+git add core/test_dashboard.py core/urls.py core/views.py deploy/smoke.py
+git add planner/views.py planner/services/availability.py planner/test_workspace.py
+git add static/css/app.css static/css/dashboard.css static/css/planner.css
+git add templates/base.html templates/core/dashboard.html templates/core/home.html templates/core/guide.html
+git add templates/planner/week.html templates/planner/calendar_item.html templates/planner/study_sidebar.html
+git add templates/studies/form.html templates/studies/form_fields.html
+git add README.md HD_Test.md docs/BAO_CAO_DU_AN.md docs/KE_HOACH_PHAT_TRIEN.md docs/THIET_KE_BAN_DAU.md docs/TRIEN_KHAI.md docs/NGHIEM_THU.md
+git diff --cached --stat
+git diff --cached --check
+git commit -m "feat: combine study management with weekly calendar"
+git push origin main
+```
+
+`templates/core/guide.html` được stage dưới dạng xóa. Kiểm tra stage chỉ có thay đổi mong muốn, không có `.env`, database hoặc `.venv`. Sau push, xem Actions đúng SHA mới. Ghi kết quả thử tay và góp ý giao diện của bạn tại đây: …
+
+---
+
+## Menu tài khoản và chuông thông báo — 15/11/2026
+
+Theo yêu cầu: gộp Tài khoản/Đăng xuất vào biểu tượng người dùng ngoài cùng bên phải; chuyển Thông báo thành chuông ngoài cùng bên trái. Hai menu mặc định đóng, bấm vào mới hiện nội dung. Các trang và chức năng cũ vẫn giữ; không thêm migration, thư viện hoặc dịch vụ ngoài.
+
+### 1. Cập nhật và chạy
+
+Dừng server cũ, đóng gói static rồi khởi động lại. Giữ `.env` và database hiện tại:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+& .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Mở [web local](http://127.0.0.1:8000/), nhấn Ctrl+F5 nếu còn giao diện cũ. Waitress cũng cần restart sau khi cập nhật settings/template. Đăng nhập để thấy hai biểu tượng.
+
+### 2. Checklist kiểm thử
+
+| # | Thao tác | Kết quả mong đợi |
+|---|---|---|
+| 1 | Đăng nhập, quan sát thanh trên cùng | Chuông ở ngoài cùng bên trái, trước logo. Biểu tượng người dùng ở ngoài cùng bên phải. Không hiện trực tiếp Tài khoản/Đăng xuất ở hàng điều hướng |
+| 2 | Bấm biểu tượng người dùng | Mở menu gồm tên tài khoản, Thông tin tài khoản, Đổi mật khẩu và Đăng xuất. Quản trị chỉ hiện với staff |
+| 3 | Bấm Thông tin tài khoản hoặc Đổi mật khẩu trong menu | Mở đúng trang hiện có; menu đóng khi chuyển trang. Không đổi mật khẩu chỉ bằng việc mở trang |
+| 4 | Bấm Đăng xuất trong menu | Thoát phiên bằng POST có CSRF và về trang chủ; hai biểu tượng biến mất, hiện Đăng nhập/Đăng ký |
+| 5 | Đăng nhập lại, bấm chuông | Mở bảng Thông báo, số chưa đọc và tối đa 5 thông báo web đã gửi gần nhất của tài khoản hiện tại. Bản chưa đọc có màu nhấn |
+| 6 | Bấm một thông báo trong bảng | Mở hộp thông báo đúng vị trí bản ghi tương ứng. Chỉ mở/xem không tự đánh dấu đã đọc |
+| 7 | Đánh dấu một bản chưa đọc là đã đọc, rồi xem chuông | Số trên chuông giảm tương ứng; khi không còn bản chưa đọc thì không hiện huy hiệu số |
+| 8 | Bấm Xem tất cả thông báo hoặc Tùy chọn nhắc trong bảng | Mở đúng hộp thông báo hoặc trang cấu hình nhắc hiện có |
+| 9 | Mở menu tài khoản rồi bấm chuông, và ngược lại | Mỗi lần chỉ mở một menu. Bấm lại cùng biểu tượng đóng menu đó |
+| 10 | Mở menu rồi bấm bên ngoài; thử phím Escape | Menu đóng; Escape đưa focus về biểu tượng đã mở. Tab đến biểu tượng và Enter cũng mở được menu |
+| 11 | Đăng nhập tài khoản B chưa có thông báo | Chuông không có số, mở bảng hiện Bạn chưa có thông báo; không lộ dữ liệu A |
+| 12 | Thử ở khoảng 375px và trên trang Lịch tuần | Hai biểu tượng vẫn ở hai đầu, logo ở giữa trên điện thoại; các liên kết chính ở hàng dưới. Menu không vượt chiều ngang màn hình và nổi trên nội dung lịch |
+
+Thông báo mới vẫn do worker tạo/gửi như trước; tải lại trang để cập nhật dữ liệu chuông. Bảng chỉ hiển thị thông báo trong web đã gửi, không đưa email hay bản đang chờ vào danh sách. Huy hiệu tối đa hiển thị `99+`; tổng chưa đọc trong bảng vẫn là số thực.
+
+### 3. Kiểm thử kỹ thuật và kết quả
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test notifications.test_header accounts core.test_dashboard --noinput
+& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
+& .\.venv\Scripts\python.exe manage.py check
+& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
+git diff --check
+```
+
+Agent đã kiểm chứng:
+
+- **289/289 test SQLite qua**, gồm 3 test mới về nguồn dữ liệu chuông: không query cho khách, lọc owner/kênh/trạng thái, giới hạn 5 bản, đếm tổng chưa đọc và không tự ghi dữ liệu/gọi API khi xem.
+- Bộ kiểm tra tài khoản và Tổng quan qua; đăng xuất tiếp tục dùng CSRF/POST.
+- HTTP qua Waitress với database QA riêng và hai worker qua toàn bộ hành trình hiện có, gồm thanh bên/lịch và nhận nhắc trong web.
+- Trình duyệt desktop: trạng thái đóng ban đầu; mở từng menu, menu kia đóng; bấm ra ngoài/Escape; mở đúng thông báo và đánh dấu đã đọc làm số giảm từ 2 xuống 1.
+- Trình duyệt 375px: menu nằm trong chiều rộng trang; Thông tin tài khoản, Đổi mật khẩu và Đăng xuất qua menu hoạt động. Không nhập/thay mật khẩu trong QA.
+- Collectstatic, Django check, migration dry-run và diff check qua. Không có migration mới. Ảnh và dữ liệu QA dùng thông tin giả, không chứa khóa; tiến trình/database QA được dọn sau kiểm thử.
+
+Chưa chạy CI/PostgreSQL/Compose cho bản sửa mới; không thay cấu hình khóa hoặc public website.
+
+### 4. Lưu sau khi kiểm thử
+
+Các thay đổi Lịch & học tập ở lượt trước vẫn ở working tree. Giữ danh sách stage của mục trước, bổ sung các file sau sau khi bạn kiểm thử đạt:
+
+```powershell
+git status --short
+git diff --check
+git add config/settings.py notifications/context_processors.py notifications/test_header.py
+git add templates/base.html templates/notifications/inbox.html static/css/app.css static/js/header.js
+git add README.md HD_Test.md docs/BAO_CAO_DU_AN.md
+git diff --cached --stat
+git diff --cached --check
+```
+
+Nếu commit chung với lượt Lịch & học tập trước, stage các file của lượt đó theo mục tương ứng. Agent chưa commit/push. Sau commit/push của bạn, xem Actions đúng SHA mới. Kết quả thử và góp ý: …
+
+
+## Bố cục lịch theo mẫu — 15/11/2026
+
+Chỉ lấy bố cục từ ảnh người dùng: giữ màu xanh/kem và dữ liệu thật của Nhịp Học.
+
+- Thanh đầu: logo, các liên kết chính, chuông và tài khoản cạnh nhau ở bên phải theo mẫu mới.
+- Hàng thao tác riêng: Thêm công việc, Thêm lịch bận, Môn học, Tài liệu; Xếp lịch tuần này ở phía phải.
+- Bảng lịch rộng: ngày theo cột, Sáng/Chiều/Tối theo hàng với nhãn ở cột trái. Ô ngày hiện tại được nhấn màu khi nằm trong tuần đang xem.
+- Ngày tuần và chú giải bên trái; nút Trước/Tuần này/Sau và chọn ngày bên phải.
+- Bảng học tập mở theo nút thao tác, đóng bằng Đóng bảng học tập; lịch vẫn được giữ cạnh biểu mẫu khi đủ rộng.
+- Quỹ thời gian, giờ học và cảnh báo nằm trong mục thu gọn dưới lịch. Trên điện thoại, cuộn ngang riêng bảng để xem đủ 7 ngày.
+
+Khởi động lại server và đóng gói CSS:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
+& .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+Ctrl+F5 để tránh CSS cũ. Không có migration mới.
+
+Checklist:
+
+1. Mở Lịch & học tập: không còn tiêu đề/tab quản lý cũ chiếm diện tích phía trên bảng; có ba vùng bố cục như mẫu.
+2. Xem các tuần trước/sau, Tuần này và nút chọn tuần: ngày hiển thị đúng.
+3. Thêm công việc/Môn học/Tài liệu: biểu mẫu hoặc danh sách mở tại cùng trang, giữ tuần. Lưu/sửa/xóa giữ các quy tắc cũ. Đóng bảng để quay lại lịch rộng.
+4. Lịch có đủ 7 cột ngày và 3 hàng buổi. Deadline, lịch bận và buổi học giữ màu riêng và liên kết hoạt động.
+5. Xếp lịch tuần này dẫn đúng tuần được chọn; Thêm lịch bận mở biểu mẫu cũ.
+6. Mở Quỹ thời gian và thiết lập học để xem khoảng trống, Giờ học, Cảnh báo và quản lý công việc.
+7. Kiểm tra chuông/tài khoản bên phải: menu vẫn mở/đóng, các chức năng vẫn dùng được.
+8. Kiểm tra trên điện thoại: nút tự xuống hàng, bảng cuộn ngang trong khung; mở/đóng bảng học tập dùng được.
+
+Đã kiểm chứng: 289/289 test SQLite qua; migration dry-run không có thay đổi; collectstatic và diff check qua. Đã xem desktop với dữ liệu demo, mở/đóng biểu mẫu và kiểm tra viewport 375px trên database QA riêng. Không thay thuật toán hoặc dữ liệu cá nhân. Chưa commit/push; các ghi nhận vị trí chuông bên trái/sidebar luôn hiện ở trên là lịch sử đã được mẫu mới thay thế.
+
+
+## Sửa cache CSS local — 15/11/2026
+
+Ảnh người dùng cho thấy HTML mới đi cùng CSS cũ. Kiểm tra trực tiếp server 8000 cho thấy source CSS mới được trả về, nhưng URL tài nguyên cũ cố định nên trình duyệt có thể giữ bản đã lưu.
+
+Đã thêm DevelopmentStaticFilesStorage cho config.settings khi DEBUG=true: URL có ?v=thời điểm cập nhật file. Sửa CSS/JS làm URL thay đổi, trình duyệt tải bản mới. config.assets/config.production vẫn dùng manifest có mã băm như trước; không đổi database hoặc .env.
+
+Kiểm thử:
+
+1. Mở lại Lịch & học tập và nhấn F5. Hàng nút có khung và khoảng cách, ngày tách thành cột, ô lịch có viền, biểu tượng không còn mũi tên mặc định.
+2. Nếu server local chưa tự reload, dừng và chạy lại manage.py runserver 127.0.0.1:8000. Lần cập nhật này đã xác minh server 8000 tự nạp cấu hình mới.
+3. Trong nguồn trang/Network, các URL local dạng /static/css/app.css?v=..., studies.css?v=..., planner.css?v=.... Không chỉnh .env hoặc xóa dữ liệu.
+4. Khi sửa CSS lần sau, tải lại trang bình thường; URL phiên bản phải thay đổi. Nếu không sửa file, URL giữ ổn định.
+5. Production/Waitress dùng config.assets hoặc config.production vẫn cần collectstatic và restart theo hướng dẫn triển khai; không dùng cơ chế local thay quy trình build.
+
+```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py test core.test_static core.test_dashboard --noinput
+& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
+```
+
+Đã qua 11 test phần static/Tổng quan; đã kiểm tra trình duyệt trên runserver với config.settings/DEBUG=true, database QA riêng: CSS có phiên bản, toolbar computed display flex và ô lịch border dashed. Test hồi quy xác minh URL thay đổi sau sửa file và giữ nguyên khi file không đổi. Các bước kiểm thử trước dùng config.assets nên đã bỏ sót cache ở cấu hình local; lần này đã thử đúng cấu hình. Không commit/push.
+
+
+## Thu gọn lịch học tập — 15/11/2026
+
+- Đổi nhãn điều hướng thành Lịch học tập.
+- Bỏ footer toàn ứng dụng và mục Quỹ thời gian và thiết lập học khỏi lịch.
+- Giảm chiều cao header, khoảng cách, kích thước nút và ô lịch. Không dùng zoom trình duyệt hoặc cố định chiều cao để giấu lịch.
+- Tên công việc dài hiển thị tối đa 2 dòng trong thẻ; rê chuột để xem tên đầy đủ hoặc bấm mở nội dung. Tất cả thẻ lịch vẫn được giữ; ô tự giãn khi nhiều thẻ.
+
+Kiểm thử: tải lại trang bằng F5, mở tuần trống hoặc tuần demo; nhãn Lịch học tập đúng, không còn footer/mục quỹ thời gian. Mặc định nhìn đủ ba hàng Sáng/Chiều/Tối trên màn hình desktop thông thường. Thử thêm nhiều lịch trong cùng buổi: hàng được nới để xem đủ, khi vượt màn hình mới cần cuộn. Biểu mẫu học tập vẫn mở/đóng được. Điện thoại tiếp tục cuộn ngang riêng bảng 7 ngày.
+
+Đã kiểm chứng trên trình duyệt viewport 1280×720 với dữ liệu demo: pageHeight=720, đáy bảng khoảng 638px, footer=0; không cần cuộn dọc. 23 test planner.test_workspace và core.test_dashboard qua; diff check qua. Không có migration mới; không đổi dữ liệu cá nhân, chưa commit/push.
+
+
+## Nút đóng bảng và bỏ tiêu đề thừa — 15/11/2026
+
+Đã đổi Đóng bảng học tập thành nút có nền, viền, biểu tượng × và vùng bấm rộng toàn bảng. Bỏ khối Cùng một không gian / Học tập / Quản lý việc học… phía trên; giữ ba tab Công việc, Môn học, Tài liệu.
+
+Kiểm thử: F5, mở Thêm công việc/Môn học/Tài liệu, kiểm tra tab nằm ngay đầu bảng. Bấm nút Đóng bảng học tập để trở lại lịch rộng và giữ nguyên tuần; mở lại bảng để kiểm tra thao tác lưu vẫn hoạt động. Không có migration; chưa commit/push.
+
+Bổ sung theo góp ý tiếp theo: thêm lại một dòng tiêu đề **Học tập** gọn phía trên ba tab, không có dòng giới thiệu/mô tả phụ. F5 và mở bảng để kiểm tra; nút đóng và các tab giữ nguyên.
+
+
+## Chuyển vùng cuộn vào biểu mẫu — 15/11/2026
+
+Giữ cố định dòng Học tập, ba tab và tiêu đề Thêm/Sửa cùng nút Đóng. Chỉ phần trường nhập liệu/nút lưu bên dưới được cuộn, dùng chung cho Công việc, Môn học, Tài liệu. Danh sách khi không mở form vẫn cuộn ở phần nội dung dưới tab.
+
+Kiểm thử: F5, lần lượt mở Thêm công việc/Thêm môn học/Thêm tài liệu; thanh cuộn bắt đầu dưới tiêu đề form. Cuộn xuống nút Lưu và cuộn ngược lên; tiêu đề/tab không di chuyển theo. Form ngắn không cần hiện thanh cuộn. Đã kiểm tra trình duyệt cả 3 biểu mẫu, 14 test workspace qua và diff check qua. Không có migration, chưa commit/push.

@@ -2,7 +2,7 @@
 
 Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Bổ sung ngày 15/11/2026: đã chạy 260 test trên SQLite và 260 test trên PostgreSQL 17.12 portable, cùng migration/static/deploy checks và hai worker trên database PostgreSQL tạm. Không cài dịch vụ Windows hoặc đổi SQLite mặc định. Đã xác minh [Actions của commit cfcb3b5](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135): job SQLite/Windows và PostgreSQL/Linux, Docker build, Compose config đều thành công. Chưa chạy toàn bộ ứng dụng bằng `docker compose up` hoặc kiểm thử URL online.
 
-**Lượt hoàn thiện cuối:** 272 test hiện tại qua trên SQLite; hành trình HTTP qua Waitress với database QA riêng và hai worker cũng qua, gồm nhận nhắc trong web. Workflow mới đã thêm chạy Compose và hành trình này trên CI nhưng chưa được xác minh trên GitHub cho mã mới. Máy hiện tại không có Docker; không khẳng định đã chạy Compose. Không cần khóa dịch vụ để thử phần lõi.
+**Lượt hoàn thiện cuối và điều chỉnh lịch:** 286 test hiện tại qua trên SQLite; hành trình HTTP qua Waitress với database QA riêng và hai worker cũng qua, gồm nhận nhắc trong web. Workflow mới đã thêm chạy Compose và hành trình này trên CI nhưng chưa được xác minh trên GitHub cho mã mới. Máy hiện tại không có Docker; không khẳng định đã chạy Compose. Không cần khóa dịch vụ để thử phần lõi.
 
 ## Ba chế độ
 
@@ -100,7 +100,7 @@ docker compose -p nhiphoc-test down
 
 Project này dùng volume riêng với Compose mặc định. Lệnh dừng trên giữ volume để xem lại dữ liệu. Không chạy cùng lúc hai project cùng bind cổng 8000. Nếu không dùng Docker, trỏ `--base-url` vào Waitress/runserver có **database thử riêng**, chạy worker nhắc trong cùng môi trường; xem cấu hình Django test trong HD_Test.md. Không cần sửa `.env` cá nhân để chạy test tự động bằng `manage.py test`.
 
-Các bước mong đợi đều in `PASS`: health/static → đăng ký/đăng nhập/Tổng quan → môn/việc/tài liệu/lịch bận/giờ học → xem trước/áp dụng/khóa buổi → Pomodoro/nhật ký/thống kê → trang hỗ trợ/quyền tài khoản thứ hai → nhận nhắc. Công cụ chờ web/database sẵn sàng tối đa 60 giây; `--expect-reminders` chờ thông báo tối đa 90 giây và cần worker đang chạy. Bỏ cờ này nếu chỉ thử web; không coi đó là đã xác minh worker.
+Công cụ đã bổ sung kiểm tra thêm môn/sửa việc trong thanh bên và lịch Sáng/Chiều/Tối. Các bước mong đợi đều in `PASS`: health/static → đăng ký/đăng nhập/Tổng quan → môn/việc/tài liệu/lịch bận/giờ học → xem trước/áp dụng/khóa buổi → Pomodoro/nhật ký/thống kê → trang hỗ trợ/quyền tài khoản thứ hai → nhận nhắc. Công cụ chờ web/database sẵn sàng tối đa 60 giây; `--expect-reminders` chờ thông báo tối đa 90 giây và cần worker đang chạy. Bỏ cờ này nếu chỉ thử web; không coi đó là đã xác minh worker.
 
 CI PostgreSQL/Linux sẽ khởi động Compose trong project `ci-smoke`, chạy công cụ đầy đủ, kiểm tra `db/web/reminders/calendar` còn hoạt động và dọn volume thử của runner khi kết thúc. Bước dọn này chỉ áp dụng dữ liệu CI dùng một lần. CI Windows vẫn kiểm tra SQLite. Cần kiểm tra Actions của commit chứa thay đổi mới sau khi push; kết quả `cfcb3b5` ở trên chỉ xác nhận workflow cũ.
 

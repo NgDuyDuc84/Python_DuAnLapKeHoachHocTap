@@ -14,11 +14,11 @@ Sinh viên có nhiều môn, deadline và lịch bận. Nhịp Học lưu công 
 |---|---|---|
 | Web/app, phần lớn nghiệp vụ bằng Python | Django, ORM, Forms, Templates; Python xử lý quyền, lịch, thuật toán, thống kê, worker và API. JavaScript hỗ trợ đồng hồ | `config/`, các app Python; mở web local, chạy bộ test |
 | Đăng ký, đăng nhập, phân quyền cơ bản | Django auth; mật khẩu băm, CSRF, kiểm tra owner; staff quản trị user qua Django Admin | [accounts](../accounts/tests.py); tài khoản B mở đối tượng của A nhận 404 |
-| Tổng quan, UI/UX hoàn chỉnh | Dashboard sau đăng nhập, số liệu cá nhân, trạng thái rỗng, hướng dẫn 6 bước, trang lỗi và CSS responsive | [dashboard](../core/dashboard.py), [test](../core/test_dashboard.py); thử desktop/375px |
+| Tổng quan, UI/UX hoàn chỉnh | Dashboard sau đăng nhập, số liệu cá nhân, trạng thái rỗng, thanh bên Học tập trong lịch tuần, trang lỗi và CSS responsive | [dashboard](../core/dashboard.py), [test](../core/test_dashboard.py); thử desktop/375px |
 | Quản lý môn học | CRUD, học kỳ, màu, lưu trữ; xóa môn giữ việc/tài liệu qua SET_NULL | [studies](../studies/models.py), [test](../studies/tests.py) |
 | Quản lý công việc/deadline | Ưu tiên, ước tính, phút còn lại, chia buổi, trạng thái, tìm kiếm và lọc quá hạn | Task/Form/TaskProgress; thử hoàn thành đưa số phút về 0 |
 | Tài liệu ôn tập | Lưu URL HTTP/HTTPS, mô tả, liên kết môn/công việc, CRUD và lọc | Material; không tải tệp lên hoặc đọc website bên ngoài |
-| Lịch cá nhân và thời gian bận | Lịch tuần; lịch bận một lần/lặp tuần/qua đêm; ngày và khung giờ học, giới hạn ngày, độ dài buổi và nghỉ | [availability](../planner/services/availability.py), [test](../planner/tests.py) |
+| Lịch cá nhân và thời gian bận | Lịch tuần chia Sáng/Chiều/Tối, thêm/sửa/xóa dữ liệu học tập trong thanh bên; lịch bận một lần/lặp tuần/qua đêm; ngày và khung giờ học, giới hạn ngày, độ dài buổi và nghỉ | [availability](../planner/services/availability.py), [test](../planner/tests.py) |
 | Tự sinh kế hoạch tuần | Thuật toán tham lam bằng Python; tìm khoảng trống, chia buổi khi được phép, tôn trọng các ràng buộc | [scheduling](../planner/services/scheduling.py), [test](../planner/test_scheduling.py) |
 | Xem trước, áp dụng và chỉnh kế hoạch | Bản nháp, fingerprint đầu vào; áp dụng kiểm tra lại; chỉnh giờ, khóa, ghi nhận, hủy và xếp lại | [sessions](../planner/services/sessions.py), [test](../planner/test_replanning.py) |
 | Rủi ro trễ deadline | Python tính việc quá hạn, thiếu phút trước hạn và xung đột; công khai phút chưa bố trí được | [alerts](../planner/services/alerts.py); trang Cảnh báo và báo cáo phương án |
@@ -81,15 +81,15 @@ Email console là xem nội dung ở terminal; SMTP trả chấp nhận cũng kh
 
 | Phạm vi | Kết quả đã quan sát |
 |---|---|
-| Bản mã hiện tại / SQLite | **272/272 test qua**; Django check, migration dry-run, pip check và collectstatic qua |
+| Bản mã hiện tại / SQLite | **289/289 test qua**; Django check, migration dry-run, pip check và collectstatic qua |
 | HTTP trên Waitress, database QA riêng | Qua đăng ký, CRUD dữ liệu chính, tạo/áp dụng/khóa lịch, thao tác focus, nhật ký/thống kê, phân quyền hai tài khoản và nhận nhắc worker |
-| Trình duyệt | Tổng quan desktop và 375px không tràn ngang; hướng dẫn và quay lại Pomodoro đang chạy hoạt động |
+| Trình duyệt | Tổng quan và Lịch tuần/biểu mẫu thanh bên đã kiểm tra desktop và 375px; thêm môn/việc/tài liệu và đổi deadline từ chiều sang tối hoạt động |
 | PostgreSQL / CI đã xác minh trước lượt này | Commit `cfcb3b5`: 260 test SQLite và PostgreSQL 17.12 tại máy; Actions SQLite/Windows, PostgreSQL/Linux, Docker build và Compose config thành công |
 | Workflow Compose mới | Đã thêm chạy web + hai worker và smoke test; **chưa xác minh trên GitHub cho bản sửa mới**, máy này chưa có Docker |
 | SMTP / Google / OpenAI thật | Mã và test giả lập có sẵn; **chưa kiểm thử nhà cung cấp vì chưa có khóa** |
 | Public website / HTTPS thật | **Chưa triển khai, ngoài phạm vi yêu cầu hiện tại** |
 
-Kết quả 260 test trên PostgreSQL thuộc phiên bản trước, không thay cho kết quả chạy 272 test của mã mới trên PostgreSQL. Sau khi người dùng kiểm thử và push, cần xem hai job cùng phần Compose của commit mới trên Actions. Không dùng kết quả CI cũ để chứng minh mã chưa push.
+Kết quả 260 test trên PostgreSQL thuộc phiên bản trước, không thay cho kết quả chạy 289 test của mã mới trên PostgreSQL. Sau khi người dùng kiểm thử và push, cần xem hai job cùng phần Compose của commit mới trên Actions. Không dùng kết quả CI cũ để chứng minh mã chưa push.
 
 ## 7. Dàn ý trình bày và câu hỏi thường gặp
 

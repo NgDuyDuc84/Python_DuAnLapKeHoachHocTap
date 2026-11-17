@@ -156,7 +156,7 @@ def journey(web, *, expect_reminders=False):
     require(marker in web.get("focus/logs/").text, "Study log missing")
     print("PASS focus start/pause/resume/cancel, manual log and statistics", flush=True)
 
-    for path in ("huong-dan/", "planner/alerts/", "notifications/", "notifications/preferences/",
+    for path in ("planner/alerts/", "notifications/", "notifications/preferences/",
                  "integrations/google/", "insights/", "accounts/profile/"):
         web.get(path)
     other = LocalWeb(web.base)
@@ -169,6 +169,18 @@ def journey(web, *, expect_reminders=False):
     finally:
         other.session.close()
     print("PASS supporting pages and isolation between two accounts", flush=True)
+
+    sidebar = f"planner/?week={monday.isoformat()}&panel=subjects"
+    location = web.post(sidebar + "&action=new", {"operation": "save", "name": marker + " sidebar", "color": "#176b58"})
+    require("week=" + monday.isoformat() in location and marker + " sidebar" in web.get(location).text,
+            "Sidebar did not retain the selected week and new subject")
+    task_sidebar = f"planner/?week={monday.isoformat()}&panel=tasks"
+    location = web.post(task_sidebar + f"&action=edit&id={task_id}", {
+        **task_values, "operation": "save", "object_id": task_id, "remaining_minutes": "60",
+    })
+    html = web.get(location).text
+    require(all(f"<h4>{label}</h4>" in html for label in ("Sáng", "Chiều", "Tối")), "Missing calendar periods")
+    print("PASS inline study sidebar and morning/afternoon/evening calendar", flush=True)
 
     if expect_reminders:
         due = datetime.now(timezone(timedelta(hours=7))) + timedelta(hours=2)

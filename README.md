@@ -9,7 +9,7 @@
 - [Dữ liệu demo và kịch bản nghiệm thu](docs/NGHIEM_THU.md)
 - [Báo cáo kỹ thuật và đối chiếu yêu cầu](docs/BAO_CAO_DU_AN.md)
 
-Hiện tại: **đã hoàn thiện phạm vi mã nguồn của kế hoạch, trừ public website**. Đã có Tổng quan sau đăng nhập, hướng dẫn trong web và công cụ kiểm thử hành trình HTTP qua web/worker. Bản hiện tại qua **272 test SQLite** và kiểm thử HTTP trên Waitress tại máy. SMTP, Google Calendar và OpenAI thật chưa được xác minh vì chưa có khóa. CI mới bổ sung chạy Compose cần xác minh sau lần push tiếp theo; kết quả CI đã thành công của commit `cfcb3b5` vẫn được giữ làm lịch sử. Tên hiển thị của ứng dụng là **Nhịp Học**.
+Hiện tại: **đã hoàn thiện phạm vi mã nguồn của kế hoạch, trừ public website**. Đã có Tổng quan sau đăng nhập, thanh bên Học tập trong Lịch tuần, lịch chia Sáng/Chiều/Tối và công cụ kiểm thử hành trình HTTP qua web/worker. Thanh trên cùng dùng chuông thông báo bên trái và menu tài khoản/đăng xuất bên phải. Bản hiện tại qua **289 test SQLite** và kiểm thử HTTP trên Waitress tại máy. SMTP, Google Calendar và OpenAI thật chưa được xác minh vì chưa có khóa. CI mới bổ sung chạy Compose cần xác minh sau lần push tiếp theo; kết quả CI đã thành công của commit `cfcb3b5` vẫn được giữ làm lịch sử. Tên hiển thị của ứng dụng là **Nhịp Học**.
 
 Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
 
@@ -30,14 +30,13 @@ Mặc định local dùng SQLite; đã có cấu hình PostgreSQL/production và
 Các trang chính:
 
 - [Tổng quan](http://127.0.0.1:8000/): sau đăng nhập, xem buổi hôm nay, phút học 7 ngày, việc quá hạn, thông báo chưa đọc, buổi sắp tới và Pomodoro đang hoạt động.
-- [Cách sử dụng](http://127.0.0.1:8000/huong-dan/): hướng dẫn 6 bước từ nhập việc đến điều chỉnh kế hoạch.
 - [Đăng ký](http://127.0.0.1:8000/accounts/register/): tên đăng nhập duy nhất, email và mật khẩu.
 - [Đăng nhập](http://127.0.0.1:8000/accounts/login/): dùng tên đăng nhập.
 - [Tài khoản của bạn](http://127.0.0.1:8000/accounts/profile/): yêu cầu đăng nhập, có liên kết đổi mật khẩu.
-- [Môn học](http://127.0.0.1:8000/studies/subjects/): thêm/sửa/xóa, màu, học kỳ và lưu trữ.
-- [Công việc](http://127.0.0.1:8000/studies/tasks/): deadline, ưu tiên, thời lượng, trạng thái và lọc quá hạn.
-- [Tài liệu](http://127.0.0.1:8000/studies/materials/): liên kết HTTP/HTTPS theo môn hoặc công việc.
-- [Lịch tuần](http://127.0.0.1:8000/planner/): lịch bận, buổi học đã áp dụng, deadline và khoảng trống từ hiện tại.
+- [Môn học trong thanh bên](http://127.0.0.1:8000/planner/?panel=subjects): thêm/sửa/xóa, màu, học kỳ và lưu trữ.
+- [Công việc trong thanh bên](http://127.0.0.1:8000/planner/?panel=tasks): deadline, ưu tiên, thời lượng, trạng thái và lọc quá hạn.
+- [Tài liệu trong thanh bên](http://127.0.0.1:8000/planner/?panel=materials): liên kết HTTP/HTTPS theo môn hoặc công việc.
+- [Lịch tuần](http://127.0.0.1:8000/planner/): lịch bận, buổi học đã áp dụng, deadline và khoảng trống từ hiện tại; mỗi ngày chia Sáng, Chiều, Tối. Thêm/sửa/xóa môn, việc và tài liệu ngay ở thanh bên, giữ tuần đang xem.
 - [Tạo kế hoạch](http://127.0.0.1:8000/planner/plans/new/): chọn tuần và chế độ Bổ sung/Xếp lại, xem trước rồi áp dụng vào lịch.
 - [Cảnh báo](http://127.0.0.1:8000/planner/alerts/): việc quá hạn, thiếu lịch trước hạn, buổi xung đột và buổi đã kết thúc chưa ghi nhận.
 - [Lịch bận](http://127.0.0.1:8000/planner/busy/): một lần/lặp hằng tuần, hỗ trợ qua đêm.
@@ -45,7 +44,7 @@ Các trang chính:
 - [Tập trung](http://127.0.0.1:8000/focus/): Pomodoro 25 phút học/5 phút nghỉ, tạm dừng/tiếp tục, lưu sớm hoặc hủy.
 - [Nhật ký](http://127.0.0.1:8000/focus/logs/): phút học từ Pomodoro và nhập tay, lọc ngày, sửa/xóa.
 - [Thống kê](http://127.0.0.1:8000/focus/statistics/): tổng phút, ngày có học, trung bình và phân bổ theo ngày/môn/nguồn, xử lý bằng Python.
-- [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email.
+- [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email. Bấm chuông bên trái để xem nhanh 5 thông báo gần nhất và số chưa đọc; bấm một thông báo để mở đúng bản ghi trong hộp thông báo.
 - [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật riêng từng kênh, chọn thời gian nhắc trước hạn/buổi.
 - [Đồng bộ](http://127.0.0.1:8000/integrations/google/): kết nối Google, xem trước theo tuần, xác nhận và xem kết quả đồng bộ.
 - [AI hỗ trợ](http://127.0.0.1:8000/insights/): số liệu 14 ngày, nhận xét Python, xem trước dữ liệu gửi AI và lịch sử phân tích riêng.

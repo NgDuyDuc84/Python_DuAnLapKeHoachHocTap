@@ -2,6 +2,8 @@
 
 Định hướng đã thống nhất: Django/Python xử lý nghiệp vụ, PostgreSQL cho bản online, giao diện Django Templates và JavaScript tối thiểu cho lịch/Pomodoro. Các giai đoạn không gắn với lịch trình hay số thành viên.
 
+**Điều chỉnh giao diện mới nhất, ngày 15/11/2026:** theo yêu cầu người dùng, bỏ Cách sử dụng; đưa Công việc/Môn học/Tài liệu vào thanh bên Lịch tuần, CRUD tại chỗ và giữ tuần; lịch chia Sáng/Chiều/Tối, không thêm các hàng mốc giờ. Không đổi thuật toán hoặc schema. Đã qua 286 test SQLite, HTTP với worker và kiểm tra trình duyệt desktop/375px. Dừng để người dùng kiểm thử và góp ý; checklist ở mục Điều chỉnh Lịch & học tập cuối HD_Test.md. Phần hướng dẫn trong web được nhắc ở các ghi nhận trước là lịch sử và đã bị thay thế bởi yêu cầu này.
+
 **Phạm vi hiện tại, ngày 15/11/2026:** người dùng yêu cầu hoàn tất toàn bộ kế hoạch, trừ public website; không còn dừng giữa các mốc trong lượt hoàn thiện này. Người dùng chưa có khóa SMTP/Google/OpenAI và chọn hoàn thiện mã cùng hướng dẫn trước. Mã nguồn các nhóm chức năng dưới đây đã có; bổ sung cuối gồm Tổng quan sau đăng nhập, hướng dẫn trong web, bài kiểm thử HTTP và tài liệu báo cáo. Phần dịch vụ thật/URL online chưa được coi là đã nghiệm thu. Xem [bảng đối chiếu](BAO_CAO_DU_AN.md) và checklist hoàn thiện cuối HD_Test.md.
 
 1. Chốt quy tắc nghiệp vụ, dữ liệu và màn hình.

@@ -1,6 +1,6 @@
 **Thiết kế ban đầu — Nhịp Học**
 
-Tài liệu ghi thiết kế và lịch sử triển khai. Các module chức năng đã có; lượt hoàn thiện ngày 15/11/2026 bổ sung Tổng quan, hướng dẫn sử dụng và kiểm thử HTTP. Theo lựa chọn người dùng, chưa public website và chưa có khóa dịch vụ thật. SMTP/Google/OpenAI cần cấu hình, kiểm thử theo HD_Test.md; xem bảng đối chiếu hiện tại trong BAO_CAO_DU_AN.md.
+Tài liệu ghi thiết kế và lịch sử triển khai. Các module chức năng đã có; lượt hoàn thiện ngày 15/11/2026 bổ sung Tổng quan, thanh bên Học tập trong lịch chia Sáng/Chiều/Tối và kiểm thử HTTP; mục Cách sử dụng đã bỏ theo yêu cầu. Theo lựa chọn người dùng, chưa public website và chưa có khóa dịch vụ thật. SMTP/Google/OpenAI cần cấu hình, kiểm thử theo HD_Test.md; xem bảng đối chiếu hiện tại trong BAO_CAO_DU_AN.md.
 
 1. **Phân chia trách nhiệm**
 
@@ -13,7 +13,7 @@ Tài liệu ghi thiết kế và lịch sử triển khai. Các module chức n�
    | Module | Vai trò | Trạng thái hiện tại |
    |---|---|---|
    | config | Settings, URL, WSGI/ASGI | Đã tạo cho local |
-   | core | Trang chủ, Tổng quan và giao diện chung | Đã có Tổng quan theo owner, hướng dẫn sử dụng, health, trang lỗi và dữ liệu demo |
+   | core | Trang chủ, Tổng quan và giao diện chung | Đã có Tổng quan theo owner, health, trang lỗi và dữ liệu demo |
    | accounts | Luồng tài khoản, quyền và hồ sơ | Đã có đăng ký, đăng nhập/đăng xuất, đổi mật khẩu và thông tin tài khoản riêng |
    | studies | Môn, công việc, tài liệu | Đã có model, migration, CRUD, tìm kiếm/lọc và quyền sở hữu |
    | planner | Lịch bận, tùy chọn, kế hoạch, thuật toán | Đã có lịch bận, tùy chọn, lịch tuần, thuật toán sinh bản xem trước và áp dụng |
@@ -143,7 +143,7 @@ Tài liệu ghi thiết kế và lịch sử triển khai. Các module chức n�
    | Tài khoản | Đăng ký, đăng nhập/đăng xuất, đổi mật khẩu |
    | Tổng quan | Đã có: buổi hôm nay, phút học 7 ngày, việc quá hạn, nhắc chưa đọc, buổi/việc sắp tới, phiên tập trung và thao tác chính |
    | Môn học/công việc | Nhập, sửa, lọc và quản lý tiến độ |
-   | Lịch tuần | Lịch bận, buổi học, tạo và chỉnh phương án |
+   | Lịch tuần | Lịch bận, buổi học, tạo/chỉnh phương án; mỗi ngày chia Sáng/Chiều/Tối và thanh bên quản lý môn/việc/tài liệu |
    | Tài liệu | Liên kết theo môn hoặc công việc |
    | Tập trung | Pomodoro gắn công việc |
    | Thống kê/AI | Nhật ký, chỉ số thực tế và đề xuất |
