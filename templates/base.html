@@ -21,11 +21,21 @@
                 <span class="brand-mark" aria-hidden="true">n.</span> Nhịp Học
             </a>
             {% if user.is_authenticated %}
-            <nav class="header-navigation" aria-label="Điều hướng chính">
-                {% for tab in navigation.main_tabs %}
-                <a href="{% url tab.url %}"{% if navigation.section == tab.key %} aria-current="page"{% endif %}>{{ tab.label }}</a>
-                {% endfor %}
-            </nav>
+            <details class="header-menu header-nav-menu" open>
+                <summary class="header-nav-toggle" aria-label="Menu điều hướng" aria-controls="main-navigation" aria-expanded="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Menu
+                </summary>
+                <nav id="main-navigation" class="header-navigation" aria-label="Điều hướng chính">
+                    {% for group in navigation.main_groups %}
+                    <div class="header-nav-group" role="group" aria-labelledby="nav-group-{{ forloop.counter }}">
+                        <h2 id="nav-group-{{ forloop.counter }}">{{ group.label }}</h2>
+                        {% for tab in group.tabs %}
+                        <a href="{% url tab.url %}"{% if navigation.main_item == tab.key %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </nav>
+            </details>
             {% endif %}
             {% if user.is_authenticated %}
             <details class="header-menu header-notifications{% if navigation.section == 'notifications' %} is-active{% endif %}" name="header-menu">

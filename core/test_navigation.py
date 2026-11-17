@@ -38,7 +38,7 @@ class NavigationStateTests(SimpleTestCase):
             "overview": ("core:home",),
             "planner": (
                 "planner:week", "planner:plan_generate", "planner:plan_detail",
-                "planner:session_move", "planner:session_record", "planner:alerts",
+                "planner:session_move", "planner:session_record", "planner:session_lock", "planner:plan_apply", "planner:alerts",
                 "planner:preferences", "planner:busy_list", "planner:busy_create", "planner:busy_update", "planner:busy_delete",
             ),
             "studies": tuple(f"studies:{name}" for name in (
@@ -59,7 +59,7 @@ class NavigationStateTests(SimpleTestCase):
             ),
         }
         detail_names = {
-            "plan_detail", "session_move", "session_record", "session", "report", "job",
+            "plan_detail", "plan_apply", "session_move", "session_record", "session_lock", "session", "report", "job",
             "subject_update", "subject_delete", "task_update", "task_delete", "task_progress",
             "material_update", "material_delete", "log_update", "log_delete", "busy_update", "busy_delete",
         }
@@ -76,9 +76,23 @@ class NavigationStateTests(SimpleTestCase):
                         "user": SimpleNamespace(is_authenticated=True, username="learner", is_staff=False),
                     })
                     links = NavigationParser(markup, "Điều hướng chính").links
-                    self.assertEqual(len(links), 5)
+                    self.assertEqual([link["href"] for link in links], [reverse(target) for target in (
+                        "core:home", "planner:week", "planner:plan_generate", "planner:alerts",
+                        "planner:busy_list", "planner:preferences", "studies:task_list", "focus:home", "focus:statistics",
+                    )])
                     active = [link["href"] for link in links if link.get("aria-current") == "page"]
-                    expected = [reverse(tab["url"]) for tab in state["main_tabs"] if tab["key"] == section]
+                    if section == "planner":
+                        target = next(target for prefix, target in (
+                            ("plan_", "plan_generate"), ("busy_", "busy_list"),
+                            ("session_", "week"), ("alerts", "alerts"),
+                            ("preferences", "preferences"), ("week", "week"),
+                        ) if name.split(":")[1].startswith(prefix))
+                        expected = [reverse("planner:" + target)]
+                        self.assertEqual(state["tabs"], ())
+                    else:
+                        targets = {"overview": "core:home", "studies": "studies:task_list",
+                                   "focus": "focus:home", "statistics": "focus:statistics"}
+                        expected = [reverse(targets[section])] if section in targets else []
                     self.assertEqual(active, expected)
                     if section in ("settings", "notifications"):
                         icon = "account" if section == "settings" else "notifications"
@@ -87,6 +101,18 @@ class NavigationStateTests(SimpleTestCase):
     def test_error_pages_without_resolver_match_do_not_select_overview(self):
         request = RequestFactory().get("/missing/")
         self.assertEqual(navigation_state(request)["section"], "")
+        self.assertEqual(navigation_state(request)["main_item"], "")
+
+    def test_unknown_route_does_not_activate_a_planner_link(self):
+        request = RequestFactory().get("/planner/unknown/")
+        request.resolver_match = SimpleNamespace(view_name="planner:unknown")
+        self.assertEqual(navigation_state(request)["main_item"], "")
+
+    def test_base_does_not_render_private_navigation_for_anonymous_users(self):
+        request = RequestFactory().get("/missing/")
+        markup = render_to_string("base.html", {"request": request, "user": SimpleNamespace(is_authenticated=False)})
+        self.assertEqual(NavigationParser(markup, "Điều hướng chính").links, [])
+        self.assertNotIn('aria-label="Menu điều hướng"', markup)
 
 
 class NavigationPageTests(TestCase):

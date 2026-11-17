@@ -36,8 +36,9 @@ class UiCleanupTests(TestCase):
     def setUp(self):
         self.client.force_login(self.user)
 
-    def test_all_planner_subpages_keep_five_tabs_and_main_active(self):
+    def test_all_planner_pages_use_header_without_section_tabs(self):
         pages = (
+            ("week", [], "week"),
             ("plan_generate", [], "plan_generate"),
             ("plan_detail", [self.plan.pk], "plan_generate"),
             ("alerts", [], "alerts"),
@@ -49,25 +50,26 @@ class UiCleanupTests(TestCase):
             ("session_move", [self.session.pk], "week"),
             ("session_record", [self.session.pk], "week"),
         )
-        expected_tabs = [reverse("planner:" + name) for name in (
-            "week", "plan_generate", "alerts", "busy_list", "preferences",
-        )]
         for name, args, active in pages:
             with self.subTest(name=name):
                 response = self.client.get(reverse("planner:" + name, args=args))
                 self.assertEqual(response.status_code, 200)
                 markup = response.content.decode()
-                tabs = NavigationParser(markup, "Quản lý lịch").links
-                self.assertEqual([link["href"] for link in tabs], expected_tabs)
-                self.assertEqual([link["href"] for link in tabs if link.get("aria-current") == "page"],
-                                 [reverse("planner:" + active)])
+                self.assertNotContains(response, 'class="section-tabs"')
+                self.assertNotContains(response, 'aria-label="Quản lý lịch"')
+                self.assertTemplateNotUsed(response, "components/section_tabs.html")
                 main = NavigationParser(markup, "Điều hướng chính").links
+                self.assertEqual([link["href"] for link in main], [reverse(target) for target in (
+                    "core:home", "planner:week", "planner:plan_generate", "planner:alerts", "planner:busy_list",
+                    "planner:preferences", "studies:task_list", "focus:home", "focus:statistics",
+                )])
                 self.assertEqual([link["href"] for link in main if link.get("aria-current") == "page"],
-                                 [reverse("planner:week")])
-                self.assertTemplateUsed(response, "components/page_header.html")
-                self.assertContains(response, '<header class="page-header">', count=1)
+                                 [reverse("planner:" + active)])
+                if name != "week":
+                    self.assertTemplateUsed(response, "components/page_header.html")
+                    self.assertContains(response, '<header class="page-header">', count=1)
+                    self.assertNotContains(response, 'class="eyebrow"')
                 self.assertTemplateNotUsed(response, "components/settings_layout.html")
-                self.assertNotContains(response, 'class="eyebrow"')
         week = self.client.get(reverse("planner:week"))
         self.assertNotContains(week, 'aria-label="Quản lý lịch"')
         self.assertNotContains(week, 'class="page-header"')

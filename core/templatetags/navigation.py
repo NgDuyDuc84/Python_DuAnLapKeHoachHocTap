@@ -3,13 +3,6 @@ from django.conf import settings
 
 register = template.Library()
 
-MAIN_TABS = (
-    {"key": "overview", "url": "core:home", "label": "Tổng quan"},
-    {"key": "planner", "url": "planner:week", "label": "Lịch học tập"},
-    {"key": "studies", "url": "studies:task_list", "label": "Môn & Việc"},
-    {"key": "focus", "url": "focus:home", "label": "Tập trung"},
-    {"key": "statistics", "url": "focus:statistics", "label": "Thống kê"},
-)
 STATISTICS_TABS = (
     {"key": "charts", "url": "focus:statistics", "label": "Biểu đồ"},
     {"key": "logs", "url": "focus:logs", "label": "Nhật ký"},
@@ -19,13 +12,33 @@ NOTIFICATION_TABS = (
     {"key": "inbox", "url": "notifications:inbox", "label": "Thông báo"},
     {"key": "email", "url": "notifications:email_history", "label": "Email đã gửi"},
 )
-PLANNER_TABS = (
+PLANNER_LINKS = (
     {"key": "week", "url": "planner:week", "label": "Lịch tuần"},
     {"key": "plans", "url": "planner:plan_generate", "label": "Tạo kế hoạch"},
     {"key": "alerts", "url": "planner:alerts", "label": "Cảnh báo"},
     {"key": "busy", "url": "planner:busy_list", "label": "Lịch bận"},
     {"key": "preferences", "url": "planner:preferences", "label": "Giờ học"},
 )
+MAIN_GROUPS = (
+    {"label": "Trang chính", "tabs": (
+        {"key": "overview", "url": "core:home", "label": "Tổng quan"},
+    )},
+    {"label": "Xếp lịch", "tabs": PLANNER_LINKS},
+    {"label": "Quản lý", "tabs": (
+        {"key": "studies", "url": "studies:task_list", "label": "Môn & Việc"},
+        {"key": "focus", "url": "focus:home", "label": "Tập trung"},
+        {"key": "statistics", "url": "focus:statistics", "label": "Thống kê"},
+    )},
+)
+PLANNER_ROUTES = {
+    "planner:week": "week", "planner:session_move": "week",
+    "planner:session_record": "week", "planner:session_lock": "week",
+    "planner:plan_generate": "plans", "planner:plan_detail": "plans", "planner:plan_apply": "plans",
+    "planner:alerts": "alerts",
+    "planner:busy_list": "busy", "planner:busy_create": "busy",
+    "planner:busy_update": "busy", "planner:busy_delete": "busy",
+    "planner:preferences": "preferences",
+}
 SETTINGS_TABS = (
     {"key": "account", "url": "accounts:profile", "label": "Tài khoản"},
     {"key": "reminders", "url": "notifications:preferences", "label": "Nhắc việc"},
@@ -61,12 +74,7 @@ STATISTICS_ROUTES = {
 }
 SECTION_ROUTES = {
     "overview": ("core:home",),
-    "planner": (
-        "planner:week", "planner:plan_generate", "planner:plan_detail", "planner:plan_apply",
-        "planner:session_move", "planner:session_record", "planner:session_lock", "planner:alerts",
-        "planner:preferences", "planner:busy_list", "planner:busy_create",
-        "planner:busy_update", "planner:busy_delete",
-    ),
+    "planner": PLANNER_ROUTES,
     "studies": tuple(f"studies:{name}" for name in (
         "subject_list", "subject_create", "subject_update", "subject_delete",
         "task_list", "task_create", "task_update", "task_delete", "task_progress",
@@ -143,23 +151,16 @@ def navigation_state(request):
     elif section == "notifications":
         tabs = NOTIFICATION_TABS
         current_tab = "email" if name in ("notifications:email_history", "notifications:retry_email") else "inbox"
-    elif section == "planner":
-        tabs = PLANNER_TABS
-        if name in ("planner:plan_generate", "planner:plan_detail", "planner:plan_apply"):
-            current_tab = "plans"
-        elif name in ("planner:busy_list", "planner:busy_create", "planner:busy_update", "planner:busy_delete"):
-            current_tab = "busy"
-        else:
-            current_tab = {"planner:preferences": "preferences", "planner:alerts": "alerts"}.get(name, "week")
     elif section == "settings":
         tabs, current_tab = SETTINGS_TABS, settings_item
     elif section == "studies":
         tabs = STUDIES_TABS
         current_tab = next(tab["key"] for tab in tabs if name.split(":")[1].startswith(tab["key"][:-1]))
     return {
-        "main_tabs": MAIN_TABS, "section": section, "settings_item": settings_item,
+        "main_groups": MAIN_GROUPS,
+        "main_item": PLANNER_ROUTES.get(name, section), "section": section, "settings_item": settings_item,
         "tabs": tabs, "current_tab": current_tab,
-        "tabs_label": {"statistics": "Thống kê", "notifications": "Thông báo", "planner": "Quản lý lịch",
+        "tabs_label": {"statistics": "Thống kê", "notifications": "Thông báo",
                        "settings": "Cài đặt", "studies": "Nội dung học tập"}.get(section, ""),
         "title": PAGE_TITLES.get(name, ""),
         "description": PAGE_DESCRIPTIONS.get(name, "Xem và cập nhật thông tin học tập của bạn."),
