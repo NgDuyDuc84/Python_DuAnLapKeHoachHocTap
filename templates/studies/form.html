@@ -3,7 +3,7 @@
 {% block study_content %}
 <div class="study-form-card">
     {% if request.resolver_match.url_name == 'task_progress' %}<h2>{{ view.object }}</h2>{% endif %}
-    <form class="study-form" method="post">
+    <form class="study-form form-grid" method="post">
         {% csrf_token %}
         {% include "studies/form_fields.html" %}
         <div class="form-actions">

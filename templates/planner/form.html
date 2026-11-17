@@ -1,12 +1,13 @@
 {% extends "planner/base.html" %}
 
 {% block planner_content %}
+{% if request.resolver_match.url_name == 'preferences' %}<div class="split">{% endif %}
 <div class="study-form-card">
-    <form class="study-form" method="post">
+    <form class="study-form{% if request.resolver_match.url_name == 'preferences' %} form-grid{% endif %}" method="post">
         {% csrf_token %}
         {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
         {% for field in form %}
-            <div class="form-field">
+            <div class="form-field{% if field.name == 'study_days' %} field-wide{% endif %}">
                 {% if field.name == 'study_days' %}
                     <fieldset class="study-days" aria-describedby="{{ field.auto_id }}_helptext">
                         <legend>{{ field.label }}</legend>{{ field }}
@@ -17,7 +18,7 @@
                     {{ field.label_tag }}{{ field }}
                 {% endif %}
                 {{ field.errors }}
-                {% if field.help_text %}<div class="field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}
+                {% if field.help_text and request.resolver_match.url_name != 'preferences' %}<div class="field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</div>{% endif %}
             </div>
         {% endfor %}
         <div class="form-actions">
@@ -26,4 +27,9 @@
         </div>
     </form>
 </div>
+{% if request.resolver_match.url_name == 'preferences' %}
+<aside class="study-card"><h2>Lưu ý</h2>
+    {% for field in form %}{% if field.help_text %}<p class="field-help" id="{{ field.auto_id }}_helptext"><strong>{{ field.label }}:</strong> {{ field.help_text }}</p>{% endif %}{% endfor %}
+</aside></div>
+{% endif %}
 {% endblock %}

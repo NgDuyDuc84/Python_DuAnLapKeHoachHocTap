@@ -7,7 +7,7 @@
 {% endblock %}
 {% block settings_content %}
 <section class="study-shell sync-shell">
-    <div class="sync-grid">
+    <div class="split">
         <section class="study-card">
             <span class="badge">{% if connection.is_connected %}Đã kết nối{% else %}Chưa kết nối{% endif %}</span>
             <h2>Tài khoản Google</h2>
@@ -34,7 +34,7 @@
             {% endif %}
         </section>
         <aside class="study-card sync-policy">
-            <h2>Bạn duyệt trước mỗi lần</h2>
+            <h2>Đồng bộ một chiều</h2>
             <ol>
                 <li>Chọn tuần và xem các buổi sẽ đưa sang Google.</li>
                 <li>Xác nhận để hệ thống đồng bộ các buổi học.</li>

@@ -1,0 +1,28 @@
+:root {
+    color-scheme: light;
+    --bg: #F7F3E8; --bg-sunk: #EFE9D8; --surface: #FFFDF9;
+    --line: #E9E2D0; --line-strong: #D9D0B8;
+    --ink: #14312B; --text: #38443E; --muted: #5F6A63;
+    --pine: #1D6B56; --pine-hover: #17594A; --pine-soft: #DDEFE5; --pine-softer: #EEF7F1;
+    --amber: #E59E2B; --amber-soft: #FFF1D3; --amber-line: #F2D9A4; --amber-ink: #8A5410;
+    --coral: #E1584B; --coral-soft: #FCE5E1; --coral-ink: #9C2F26;
+    --sky: #4A86C9; --sky-soft: #E4EEFA; --sky-ink: #24507F;
+    --s1: #EF6A5B; --s2: #F2B134; --s3: #86C240; --s4: #26B39B;
+    --s5: #4DA3E0; --s6: #6B79E6; --s7: #A56BE0; --s8: #E96AA6;
+    --r-sm: 10px; --r-md: 14px; --r-lg: 22px;
+    --sh-sm: 0 1px 2px rgba(60,48,20,.05);
+    --sh-md: 0 1px 2px rgba(60,48,20,.04), 0 12px 28px -18px rgba(60,48,20,.28);
+    --sh-lg: 0 2px 4px rgba(60,48,20,.04), 0 24px 48px -28px rgba(60,48,20,.38);
+    --ring: 0 0 0 3px rgba(29,107,86,.28);
+    --font-display: 'Lora', Georgia, 'Times New Roman', serif;
+    --font-ui: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+    --font-calendar: 'Segoe UI', Arial, sans-serif;
+    --bg-top: #F9F5EB; --bg-bottom: #F5F0E2; --header-bg: rgba(255,253,248,.9);
+    --action-start: #FFF3D9; --action-mid: #FFF9EC; --button-ink: #FFFFFF;
+    --button-inset: inset 0 1px 0 rgba(255,255,255,.2);
+    --page-w: 1120px; --narrow-w: 760px; --auth-w: 480px;
+    --gutter: 24px; --section-gap: 24px; --header-h: 64px; --card-pad: 24px;
+    --accent: var(--pine); --paper: var(--bg);
+}
+@media (min-width: 1280px) { :root { --gutter: 32px; } }
+@media (width < 768px) { :root { --gutter: 16px; } }

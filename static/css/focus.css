@@ -1,6 +1,6 @@
 .focus-note { margin: 20px 0; color: var(--muted); font-size: 14px; }
 .focus-heading { margin-top: 32px; font-size: 23px; }
-.timer-card { padding: 32px; text-align: center; border: 1px solid #cbded0; border-radius: 18px; background: #edf5e9; }
+.timer-card { padding: 32px; text-align: center; border: 1px solid var(--pine-soft); border-radius: var(--r-lg); background: var(--surface); }
 .timer-card h2 { margin: 0; font-size: 24px; overflow-wrap: anywhere; }
 .timer-card p { font-size: 14px; }
 .timer-clock { margin: 20px 0; color: var(--accent); font-size: clamp(64px, 10vw, 100px); font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; letter-spacing: -3px; }
@@ -11,8 +11,8 @@
 .stat-cards p { margin: 0 0 10px; color: var(--muted); font-size: 13px; }
 .stat-cards strong { font-size: 30px; }
 .chart-row { display: grid; grid-template-columns: 105px minmax(0, 1fr) 90px; gap: 16px; align-items: center; margin: 12px 0; font-size: 13px; }
-.chart-track { height: 16px; border-radius: 5px; background: #eef2eb; }
-.chart-bar { height: 100%; background: var(--accent); border-radius: 5px; }
+.chart-track { height: 16px; border-radius: var(--r-sm); background: var(--surface); }
+.chart-bar { height: 100%; background: var(--accent); border-radius: var(--r-sm); }
 .chart-row > span { text-align: right; }
 .stat-tables { margin-top: 24px; }
 .stat-list { list-style: none; margin: 0; padding: 0; }

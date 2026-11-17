@@ -1,6 +1,7 @@
 {% extends "focus/base.html" %}
 {% block focus_content %}
 {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+<div class="split">
 {% if active %}
     <div class="study-card"><h2>Bạn đang có một phiên {{ active.get_phase_display|lower }}</h2><p>{{ active.task_title }} · {{ active.get_status_display }}</p><a class="button" href="{% url 'focus:session' active.pk %}">Tiếp tục phiên hiện tại</a></div>
 {% else %}
@@ -12,10 +13,13 @@
         </form>
     </div>
 {% endif %}
+<aside class="study-card">
 <h2 class="focus-heading">10 phiên gần nhất</h2>
 <div class="study-list">
 {% for session in recent_sessions %}
-    <article class="study-card"><h3><a class="text-link" href="{% url 'focus:session' session.pk %}">{{ session.task_title }}</a></h3><p class="study-meta">{{ session.started_at|date:"d/m/Y H:i" }} · {{ session.get_phase_display }} · {{ session.get_status_display }}</p></article>
+    <article class="recent-focus-item"><h3><a class="text-link" href="{% url 'focus:session' session.pk %}">{{ session.task_title }}</a></h3><p class="study-meta">{{ session.started_at|date:"d/m/Y H:i" }} · {{ session.get_phase_display }} · {{ session.get_status_display }}</p></article>
 {% empty %}<p class="empty-state">Chưa có phiên tập trung. Chọn một công việc chưa hoàn thành để bắt đầu.</p>{% endfor %}
+</div>
+</aside>
 </div>
 {% endblock %}

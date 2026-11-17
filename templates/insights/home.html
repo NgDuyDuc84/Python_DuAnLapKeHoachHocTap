@@ -1,7 +1,6 @@
 {% extends 'insights/base.html' %}
 {% block title %}AI hỗ trợ học tập — Nhịp Học{% endblock %}
 {% block insight_content %}
-{% include "components/page_header.html" with title=navigation.title description=navigation.description only %}
 <div class="insight-metrics">
     <article class="study-card"><p>Phút học trong 14 ngày</p><strong>{{ totals.minutes }}</strong><span>{{ totals.entries }} bản ghi nhật ký</span></article>
     <article class="study-card"><p>Ngày có ghi nhận học</p><strong>{{ totals.study_days }} <small>/ 14</small></strong><span>Trung bình {{ totals.daily_average }} phút/ngày</span></article>

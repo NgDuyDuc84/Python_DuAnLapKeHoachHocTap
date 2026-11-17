@@ -8,10 +8,10 @@
 .insight-metrics span, .insight-muted { color: var(--muted); font-size: 14px; }
 .insight-action { border-left: 4px solid var(--accent); }
 .insight-action h2 { margin-top: 14px; }
-.insight-notice { padding: 16px; border-left: 3px solid #b9853b; border-radius: 6px; background: #faf1df; }
+.insight-notice { padding: 16px; border-left: 3px solid var(--amber); border-radius: var(--r-sm); background: var(--amber-soft); }
 .insight-data { margin: 20px 0; }
 .insight-data summary { cursor: pointer; color: var(--accent); font-weight: 600; }
-.insight-data pre { max-height: 420px; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.insight-data pre { max-height: 420px; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 .insight-consent { display: flex; align-items: flex-start; gap: 12px; }
 .insight-consent input { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 5px; accent-color: var(--accent); }
 .insight-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 24px; }

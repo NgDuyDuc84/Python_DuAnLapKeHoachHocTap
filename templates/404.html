@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Không tìm thấy trang — Nhịp Học{% endblock %}
+{% block page_class %}page--narrow{% endblock %}
 {% block content %}
 <section class="auth-shell"><div class="auth-card">
     {% include "components/page_header.html" with title="Trang này không còn ở đây" description="Liên kết có thể đã thay đổi, nội dung đã xóa hoặc không thuộc tài khoản của bạn." action_name="core:home" action_label="Về Tổng quan" only %}

@@ -2,7 +2,7 @@
 
 {% block study_content %}
 {% include "studies/filters.html" %}
-<div class="study-grid">
+<div class="study-grid subject-grid">
     {% for subject in object_list %}
         <article class="study-card subject-card" style="--subject-color: {{ subject.color }};">
             <h2>{{ subject.name }}</h2>

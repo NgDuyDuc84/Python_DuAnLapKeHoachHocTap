@@ -1,9 +1,10 @@
 <header class="page-header">
     <div>
-        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</h1>
+        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}{% if day %}<span class="heading-date">· {{ weekday }}, {{ day|date:"d/m" }}</span>{% endif %}</h1>
         <p>{{ description }}</p>
     </div>
     {% firstof action.url action_name as primary_name %}
     {% firstof action.label action_label as primary_label %}
     {% if primary_name %}<a class="button" href="{% url primary_name %}">{{ primary_label }}</a>{% endif %}
 </header>
+{% if tabs %}{% include "components/section_tabs.html" with tabs=tabs current_tab=current_tab tabs_label=tabs_label only %}{% endif %}

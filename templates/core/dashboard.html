@@ -4,10 +4,12 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
 <section class="dashboard" aria-labelledby="dashboard-title">
-    <header class="dashboard-welcome">
-        <h1 id="dashboard-title">Chào {{ user.first_name|default:user.username }} <span>· {{ weekday }}, {{ today|date:"d/m" }}</span></h1>
-        <p>{{ summary }}</p>
-    </header>
+    <div class="dashboard-welcome">
+        {% firstof user.first_name user.username as display_name %}
+        {% with greeting="Chào "|add:display_name %}
+        {% include "components/page_header.html" with title=greeting description=summary weekday=weekday day=today title_id="dashboard-title" only %}
+        {% endwith %}
+    </div>
     {% if action.kind == 'onboarding' %}
     <section class="dashboard-onboarding" aria-labelledby="onboarding-title">
         <h2 id="onboarding-title">Chuẩn bị kế hoạch đầu tiên</h2>
@@ -28,7 +30,7 @@
             <h2 class="next-action-label"><span aria-hidden="true">◷</span> Nên làm bây giờ</h2>
             <h3 id="next-action-title">{{ action.title }}</h3>
             {% if action.task %}
-            <p class="action-task-meta"><span class="subject-dot" style="--subject-color: {{ action.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>{{ action.task.subject.name|default:"Chưa gắn môn" }} · Ưu tiên {{ action.task.get_priority_display|lower }} · Còn {{ action.task.remaining_minutes }} phút cần học</p>
+            <p class="action-task-meta"><span class="subject-dot" style="--subject-color: {{ action.task.subject.color|default:'var(--muted)' }}" aria-hidden="true"></span>{{ action.task.subject.name|default:"Chưa gắn môn" }} · Ưu tiên {{ action.task.get_priority_display|lower }} · Còn {{ action.task.remaining_minutes }} phút cần học</p>
             {% elif action.kind == 'ready' %}<p>Bạn có thể chọn một công việc và dành thời gian tập trung cho nó.</p>
             {% elif action.kind == 'focus' %}<p>Trở lại đồng hồ để tiếp tục phiên hiện tại.</p>{% endif %}
             <div class="dashboard-action-buttons">
@@ -59,7 +61,7 @@
                     {% for row in group.rows %}
                     <li>
                         <time class="session-time" datetime="{{ row.session.starts_at|date:'c' }}">{{ row.session.starts_at|date:"H:i" }}–{{ row.session.ends_at|date:"H:i" }}</time>
-                        <span class="subject-dot" style="--subject-color: {{ row.session.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>
+                        <span class="subject-dot" style="--subject-color: {{ row.session.task.subject.color|default:'var(--muted)' }}" aria-hidden="true"></span>
                         <div class="session-description"><strong>{{ row.session.task.title }}</strong><span>{{ row.session.task.subject.name|default:"Chưa gắn môn" }}</span></div>
                         {% if row.action %}{% include "components/dashboard_button.html" with button=row.action secondary=True %}{% else %}<span class="recorded-badge">Đã ghi nhận</span>{% endif %}
                     </li>
@@ -76,7 +78,7 @@
                 {% for row in task_rows %}
                 <li class="dashboard-task{% if row.missing or row.deadline.overdue %} task-attention{% endif %}">
                     <div class="task-heading"><h3>{{ row.task.title }}</h3>{% if row.missing %}<span class="schedule-badge">Chưa có lịch</span>{% endif %}</div>
-                    <p class="task-subject"><span class="subject-dot" style="--subject-color: {{ row.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>{{ row.task.subject.name|default:"Chưa gắn môn" }} <span class="priority-chip priority-{{ row.task.priority }}">Ưu tiên {{ row.task.get_priority_display|lower }}</span></p>
+                    <p class="task-subject"><span class="subject-dot" style="--subject-color: {{ row.task.subject.color|default:'var(--muted)' }}" aria-hidden="true"></span>{{ row.task.subject.name|default:"Chưa gắn môn" }} <span class="priority-chip priority-{{ row.task.priority }}">Ưu tiên {{ row.task.get_priority_display|lower }}</span></p>
                     <p><time datetime="{{ row.task.deadline|date:'c' }}" title="{{ row.task.deadline|date:'d/m/Y H:i' }}">Hạn {{ row.deadline.label }} · {{ row.task.deadline|date:"H:i" }}</time> · <span{% if row.deadline.overdue %} class="overdue-text"{% endif %}>{{ row.deadline.relative }}</span></p>
                     <p>Còn {{ row.task.remaining_minutes }} phút cần học</p>
                     <div class="dashboard-action-buttons">{% include "components/dashboard_button.html" with button=row.start secondary=False %}{% include "components/dashboard_button.html" with button=row.progress secondary=True %}</div>

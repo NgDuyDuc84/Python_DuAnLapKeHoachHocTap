@@ -1,7 +1,14 @@
 from django import template
 from django.conf import settings
+from django.templatetags.static import static
 
 register = template.Library()
+
+
+@register.simple_tag
+def font_preload_url(name):
+    # Relative font URLs in CSS have no development-only cache query.
+    return static(name).partition("?")[0]
 
 STATISTICS_TABS = (
     {"key": "charts", "url": "focus:statistics", "label": "Biểu đồ"},
@@ -133,6 +140,13 @@ PAGE_ACTIONS = {
     "planner:busy_list": {"url": "planner:busy_create", "label": "Thêm lịch bận"},
     "focus:logs": {"url": "focus:log_create", "label": "Thêm nhật ký"},
 }
+NARROW_ROUTES = {
+    "planner:busy_create", "planner:busy_update", "planner:busy_delete",
+    "planner:session_move", "planner:session_record",
+    "focus:log_create", "focus:log_update", "focus:log_delete",
+    "studies:subject_delete", "studies:task_delete", "studies:material_delete",
+}
+AUTH_ROUTES = {"accounts:login", "accounts:register"}
 # A rejected AI request renders the home template at the existing POST URL.
 PAGE_TITLES["insights:generate"] = PAGE_TITLES["insights:home"]
 PAGE_DESCRIPTIONS["insights:generate"] = PAGE_DESCRIPTIONS["insights:home"]
@@ -158,6 +172,7 @@ def navigation_state(request):
         current_tab = next(tab["key"] for tab in tabs if name.split(":")[1].startswith(tab["key"][:-1]))
     return {
         "main_groups": MAIN_GROUPS,
+        "page_class": "page--narrow" if name in NARROW_ROUTES else "page--auth" if name in AUTH_ROUTES else "",
         "main_item": PLANNER_ROUTES.get(name, section), "section": section, "settings_item": settings_item,
         "tabs": tabs, "current_tab": current_tab,
         "tabs_label": {"statistics": "Thống kê", "notifications": "Thông báo",

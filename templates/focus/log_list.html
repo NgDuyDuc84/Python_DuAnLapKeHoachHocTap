@@ -2,7 +2,7 @@
 {% block focus_content %}
 {% include "focus/range_filter.html" %}
 <p class="focus-note">Tên việc/môn lưu tại lúc ghi nhận; đổi tên hoặc xóa công việc không xóa lịch sử. Nhật ký Pomodoro tính toàn bộ phút vào ngày bắt đầu phiên, kể cả qua nửa đêm.</p>
-<div class="study-list">
+<div class="study-list record-list">
 {% for log in logs %}
 <article class="study-card">
     <div class="card-heading"><h2>{{ log.task_title }}</h2><span class="badge">{{ log.get_source_display }} · {{ log.minutes }} phút</span></div>

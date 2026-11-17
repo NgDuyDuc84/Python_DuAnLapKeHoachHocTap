@@ -150,11 +150,13 @@ class UiCleanupTests(TestCase):
         self.assertEqual(list(field.queryset), [self.task])
         self.assertContains(self.client.get(reverse("focus:home")), "Chọn công việc…")
 
-    def test_plan_explanations_are_collapsed_after_form_and_links_stay_in_planner(self):
+    def test_plan_explanations_use_side_card_and_links_stay_in_planner(self):
         response = self.client.get(reverse("planner:plan_generate"))
         markup = response.content.decode()
         self.assertLess(markup.index('id="id_mode"'), markup.index('<details class="explanation">'))
-        self.assertContains(response, '<summary>Cách hệ thống xếp lịch</summary>', html=True)
+        self.assertContains(response, '<h2>Cách hệ thống xếp lịch</h2>', html=True)
+        self.assertContains(response, '<summary>Xem chi tiết</summary>', html=True)
+        self.assertContains(response, 'class="split"')
         self.assertContains(response, 'id="plan-mode-help"')
         self.assertContains(response, 'href="' + reverse("planner:preferences") + '">Điều chỉnh giờ học')
         response = self.client.post(reverse("planner:plan_generate"), {"mode": "replace", "week": "invalid"})

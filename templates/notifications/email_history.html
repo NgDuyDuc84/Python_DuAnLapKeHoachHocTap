@@ -2,7 +2,7 @@
 {% block notification_content %}
 {% if navigation.show_technical_details %}<p class="notification-note">{{ email_mode }}</p>{% elif not navigation.email_available %}<p class="notification-note">Gửi email nhắc việc hiện chưa khả dụng. Bạn vẫn có thể nhận thông báo trong ứng dụng.</p>{% endif %}
 <p class="notification-note">Email lỗi được tự thử tối đa 3 lần, cách nhau ít nhất 1 phút. Kết quả chưa xác nhận không được tự gửi lại: hãy kiểm tra hộp thư để tránh nhận trùng. Mỗi lần yêu cầu gửi lại sẽ được kiểm tra theo dữ liệu và tùy chọn hiện tại.</p>
-<div class="study-list">
+<div class="study-list record-list">
 {% for reminder in reminders %}
 <article class="study-card">
     <div class="card-heading"><h2>{{ reminder.title }}</h2><span class="badge">{{ reminder.delivery_label }}</span></div>

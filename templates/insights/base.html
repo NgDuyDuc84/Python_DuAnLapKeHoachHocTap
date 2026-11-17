@@ -6,7 +6,7 @@
 {% endblock %}
 {% block content %}
 <section class="study-shell insight-shell">
-    {% include "components/section_tabs.html" with tabs=navigation.tabs current_tab=navigation.current_tab tabs_label=navigation.tabs_label only %}
+    {% include "components/page_header.html" with title=navigation.title description=navigation.description tabs=navigation.tabs current_tab=navigation.current_tab tabs_label=navigation.tabs_label only %}
     {% block insight_content %}{% endblock %}
 </section>
 {% endblock %}

@@ -2,9 +2,8 @@
 {% load static %}
 {% block extra_css %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/notifications.css' %}">{% endblock %}
 {% block settings_content %}
-{% if navigation.show_technical_details %}<p class="notification-note">{{ email_mode }}</p>{% elif not navigation.email_available %}<p class="notification-note">Gửi email nhắc việc hiện chưa khả dụng. Bạn vẫn có thể nhận thông báo trong ứng dụng.</p>{% endif %}
-<p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. {% if navigation.show_technical_details %}Cần dịch vụ nền hoạt động để xử lý nhắc.{% endif %}</p>
-<div class="study-form-card"><form method="post" class="study-form">{% csrf_token %}
+<div class="split">
+<div class="study-form-card"><form method="post" class="study-form form-grid">{% csrf_token %}
     {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
     {% for field in form %}
     <div class="form-field">
@@ -22,5 +21,9 @@
     {% endfor %}
     <button class="button" type="submit">Lưu tùy chọn nhắc</button>
 </form></div>
+<aside class="study-card"><h2>Lưu ý</h2>
+{% if navigation.show_technical_details %}<p class="notification-note">{{ email_mode }}</p>{% elif not navigation.email_available %}<p class="notification-note">Gửi email nhắc việc hiện chưa khả dụng. Bạn vẫn có thể nhận thông báo trong ứng dụng.</p>{% endif %}
+<p class="notification-note">Email nhận nhắc: <strong>{{ user.email|default:"Tài khoản chưa có email" }}</strong>. Chỉ nhắc việc chưa hoàn thành và buổi đã áp dụng chưa ghi nhận, trước khi đến hạn/bắt đầu. {% if navigation.show_technical_details %}Cần dịch vụ nền hoạt động để xử lý nhắc.{% endif %}</p>
 <p class="notification-note">Tắt kênh sẽ chặn nhắc chưa gửi; lịch sử đã nhận vẫn được giữ. Thay giờ deadline/buổi sẽ có nhắc cho thời điểm mới; đổi độ nhắc sớm không gửi lại một nhắc đã xử lý cho cùng thời điểm.</p>
+</aside></div>
 {% endblock %}

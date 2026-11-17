@@ -102,7 +102,7 @@ Quyết định cập nhật: Tổng quan lấy hành động cần làm làm tr
 
 ### 4.3. Luồng xếp kế hoạch (3 bước, có stepper)
 
-1. **Chọn tuần và chế độ.** Bổ sung / Xếp lại là 2 thẻ lựa chọn có mô tả ngắn. "10 kế hoạch gần đây" gập vào accordion.
+1. **Chọn tuần và chế độ.** Bổ sung / Xếp lại có mô tả ngắn ngay dưới lựa chọn. Bố cục hiện tại là form bên trái và thẻ "Cách hệ thống xếp lịch" bên phải (ba ý ngắn + details cho chi tiết); gợi ý tuần nằm ngay dưới ô ngày. "10 kế hoạch gần nhất" rộng đủ khung ở bên dưới, không gập toàn bộ lịch sử vào accordion.
 2. **Xem trước.** Thanh tóm tắt trên cùng (đã xếp X/Y phút, thiếu Z, n cảnh báo), rồi bảng các buổi. Lý do và phần thiếu gập lại. Thanh dưới cố định: [Hủy] [Áp dụng vào lịch].
 3. **Áp dụng.** Quay về Lịch kèm thông báo; nếu đã kết nối Google thì có nút "Đồng bộ lên Google Calendar".
 
@@ -129,11 +129,63 @@ Thông báo kỹ thuật về Google/email/dịch vụ nền chỉ dành cho sta
 ## 5. Thành phần dùng chung
 
 - **Một `base.html`** + component tab (`components/section_tabs.html`) thay cho 5 khung hiện tại.
-- **Page header chuẩn:** tiêu đề bên trái, tối đa 1 nút chính (xanh đậm) bên phải.
+- **Page header chuẩn:** tiêu đề bên trái, mô tả một dòng, tối đa 1 nút chính (xanh đậm) bên phải, vùng tab tùy chọn; dùng `components/page_header.html`.
 - **Một dialog xác nhận xóa** dùng chung.
-- **Form chuẩn:** 1 cột, nhóm trường rõ ràng, nút Lưu (chính) + Hủy.
+- **Form chuẩn:** theo các kiểu trang ở mục 5.1; form không có nội dung phụ dùng đủ khung với trường hai cột từ 1024px, nút Lưu (chính) + Hủy.
 - **Toast** và **empty state** dùng chung.
 - **Quy ước màu** nhất quán với chú thích của Lịch: lịch bận xanh dương, buổi học xanh đậm, deadline cam; môn học dùng màu riêng của môn.
+
+### 5.1. Bố cục (quyết định cập nhật)
+
+Giá trị đo từ mã thật: `.container` của đa số trang có chiều rộng tối đa **1120px**, không phải con số 1260px ước tính. Chọn `--page-w: 1120px`; `--narrow-w: 760px`; `--auth-w: 480px`; `--section-gap: 24px`; padding thẻ 24px. Các giá trị khung tính cả padding do `box-sizing: border-box`. `--gutter` là 32px từ 1280px, 24px trong khoảng 768–1279px (gồm 1024–1279px), 16px dưới 768px.
+
+`base.html` có đúng một `main.page`, block `page_class` mặc định lấy từ bảng tên URL trong `navigation_state`. Không đặt độ rộng trang rải rác theo app. `layout.css` quyết định khung, bỏ giới hạn thẻ con gây trống nửa trang; `main_class` cũ vẫn tương thích với Lịch tuần.
+
+| Kiểu | Trang | Quy tắc |
+| --- | --- | --- |
+| A — Rộng | Chỉ Lịch tuần | Giữ `.container.calendar-container` hiện có: tối đa 1720px, lề 24px khi co lại, 18px dưới 640px; không đổi HTML/JS/lưới/kích thước/spacing của Lịch |
+| B — Tiêu chuẩn | Tổng quan; ba danh sách Môn & Việc; Biểu đồ/Nhật ký/AI và báo cáo; Cảnh báo; danh sách Lịch bận; Thông báo/Email; chi tiết kế hoạch; chi tiết đồng bộ; trang phiên Tập trung | `max-width: var(--page-w)`, căn giữa, padding ngang theo gutter; tiêu đề/tab/nội dung cùng mép |
+| C — Form + phụ | Tạo kế hoạch, bắt đầu Tập trung, Giờ học, Nhắc việc, Tài khoản, Kết nối Google, Đổi mật khẩu có quy tắc | Cùng khung B; `.split` = `minmax(0,7fr) minmax(0,5fr)`, gap 24px; aside sticky cách đỉnh bằng chiều cao header 64px + 16px; dưới 1024px thành một cột, aside xuống dưới và bỏ sticky |
+| D — Hẹp | Thêm/sửa/xóa Lịch bận; thêm/sửa/xóa Nhật ký; các xác nhận xóa; Ghi nhận/Chỉnh giờ buổi học; trang lỗi | `.page--narrow`, cả tiêu đề và thẻ nằm trong khung 760px căn giữa |
+| Đăng nhập | Đăng nhập/Đăng ký | `.page--auth`, khung 480px, giữ layout công khai |
+
+Các form thêm/sửa môn, việc, tài liệu và cập nhật tiến độ không có nội dung phụ thật: dùng đủ khung B, trường hai cột từ 1024px; textarea chiếm hai cột. Đổi mật khẩu không có quy tắc sẵn có cũng dùng đủ khung thay vì `.split`. Trang giới thiệu dùng khung B.
+
+- Tạo kế hoạch: form trước; thẻ phụ có ba ý + details phần giải thích cũ; kế hoạch gần đây đủ khung ở dưới. Quyết định này ghi đè việc gập toàn bộ giải thích trong details toàn chiều rộng.
+- Tập trung: form hoặc phiên đang dở ở cột chính; 10 phiên gần nhất ở cột phụ.
+- Giờ học: gom chính các help text hiện có vào thẻ Lưu ý, giữ ID cho `aria-describedby`. Nhắc việc: đưa các ghi chú hiện có sang Lưu ý. Tài khoản: thông tin ở trái, thẻ Mật khẩu/Đổi mật khẩu ở phải. Google: Tài khoản Google / Đồng bộ một chiều; Yêu cầu gần đây đủ khung phía dưới.
+- Page header chung có khoảng trên 40px và cách nội dung 24px; dưới 768px khoảng trên 28px. Trừ Lịch tuần và trang auth, mọi trang dùng component này; tab tùy chọn được render ngay sau tiêu đề/mô tả.
+- Thẻ cạnh nhau stretch, flex dọc; empty state căn giữa. Hai thẻ Tổng quan cao bằng nhau, dải số liệu ba cột bằng nhau. Môn học: ba cột từ 1100px, hai cột từ 720px, một cột nhỏ hơn.
+- Lịch sử kế hoạch, Nhật ký, Email và đồng bộ dùng đủ khung, hàng/cột nhất quán và chuyển thành thẻ trên màn nhỏ. Không bỏ dữ liệu hay hành động hiện có.
+- Giữ chỗ thanh cuộn dọc để các trang chuẩn không lệch mép khi nội dung dài/ngắn. Lịch tuần có ngoại lệ để khung rộng và vị trí của nó giữ nguyên.
+
+### 5.2. Phong cách — Sổ tay xanh
+
+`static/css/tokens.css` là nơi duy nhất khai báo `:root` và biến dùng chung, nạp trước mọi CSS khác. `theme.css` áp phong cách lên thành phần dùng chung, không thay đổi thứ tự khối, URL hay hành vi. Phong cách áp sau bố cục 5.1; ảnh mẫu là tham chiếu hình thức, không thêm dữ liệu hoặc nội dung giả.
+
+| Nhóm token | Giá trị |
+| --- | --- |
+| Nền/viền | bg `#F7F3E8`, bg-sunk `#EFE9D8`, surface `#FFFDF9`, line `#E9E2D0`, line-strong `#D9D0B8` |
+| Chữ | ink `#14312B`, text `#38443E`, muted `#5F6A63` |
+| Xanh thông | pine `#1D6B56`, pine-hover `#17594A`, pine-soft `#DDEFE5`, pine-softer `#EEF7F1` |
+| Hổ phách | amber `#E59E2B`, amber-soft `#FFF1D3`, amber-line `#F2D9A4`, amber-ink `#8A5410` |
+| San hô | coral `#E1584B`, coral-soft `#FCE5E1`, coral-ink `#9C2F26` |
+| Xanh trời | sky `#4A86C9`, sky-soft `#E4EEFA`, sky-ink `#24507F` |
+| Môn học s1–s8 | `#EF6A5B #F2B134 #86C240 #26B39B #4DA3E0 #6B79E6 #A56BE0 #E96AA6`; giữ nguyên màu đã lưu của người dùng |
+| Bo góc | r-sm 10px, r-md 14px, r-lg 22px |
+| Bóng | sh-sm `0 1px 2px rgba(60,48,20,.05)`; sh-md `0 1px 2px rgba(60,48,20,.04), 0 12px 28px -18px rgba(60,48,20,.28)`; sh-lg `0 2px 4px rgba(60,48,20,.04), 0 24px 48px -28px rgba(60,48,20,.38)` |
+| Focus | ring `0 0 0 3px rgba(29,107,86,.28)`, kèm outline có thể thấy |
+| Chữ | display `'Lora', Georgia, 'Times New Roman', serif`; UI `'Inter', system-ui, 'Segoe UI', Roboto, sans-serif` |
+
+- Font WOFF2 variable tự host trong `static/fonts/`, đủ Latin/Latin mở rộng/tiếng Việt, `font-display: swap`; preload hai subset Latin chính. Giữ file font gốc và giấy phép OFL; không gọi CDN lúc chạy. Xem nguồn/checksum ở `static/fonts/sources.json`.
+- h1/h2/h3, tên thẻ và số lớn dùng Lora; phần còn lại dùng Inter. Giờ/số bảng dùng tabular-nums. Riêng thân Lịch tuần giữ Segoe UI để không đổi ngắt dòng/kích thước đã kiểm chứng.
+- Nền gradient nhẹ `#F9F5EB → #F5F0E2`; header nền `rgba(255,253,248,.9)`, logo gradient xanh. Nav là pill padding 8px 13px, active pine-soft/pine-hover đậm 650, **bỏ gạch chân cũ**, giữ vạch ngăn nhóm. Tab nội dung bo 12px, active pine-soft.
+- Nút chính pine/chữ trắng, bo 14px, bóng nhẹ/viền sáng trong; phụ surface/line-strong/pine; nguy hiểm coral-soft/coral-ink; có cỡ nhỏ, trạng thái disabled và focus rõ.
+- Thẻ surface/line/r-lg/sh-md. Thẻ hành động Tổng quan a–e gradient `#FFF3D9 → #FFF9EC → #FFFDF9`, viền amber-line/sh-lg; f/h dùng pine-softer.
+- Chip có cặp nền soft/chữ ink: thiếu lịch amber, đủ lịch pine, quá hạn coral, lịch bận sky. Màu môn vẫn là dữ liệu người dùng, không đổi model/mặc định đã lưu.
+- Ô nhập/select/textarea cao ban đầu 48px, bo 12px, viền 1.5px line-strong; textarea có thể kéo cao hơn; checkbox/radio giữ cỡ phù hợp. Label 14px đậm, chú thích 13px. JS nhãn form dùng chung đổi riêng option `---------` thành nhãn Chọn… bằng tiếng Việt, không đổi value/tập lựa chọn và không chạy trong Lịch tuần.
+- Message/dialog/bảng dùng token tương ứng; success pine-soft, warning amber-soft, error coral-soft. Chữ thường tối thiểu 4.5:1; không dùng amber làm chữ trên nền sáng. Transition màu/bóng/transform 150ms; thẻ bấm hover nâng 1px, nút nhấn xuống 1px; tắt animation/transform theo reduced-motion.
+- Lịch tuần chỉ nhận đổi màu/bo góc/bóng qua token; giữ các template, JS và khai báo bố cục cũ. Không áp quy tắc input 48px, page padding hay grid mới vào thân Lịch.
 
 ---
 
@@ -176,7 +228,7 @@ Thông báo kỹ thuật về Google/email/dịch vụ nền chỉ dành cho sta
 
 ### 8.2. Điều hướng và trạng thái active
 
-`templates/base.html` hiển thị đúng 9 liên kết theo sơ đồ mục 2, chuông thông báo và menu avatar. Dùng reverse name hiện có, không gõ cứng URL. Mục active xác định theo **tên URL**, không theo app; chữ xanh đậm, gạch chân 2px và `aria-current="page"`. Mỗi trang chỉ có một danh sách nav dùng chung cho desktop/menu, không nhân đôi liên kết. URL không thuộc bảng không active mục nào:
+`templates/base.html` hiển thị đúng 9 liên kết theo sơ đồ mục 2, chuông thông báo và menu avatar. Dùng reverse name hiện có, không gõ cứng URL. Mục active xác định theo **tên URL**, không theo app; dùng pill pine-soft/pine-hover đậm 650 và `aria-current="page"` theo phong cách mục 5.2, thay gạch chân cũ. Mỗi trang chỉ có một danh sách nav dùng chung cho desktop/menu, không nhân đôi liên kết. URL không thuộc bảng không active mục nào:
 
 | Mục | URL thuộc về mục này |
 | --- | --- |
@@ -198,7 +250,7 @@ Mọi trang planner đều bỏ thanh tab con, chỉ giữ tiêu đề/nội dun
 
 Badge Cảnh báo chỉ được thêm nếu số đếm đúng nguồn của `build_alerts`, chỉ hiện khi > 0, tốn tối đa một truy vấn nhẹ/request hoặc dùng dữ liệu sẵn có. **Bản hiện tại bỏ badge:** nguồn Cảnh báo gồm thiếu phút trước hạn, xung đột và buổi chưa ghi nhận; tính đầy đủ đòi hỏi nhiều tập dữ liệu và xử lý, không thể có cùng số chính xác trong giới hạn này. Không thay bằng số việc quá hạn hoặc số thông báo chưa đọc. Không gọi `build_alerts` từ header.
 
-**Dọn hiển thị sau Pha 1:** bỏ eyebrow trên mọi trang trừ các template Lịch tuần được bảo vệ; dùng page header chung có tiêu đề, một dòng mô tả, tối đa một nút chính bên phải. Môn & Việc giữ các URL hiện tại, thứ tự Công việc | Môn học | Tài liệu, mặc định Công việc; học kỳ dạng số hiển thị có nhãn. Tập trung dùng nhãn rỗng “Chọn công việc…” và mô tả 1–2 câu. Tạo kế hoạch đặt form trước, mô tả chế độ ngay dưới lựa chọn và cập nhật khi đổi; phần giải thích cũ gập trong “Cách hệ thống xếp lịch”. Link “Điều chỉnh giờ học” giữ `planner:preferences`. Những thay đổi này không triển khai gộp studies/drawer/redirect/stepper của Pha 2–3.
+**Dọn hiển thị sau Pha 1:** bỏ eyebrow trên mọi trang trừ các template Lịch tuần được bảo vệ; dùng page header chung có tiêu đề, một dòng mô tả, tối đa một nút chính bên phải. Môn & Việc giữ các URL hiện tại, thứ tự Công việc | Môn học | Tài liệu, mặc định Công việc; học kỳ dạng số hiển thị có nhãn. Tập trung dùng nhãn rỗng “Chọn công việc…” và mô tả 1–2 câu. Tạo kế hoạch dùng `.split` theo mục 5.1: form trái, mô tả chế độ ngay dưới lựa chọn và cập nhật khi đổi; thẻ giải thích bên phải có ba ý ngắn và details cho phần chi tiết. Link “Điều chỉnh giờ học” giữ `planner:preferences`. Những thay đổi này không triển khai gộp studies/drawer/redirect/stepper của Pha 2–3.
 
 **Lưu ý với Lịch tuần:** nếu `planner/week.html` đang kế thừa `planner/base.html`, phải giữ cấu trúc block tương thích để thân trang Lịch không đổi. Kiểm tra trang `/planner/` hiển thị như cũ (chỉ khác thanh trên).
 
@@ -221,7 +273,7 @@ Tạo `components/confirm_delete.html`. Các template xác nhận xóa hiện c�
 
 ### 8.6. Luồng kế hoạch
 
-Giữ `/planner/plans/new/`, `/planner/plans/<id>/`, `/planner/plans/<id>/apply/`. Thêm stepper 3 bước, thanh hành động cố định ở đáy ở bước xem trước, accordion cho lịch sử và phần "lý do/phần thiếu". Không đổi thuật toán hay dữ liệu báo cáo.
+Giữ `/planner/plans/new/`, `/planner/plans/<id>/`, `/planner/plans/<id>/apply/`. Stepper và thanh hành động cố định ở đáy bước xem trước vẫn là phần việc sau. Lịch sử giữ rộng đủ khung bên dưới form theo quyết định bố cục 5.1; chỉ phần giải thích chi tiết/lý do có thể gập. Không đổi thuật toán hay dữ liệu báo cáo.
 
 ### 8.7. Chip Pomodoro
 

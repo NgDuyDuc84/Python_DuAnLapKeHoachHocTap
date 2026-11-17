@@ -1,7 +1,6 @@
 {% extends 'insights/base.html' %}
 {% block title %}Kết quả AI hỗ trợ — Nhịp Học{% endblock %}
 {% block insight_content %}
-{% include "components/page_header.html" with title=navigation.title description=navigation.description only %}
 <p class="study-meta">Dựa trên dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }}</p>
 <section class="study-card">
     <span class="badge">{{ report.get_status_display }}</span>

@@ -7,10 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Nhịp Học — không gian lập kế hoạch học tập cá nhân, sắp xếp thời gian và theo dõi tiến độ.">
     <title>{% block title %}Nhịp Học — Kế hoạch học tập cá nhân{% endblock %}</title>
+    <link rel="preload" href="{% font_preload_url 'fonts/lora-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{% font_preload_url 'fonts/inter-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+    <link rel="stylesheet" href="{% static 'fonts/fonts.css' %}">
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
     <link rel="stylesheet" href="{% static 'css/navigation.css' %}">
     <link rel="stylesheet" href="{% static 'vendor/flatpickr/flatpickr.min.css' %}">
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
 </head>
 <body>
     <a class="skip-link" href="#noi-dung">Đến nội dung chính</a>
@@ -74,11 +80,11 @@
         </div>
     </header>
     {% endblock %}
-    <main id="noi-dung" class="{% block main_class %}container{% endblock %}">
+    <main id="noi-dung" class="page {% block page_class %}{{ navigation.page_class }}{% endblock %} {% block main_class %}{% endblock %}">
         {% if messages %}
             <div class="messages" aria-live="polite">
                 {% for message in messages %}
-                    <p class="flash" role="status">{{ message }}</p>
+                    <p class="flash{% if message.tags %} flash-{{ message.tags }}{% endif %}" role="status">{{ message }}</p>
                 {% endfor %}
             </div>
         {% endif %}
@@ -88,5 +94,6 @@
     <script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}" defer></script>
     <script src="{% static 'vendor/flatpickr/vn.js' %}" defer></script>
     <script src="{% static 'js/datetime_inputs.js' %}" defer></script>
+    <script src="{% static 'js/form_labels.js' %}" defer></script>
 </body>
 </html>
