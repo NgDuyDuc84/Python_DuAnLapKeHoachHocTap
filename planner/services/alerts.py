@@ -10,13 +10,8 @@ from .scheduling import ceil_minute, minutes_between
 from .sessions import session_conflicts
 
 
-def build_alerts(user, *, now=None):
-    now = now or timezone.now()
-    horizon = now + timedelta(days=7)
-    sessions = list(StudySession.objects.filter(
-        owner=user, plan__applied_at__isnull=False,
-    ).exclude(status=StudySession.Status.CANCELLED).select_related("task", "plan"))
-    tasks = Task.objects.filter(owner=user, deadline__lte=horizon).exclude(status=Task.Status.DONE)
+def build_task_alerts(tasks, sessions, now):
+    """Shared deadline/shortfall calculation; inputs are already scoped to the owner."""
     task_alerts = []
     for task in tasks:
         credit = sum(
@@ -26,6 +21,17 @@ def build_alerts(user, *, now=None):
         missing = max(0, task.remaining_minutes - credit)
         if task.deadline <= now or missing:
             task_alerts.append({"task": task, "missing": missing, "overdue": task.deadline <= now})
+    return task_alerts
+
+
+def build_alerts(user, *, now=None):
+    now = now or timezone.now()
+    horizon = now + timedelta(days=7)
+    sessions = list(StudySession.objects.filter(
+        owner=user, plan__applied_at__isnull=False,
+    ).exclude(status=StudySession.Status.CANCELLED).select_related("task", "plan"))
+    tasks = Task.objects.filter(owner=user, deadline__lte=horizon).exclude(status=Task.Status.DONE)
+    task_alerts = build_task_alerts(tasks, sessions, now)
     preferences = get_preferences(user)
     events = list(BusyEvent.objects.filter(owner=user))
     conflicts = []

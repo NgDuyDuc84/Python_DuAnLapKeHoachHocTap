@@ -3,30 +3,101 @@
 {% block title %}Tổng quan — Nhịp Học{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-<section class="dashboard">
-    {% with greeting="Chào "|add:user.username|add:". Bắt đầu từ một việc cần làm, rồi dành thời gian cho nó." %}
-    {% include "components/page_header.html" with title="Nhịp học của bạn" description=greeting action_name="planner:week" action_label="Mở lịch học của bạn" only %}
-    {% endwith %}
-    <div class="overview-metrics" aria-label="Số liệu học tập">
-        <a class="overview-metric" href="{% url 'planner:week' %}"><span>Buổi học hôm nay</span><strong>{{ today_count }}</strong><small>{{ today_done }} buổi đã ghi nhận học</small></a>
-        <a class="overview-metric" href="{% url 'focus:statistics' %}"><span>Phút học trong 7 ngày</span><strong>{{ weekly_minutes }}</strong><small>Từ nhật ký, tính cả hôm nay</small></a>
-        <a class="overview-metric{% if overdue_count %} metric-warning{% endif %}" href="{% url 'studies:task_list' %}?status=overdue"><span>Công việc quá hạn</span><strong>{{ overdue_count }}</strong><small>Chưa được đánh dấu hoàn thành</small></a>
-        <a class="overview-metric" href="{% url 'notifications:inbox' %}"><span>Thông báo chưa đọc</span><strong>{{ unread_count }}</strong><small>Đã được gửi trong ứng dụng</small></a>
-    </div>
-    {% if active_focus %}
-    <aside class="focus-resume"><div><strong>Bạn có phiên {{ active_focus.get_phase_display|lower }} {{ active_focus.get_status_display|lower }}</strong><p>{{ active_focus.task_title }}</p></div><a class="button" href="{% url 'focus:session' active_focus.pk %}">Trở lại đồng hồ</a></aside>
-    {% endif %}
-    {% if not has_tasks %}
-    <aside class="dashboard-onboarding"><h2>Chuẩn bị kế hoạch đầu tiên</h2><p>Thêm công việc và deadline, khai báo giờ bận rồi xem trước lịch do ứng dụng đề xuất.</p><div class="dashboard-actions">{% if not has_subjects %}<a class="text-link" href="{% url 'studies:subject_create' %}">1. Thêm môn học</a>{% endif %}<a class="text-link" href="{% url 'studies:task_create' %}">2. Thêm công việc</a><a class="text-link" href="{% url 'planner:busy_create' %}">3. Khai báo lịch bận</a><a class="text-link" href="{% url 'planner:preferences' %}">4. Chọn giờ học</a></div></aside>
-    {% endif %}
-    <div class="overview-columns">
-        <section class="overview-panel"><div class="overview-panel-heading"><h2>Buổi học sắp tới</h2><a class="text-link" href="{% url 'planner:week' %}">Xem lịch</a></div><p class="overview-caption">Tối đa 6 buổi chưa ghi nhận trong 7 ngày tới, gồm buổi đang diễn ra.</p>
-            <ul class="overview-list">{% for session in upcoming_sessions %}<li><div><a class="overview-title" href="{% url 'planner:plan_detail' session.plan_id %}">{{ session.task.title }}</a><p>{{ session.starts_at|date:"d/m · H:i" }}–{{ session.ends_at|date:"H:i" }} · {{ session.duration_minutes }} phút</p></div><a class="text-link" href="{% url 'planner:session_record' session.pk %}">Ghi nhận</a></li>{% empty %}<li class="overview-empty">Chưa có buổi sắp tới. <a class="text-link" href="{% url 'planner:plan_generate' %}">Xem trước kế hoạch mới</a></li>{% endfor %}</ul>
+<section class="dashboard" aria-labelledby="dashboard-title">
+    <header class="dashboard-welcome">
+        <h1 id="dashboard-title">Chào {{ user.first_name|default:user.username }} <span>· {{ weekday }}, {{ today|date:"d/m" }}</span></h1>
+        <p>{{ summary }}</p>
+    </header>
+    {% if action.kind == 'onboarding' %}
+    <section class="dashboard-onboarding" aria-labelledby="onboarding-title">
+        <h2 id="onboarding-title">Chuẩn bị kế hoạch đầu tiên</h2>
+        <p>Hoàn thành ba bước để bắt đầu nhịp học của bạn.</p>
+        <ol class="onboarding-steps">
+            {% for step in onboarding_steps %}
+            <li{% if step.done %} class="step-done"{% endif %}>
+                <span class="step-state" aria-hidden="true">{% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
+                <div><h3>{{ step.title }}</h3><p>{% if step.done %}Đã hoàn thành{% else %}Chưa hoàn thành{% endif %}</p></div>
+                <a class="dashboard-button dashboard-button-secondary" href="{% url step.url %}">{{ step.title }}</a>
+            </li>
+            {% endfor %}
+        </ol>
+    </section>
+    {% else %}
+    <section class="dashboard-next-action{% if action.kind == 'overdue' or action.kind == 'shortfall' %} action-attention{% endif %}" aria-labelledby="next-action-title" data-action="{{ action.kind }}">
+        <div class="next-action-content">
+            <h2 class="next-action-label"><span aria-hidden="true">◷</span> Nên làm bây giờ</h2>
+            <h3 id="next-action-title">{{ action.title }}</h3>
+            {% if action.task %}
+            <p class="action-task-meta"><span class="subject-dot" style="--subject-color: {{ action.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>{{ action.task.subject.name|default:"Chưa gắn môn" }} · Ưu tiên {{ action.task.get_priority_display|lower }} · Còn {{ action.task.remaining_minutes }} phút cần học</p>
+            {% elif action.kind == 'ready' %}<p>Bạn có thể chọn một công việc và dành thời gian tập trung cho nó.</p>
+            {% elif action.kind == 'focus' %}<p>Trở lại đồng hồ để tiếp tục phiên hiện tại.</p>{% endif %}
+            <div class="dashboard-action-buttons">
+                {% include "components/dashboard_button.html" with button=action.primary secondary=False %}
+                {% if action.secondary %}{% include "components/dashboard_button.html" with button=action.secondary secondary=True %}{% endif %}
+            </div>
+        </div>
+        {% if action.deadline %}
+        <aside class="action-deadline{% if action.deadline.overdue %} deadline-overdue{% endif %}">
+            <span>{% if action.deadline.overdue %}Đã quá hạn{% else %}Đến hạn sau{% endif %}</span>
+            <strong>{{ action.deadline.countdown }}</strong>
+            <time datetime="{{ action.task.deadline|date:'c' }}">{{ action.task.deadline|date:"d/m/Y · H:i" }}</time>
+        </aside>
+        {% endif %}
+    </section>
+    <nav class="dashboard-metrics" aria-label="Tóm tắt học tập">
+        <a href="{% url 'planner:week' %}?week={{ today|date:'Y-m-d' }}"><span>Hôm nay</span><strong>{{ today_done }}/{{ today_count }}</strong> buổi đã ghi nhận <span aria-hidden="true">›</span></a>
+        <a href="{% url 'focus:statistics' %}"><span>7 ngày qua</span><strong>{{ weekly_minutes }}</strong> phút <span aria-hidden="true">›</span></a>
+        <a{% if overdue_count %} class="metric-overdue"{% endif %} href="{% url 'studies:task_list' %}?status=overdue"><span>Quá hạn</span><strong>{{ overdue_count }}</strong> việc <span aria-hidden="true">›</span></a>
+    </nav>
+    <div class="dashboard-panels">
+        <section class="dashboard-panel" aria-labelledby="sessions-title">
+            <div class="panel-heading"><h2 id="sessions-title">Hôm nay & sắp tới</h2><a href="{% url 'planner:week' %}">Xem lịch →</a></div>
+            {% for group in session_groups %}
+            <section class="session-day" aria-label="{{ group.label }} {{ group.date|date:'d/m/Y' }}">
+                <h3>{{ group.label }} <time datetime="{{ group.date|date:'Y-m-d' }}">{{ group.date|date:"d/m" }}</time></h3>
+                <ul class="dashboard-session-list">
+                    {% for row in group.rows %}
+                    <li>
+                        <time class="session-time" datetime="{{ row.session.starts_at|date:'c' }}">{{ row.session.starts_at|date:"H:i" }}–{{ row.session.ends_at|date:"H:i" }}</time>
+                        <span class="subject-dot" style="--subject-color: {{ row.session.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>
+                        <div class="session-description"><strong>{{ row.session.task.title }}</strong><span>{{ row.session.task.subject.name|default:"Chưa gắn môn" }}</span></div>
+                        {% if row.action %}{% include "components/dashboard_button.html" with button=row.action secondary=True %}{% else %}<span class="recorded-badge">Đã ghi nhận</span>{% endif %}
+                    </li>
+                    {% empty %}
+                    <li class="session-empty"><span>Chưa có buổi học nào hôm nay.</span><a class="dashboard-button dashboard-button-secondary" href="{% url 'planner:plan_generate' %}">Xếp lịch tuần này</a></li>
+                    {% endfor %}
+                </ul>
+            </section>
+            {% endfor %}
         </section>
-        <section class="overview-panel"><div class="overview-panel-heading"><h2>Việc cần chú ý</h2><a class="text-link" href="{% url 'planner:alerts' %}">Cảnh báo</a></div><p class="overview-caption">Tối đa 6 việc quá hạn hoặc đến hạn trong 7 ngày, theo deadline và ưu tiên.</p>
-            <ul class="overview-list">{% for task in urgent_tasks %}<li><div><a class="overview-title" href="{% url 'studies:task_update' task.pk %}">{{ task.title }}</a><p>{{ task.subject.name|default:"Chưa gắn môn" }} · còn {{ task.remaining_minutes }} phút</p><p>{% if task.is_overdue %}<span class="deadline-warning">Quá hạn · </span>{% endif %}{{ task.deadline|date:"d/m/Y · H:i" }} · Ưu tiên {{ task.get_priority_display|lower }}</p></div><a class="text-link" href="{% url 'studies:task_progress' task.pk %}">Tiến độ</a></li>{% empty %}<li class="overview-empty">Không có việc đến hạn trong 7 ngày tới. <a class="text-link" href="{% url 'studies:task_list' %}">Xem tất cả công việc</a></li>{% endfor %}</ul>
+        <section class="dashboard-panel" aria-labelledby="tasks-title">
+            <div class="panel-heading"><h2 id="tasks-title">Việc cần chú ý</h2><a href="{% url 'planner:alerts' %}">Xem tất cả →</a></div>
+            <ul class="dashboard-task-list">
+                {% for row in task_rows %}
+                <li class="dashboard-task{% if row.missing or row.deadline.overdue %} task-attention{% endif %}">
+                    <div class="task-heading"><h3>{{ row.task.title }}</h3>{% if row.missing %}<span class="schedule-badge">Chưa có lịch</span>{% endif %}</div>
+                    <p class="task-subject"><span class="subject-dot" style="--subject-color: {{ row.task.subject.color|default:'#80968f' }}" aria-hidden="true"></span>{{ row.task.subject.name|default:"Chưa gắn môn" }} <span class="priority-chip priority-{{ row.task.priority }}">Ưu tiên {{ row.task.get_priority_display|lower }}</span></p>
+                    <p><time datetime="{{ row.task.deadline|date:'c' }}" title="{{ row.task.deadline|date:'d/m/Y H:i' }}">Hạn {{ row.deadline.label }} · {{ row.task.deadline|date:"H:i" }}</time> · <span{% if row.deadline.overdue %} class="overdue-text"{% endif %}>{{ row.deadline.relative }}</span></p>
+                    <p>Còn {{ row.task.remaining_minutes }} phút cần học</p>
+                    <div class="dashboard-action-buttons">{% include "components/dashboard_button.html" with button=row.start secondary=False %}{% include "components/dashboard_button.html" with button=row.progress secondary=True %}</div>
+                </li>
+                {% empty %}<li class="task-empty">Chưa có việc cần chú ý trong 7 ngày tới.</li>{% endfor %}
+            </ul>
         </section>
     </div>
-    <section class="dashboard-next"><h2>Bước tiếp theo của bạn</h2><div class="dashboard-actions"><a class="button" href="{% url 'planner:plan_generate' %}">Tạo kế hoạch tuần</a><a class="text-link" href="{% url 'focus:home' %}">Bắt đầu tập trung</a><a class="text-link" href="{% url 'studies:material_list' %}">Mở tài liệu</a><a class="text-link" href="{% url 'insights:home' %}">Xem phân tích học tập</a><a class="text-link" href="{% url 'core:guide' %}">Hướng dẫn sử dụng</a></div><p class="overview-caption">Kế hoạch chỉ đổi khi bạn áp dụng. Nhật ký ghi thời gian học; hãy cập nhật riêng tiến độ công việc.</p></section>
+    <section class="dashboard-week" aria-labelledby="week-title">
+        <div class="panel-heading"><h2 id="week-title">Tuần này <span>· {{ week_start|date:"d/m" }} – {{ week_end|date:"d/m/Y" }}</span></h2><a href="{% url 'planner:week' %}">Mở lịch →</a></div>
+        <p class="week-legend"><span class="session-marker" aria-hidden="true"></span> Buổi học <span class="deadline-marker" aria-hidden="true"></span> Hạn chót</p>
+        <div class="week-days">
+            {% for day in week_days %}
+            <a class="week-day{% if day.today %} week-today{% endif %}" href="{% url 'planner:week' %}?week={{ day.date|date:'Y-m-d' }}" aria-label="{{ day.date|date:'d/m/Y' }}: {{ day.sessions }} buổi học, {{ day.deadlines }} hạn chót"{% if day.today %} aria-current="date"{% endif %}>
+                <span>{{ day.label }}</span><strong>{{ day.date|date:"d" }}</strong>
+                <span class="day-markers">{% if day.sessions %}<span class="session-marker" aria-hidden="true"></span>{% endif %}{% if day.deadlines %}<span class="deadline-marker" aria-hidden="true"></span>{% endif %}</span>
+                {% if day.today %}<small>Hôm nay</small>{% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </section>
 {% endblock %}

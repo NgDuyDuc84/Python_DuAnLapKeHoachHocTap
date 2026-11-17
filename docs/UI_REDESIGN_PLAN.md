@@ -69,14 +69,26 @@ Thanh trên giữ 5 mục nhưng mỗi mục có nghĩa rõ ràng; mọi thứ c
 
 ### 4.1. Tổng quan
 
-Gom 7 khối hiện tại thành 4 vùng:
+Quyết định cập nhật: Tổng quan lấy hành động cần làm làm trọng tâm, theo bố cục mẫu gồm thẻ nổi bật, dải số liệu mỏng, hai thẻ nội dung và lịch tuần thu gọn. Bỏ nút "Mở lịch học của bạn" và khối "Bước tiếp theo của bạn". Không thêm biểu đồ nhỏ hay khối xung đột riêng.
 
-- **Hàng đầu:** lời chào và một nút chính "Bắt đầu tập trung".
-- **Cột trái:**
-  - "Hôm nay": các buổi học trong ngày, bấm để ghi nhận.
-  - "Cần xử lý": việc quá hạn, buổi chưa ghi nhận, xung đột; tối đa 5 dòng kèm "Xem tất cả" (→ `/planner/alerts/`).
-- **Cột phải:** phiên Pomodoro đang dở (nếu có), phút học 7 ngày (số + biểu đồ nhỏ), deadline sắp tới.
-- **Khi chưa có dữ liệu:** 3 bước gợi ý — Thêm môn → Thêm việc → Xếp lịch.
+- **Đầu trang:** "Chào <tên> · <Thứ>, dd/mm"; dùng tên gọi hoặc tên tài khoản khi chưa có tên. Một câu tóm tắt số buổi hôm nay và số việc chưa hoàn thành đến hạn trong 7 ngày, lấy từ dữ liệu thật. Khi trống: "Hôm nay chưa có buổi học nào."
+- **Nên làm bây giờ:** đúng một hành động chính, tối đa một hành động phụ. Một hàm thuần nhận dữ liệu đã truy vấn và chọn trường hợp đầu tiên khớp theo thứ tự:
+  1. Có phiên Pomodoro đang dở → "Tiếp tục phiên: <việc>" / **Tiếp tục**. Dùng cùng nguồn `active_session` của Tập trung, gồm cả phiên tạm dừng và phiên nghỉ chưa kết thúc.
+  2. Có buổi học đã áp dụng đang diễn ra → **Bắt đầu tập trung** / Ghi nhận.
+  3. Có buổi đã qua chưa ghi nhận → **Ghi nhận buổi này**. Vẫn tìm được buổi thuộc tuần trước.
+  4. Có việc quá hạn → **Cập nhật tiến độ** / Xếp lịch.
+  5. Có việc đến hạn trong 7 ngày chưa đủ lịch → **Xếp lịch** / Học ngay. Tính số phút thiếu bằng cùng hàm với trang Cảnh báo, chỉ tính lịch đã áp dụng và không bị hủy.
+  6. Có buổi tiếp theo hôm nay → "Buổi tiếp theo: <việc> lúc HH:mm" / **Xem lịch**.
+  7. Chưa hoàn thành khởi đầu → checklist bên dưới.
+  8. Còn lại → "Bạn đã sẵn sàng" / **Bắt đầu tập trung**.
+- **Checklist khởi đầu:** Thêm môn học → Thêm công việc → Tạo kế hoạch tuần; từng bước có trạng thái hoàn thành và nút đến URL sẵn có. Bước tạo kế hoạch hoàn thành khi đã có kế hoạch, kể cả bản nháp. Giữ checklist tới khi cả ba bước xong, nhưng các hành động 1–6 luôn được ưu tiên. Khi checklist hiện, thay toàn bộ các khối nội dung bên dưới bằng checklist.
+- **Dải số liệu:** ba mục bấm được: "Hôm nay X/Y buổi đã ghi nhận" → Lịch; "7 ngày qua: N phút" → Thống kê; "Quá hạn: M" → danh sách việc quá hạn. Buổi học chỉ tính lịch đã áp dụng, không bị hủy. Chỉ tô nổi số quá hạn khi lớn hơn 0. Không hiện số thông báo chưa đọc vì đã có chuông. Ẩn dải khi hiện checklist.
+- **Hai thẻ nội dung:**
+  - "Hôm nay & sắp tới": tối đa 6 buổi, nhóm Hôm nay / Ngày mai / Thứ N dd/mm. Mỗi dòng có giờ 24 giờ, màu môn, tên việc và Bắt đầu hoặc Ghi nhận; buổi đã ghi nhận hiện trạng thái. Khi hôm nay trống có nút "Xếp lịch tuần này"; không có câu mô tả "Tối đa 6 buổi...".
+  - "Việc cần chú ý": tối đa 6 việc chưa hoàn thành có hạn trong 7 ngày hoặc đã quá hạn, theo thứ tự deadline/ưu tiên hiện có; tên, môn, deadline tương đối, chip ưu tiên, "Chưa có lịch" khi thiếu lịch, "Còn X phút cần học", Học ngay và Tiến độ. "Xem tất cả" dẫn tới `/planner/alerts/`. Không thêm câu mô tả dài.
+- **Tuần này:** 7 ô T2–CN, đánh dấu hôm nay, ngày có buổi đã áp dụng và ngày có deadline. Dùng lại các tập dữ liệu đã tải; mỗi ô chỉ liên kết tới `/planner/?week=YYYY-MM-DD`. Không sửa trang Lịch.
+- **Hành động tập trung:** Học ngay/Bắt đầu của một công việc gửi POST tới endpoint hiện có `focus:home`, kèm CSRF, công việc và `request_key` từ `FocusStartForm`. Không tạo logic phiên mới. Các ngày đầy đủ dùng dd/mm/yyyy, giờ dùng HH:mm, theo múi giờ hiện có.
+- **Kiểm chứng:** test đủ 8 nhánh và thứ tự ưu tiên; view 200 cho người mới, việc chưa đủ lịch, phiên đang chạy; test quyền sở hữu, CSRF/chống gửi lặp và số phút thiếu khớp Cảnh báo. Đo toàn bộ GET trước/sau trên cùng dữ liệu: 14 → 12 truy vấn; thêm dải Tuần này không phát sinh truy vấn riêng.
 
 ### 4.2. Môn & Việc
 

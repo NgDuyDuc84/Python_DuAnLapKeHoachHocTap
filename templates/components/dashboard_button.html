@@ -1,0 +1,9 @@
+{% if button.method == 'post' %}
+<form class="dashboard-button-form" method="post" action="{% url button.url %}">
+    {% csrf_token %}{{ button.form.request_key }}
+    <input type="hidden" name="task" value="{{ button.task_id }}">
+    <button class="dashboard-button{% if secondary %} dashboard-button-secondary{% endif %}" type="submit">{{ button.label }}</button>
+</form>
+{% else %}
+<a class="dashboard-button{% if secondary %} dashboard-button-secondary{% endif %}" href="{% if button.pk %}{% url button.url button.pk %}{% else %}{% url button.url %}{% endif %}">{{ button.label }}</a>
+{% endif %}

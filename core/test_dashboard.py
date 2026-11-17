@@ -57,7 +57,7 @@ class DashboardTests(TestCase):
         self.assertTemplateUsed(response, "core/dashboard.html")
         self.assertContains(response, "Chuẩn bị kế hoạch đầu tiên")
         self.assertEqual(response["Cache-Control"], "no-store")
-        for key in ("today_count", "today_done", "weekly_minutes", "overdue_count", "unread_count"):
+        for key in ("today_count", "today_done", "weekly_minutes", "overdue_count"):
             self.assertEqual(response.context[key], 0)
         self.assertFalse(response.context["has_tasks"])
         self.assertNotContains(response, self.task.title)
@@ -114,9 +114,12 @@ class DashboardTests(TestCase):
         self.reminder(read_at=self.now)
         self.reminder(channel=Reminder.Channel.EMAIL)
         self.reminder(owner=self.other)
-        self.assertEqual(build_dashboard(self.user, now=self.now)["unread_count"], 1)
+        self.client.force_login(self.user)
+        self.assertEqual(self.client.get(reverse("core:home")).context["header_unread_count"], 1)
         Reminder.objects.filter(owner=self.user).update(read_at=self.now)
-        self.assertEqual(build_dashboard(self.user, now=self.now)["unread_count"], 0)
+        response = self.client.get(reverse("core:home"))
+        self.assertEqual(response.context["header_unread_count"], 0)
+        self.assertNotContains(response, "Thông báo chưa đọc")
 
     def test_active_focus_is_owned_and_user_text_is_escaped(self):
         active = FocusSession.objects.create(owner=self.user, task=self.task, task_title="<script>private</script>",

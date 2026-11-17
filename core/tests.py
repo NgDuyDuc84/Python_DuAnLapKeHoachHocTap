@@ -113,7 +113,7 @@ class ReadinessTests(TestCase):
         self.assertContains(self.client.get(reverse("core:home")), "Bắt đầu lập kế hoạch")
         self.client.force_login(self.user)
         response = self.client.get(reverse("core:home"))
-        self.assertContains(response, "Mở lịch học của bạn")
+        self.assertContains(response, "Chuẩn bị kế hoạch đầu tiên")
         self.assertNotContains(response, "Đăng nhập để quản lý")
 
     @override_settings(DEBUG=False)
