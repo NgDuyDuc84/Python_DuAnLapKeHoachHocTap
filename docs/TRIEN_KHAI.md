@@ -1,5 +1,7 @@
 # Cấu hình chạy và triển khai Nhịp Học
 
+**Cập nhật 17/11/2026:** bắt đầu triển khai online tạm thời bằng Render Free theo yêu cầu mới. Xem [cấu hình và hướng dẫn Render demo](RENDER_DEMO.md). Các ghi nhận chưa public bên dưới là lịch sử trước yêu cầu này; chỉ xác nhận online sau khi kiểm tra URL thật.
+
 Mốc 11 chỉ chuẩn bị cấu hình theo lựa chọn của người dùng: **chưa triển khai online, chưa tạo dịch vụ có phí**. Chưa có URL nghiệm thu. Bổ sung ngày 15/11/2026: đã chạy 260 test trên SQLite và 260 test trên PostgreSQL 17.12 portable, cùng migration/static/deploy checks và hai worker trên database PostgreSQL tạm. Không cài dịch vụ Windows hoặc đổi SQLite mặc định. Đã xác minh [Actions của commit cfcb3b5](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135): job SQLite/Windows và PostgreSQL/Linux, Docker build, Compose config đều thành công. Chưa chạy toàn bộ ứng dụng bằng `docker compose up` hoặc kiểm thử URL online.
 
 **Lượt hoàn thiện cuối và điều chỉnh lịch:** 286 test hiện tại qua trên SQLite; hành trình HTTP qua Waitress với database QA riêng và hai worker cũng qua, gồm nhận nhắc trong web. Workflow mới đã thêm chạy Compose và hành trình này trên CI nhưng chưa được xác minh trên GitHub cho mã mới. Máy hiện tại không có Docker; không khẳng định đã chạy Compose. Không cần khóa dịch vụ để thử phần lõi.

@@ -6,6 +6,7 @@
 - [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
 - [Hướng dẫn kiểm thử từng bước](HD_Test.md)
 - [Cấu hình chạy và triển khai](docs/TRIEN_KHAI.md)
+- [Triển khai Render miễn phí để báo cáo](docs/RENDER_DEMO.md)
 - [Dữ liệu demo và kịch bản nghiệm thu](docs/NGHIEM_THU.md)
 - [Báo cáo kỹ thuật và đối chiếu yêu cầu](docs/BAO_CAO_DU_AN.md)
 
