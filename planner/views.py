@@ -61,6 +61,8 @@ class WeekView(LoginRequiredMixin, TemplateView):
             sidebar_form = form_class(user=self.request.user, instance=obj)
         query = self.request.GET.get("q", "").strip()[:200]
         objects = model.objects.filter(owner=self.request.user)
+        if panel == "materials":
+            objects = objects.defer("file_data")
         if panel != "subjects":
             objects = objects.select_related("subject")
         if query:
@@ -95,7 +97,7 @@ class WeekView(LoginRequiredMixin, TemplateView):
             obj.delete()
             messages.success(request, f"Đã xóa {label}.")
         elif operation == "save":
-            form = form_class(request.POST, user=request.user, instance=obj)
+            form = form_class(request.POST, request.FILES, user=request.user, instance=obj)
             if not form.is_valid():
                 return self.render_to_response(self.get_context_data(
                     sidebar_mode="edit" if obj else "new", sidebar_object=obj, sidebar_form=form,

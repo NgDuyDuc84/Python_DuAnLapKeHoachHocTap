@@ -9,7 +9,7 @@
         {% if sidebar_form %}
         <div class="sidebar-editor">
             <div class="sidebar-editor-heading"><h3>{% if sidebar_object %}Sửa{% else %}Thêm{% endif %} {{ sidebar_label }}</h3><a class="text-link" href="{{ sidebar_url }}#hoc-tap">Đóng</a></div>
-            <form class="study-form" method="post" action="{{ sidebar_url }}#hoc-tap">
+            <form class="study-form" method="post" action="{{ sidebar_url }}#hoc-tap"{% if sidebar_form.is_multipart %} enctype="multipart/form-data"{% endif %}>
                 {% csrf_token %}<input type="hidden" name="operation" value="save">
                 {% if sidebar_object %}<input type="hidden" name="object_id" value="{{ sidebar_object.pk }}">{% endif %}
                 {% include "studies/form_fields.html" with form=sidebar_form %}
@@ -20,7 +20,7 @@
         <div class="sidebar-editor"><h3>Xóa {{ sidebar_label }}?</h3><p class="sidebar-object-name">{{ sidebar_object }}</p>
             {% if sidebar_panel == 'tasks' %}<p>Các buổi học của việc này cũng bị xóa. Tài liệu, nhật ký và phiên Pomodoro được giữ, bỏ liên kết với công việc.</p>
             {% elif sidebar_panel == 'subjects' %}<p>Công việc và tài liệu được giữ, bỏ liên kết với môn này.</p>
-            {% else %}<p>Chỉ xóa liên kết đã lưu, tệp ở website gốc được giữ.</p>{% endif %}
+            {% else %}<p>Tài liệu và tệp tải lên sẽ bị xóa. Tệp ở website gốc của liên kết ngoài được giữ.</p>{% endif %}
             <p>Thao tác xóa không thể hoàn tác.</p>
             <form class="form-actions" method="post" action="{{ sidebar_url }}#hoc-tap">{% csrf_token %}<input type="hidden" name="operation" value="delete"><input type="hidden" name="object_id" value="{{ sidebar_object.pk }}"><button class="button button-danger" type="submit">Xác nhận xóa</button><a class="text-link" href="{{ sidebar_url }}#hoc-tap">Hủy</a></form>
         </div>
@@ -41,7 +41,10 @@
                 <div class="sidebar-entry-actions">
                     <a class="text-link" href="{{ sidebar_url }}&amp;action=edit&amp;id={{ entry.pk }}#hoc-tap" aria-label="Sửa {{ entry }}">Sửa</a>
                     <a class="delete-link" href="{{ sidebar_url }}&amp;action=delete&amp;id={{ entry.pk }}#hoc-tap" aria-label="Xóa {{ entry }}">Xóa</a>
-                    {% if sidebar_panel == 'materials' %}<a class="text-link" href="{{ entry.url }}" target="_blank" rel="noopener noreferrer">Mở tài liệu ↗</a>{% endif %}
+                    {% if sidebar_panel == 'materials' %}
+                    {% if entry.url %}<a class="text-link" href="{{ entry.url }}" target="_blank" rel="noopener noreferrer">Mở liên kết ↗</a>{% endif %}
+                    {% if entry.file_name %}<a class="text-link" href="{% url 'studies:material_download' entry.pk %}">Tải tệp ↓</a>{% endif %}
+                    {% endif %}
                 </div>
             </li>
             {% empty %}<li class="sidebar-empty">{% if sidebar_query %}Không tìm thấy {{ sidebar_label }} phù hợp.{% else %}Chưa có {{ sidebar_label }}. Thêm mới để bắt đầu.{% endif %}</li>{% endfor %}

@@ -105,19 +105,27 @@ class Material(models.Model):
     )
     title = models.CharField("Tên tài liệu", max_length=200)
     url = models.URLField(
-        "Đường dẫn", max_length=2048,
+        "Đường dẫn", max_length=2048, blank=True,
         validators=[URLValidator(schemes=["http", "https"])],
     )
+    file_name = models.CharField("Tên tệp", max_length=255, blank=True, editable=False)
+    file_data = models.BinaryField("Nội dung tệp", null=True, blank=True, editable=False)
     description = models.TextField("Ghi chú", blank=True)
 
     class Meta:
         ordering = ["title", "pk"]
+        constraints = [models.CheckConstraint(
+            condition=~models.Q(url="") | models.Q(file_data__isnull=False),
+            name="material_has_link_or_file",
+        )]
 
     def __str__(self):
         return self.title
 
     def clean(self):
         errors = {}
+        if not self.url and self.file_data is None:
+            errors["url"] = "Nhập đường dẫn hoặc tải lên một tệp tài liệu."
         for name in ("subject", "task"):
             related = getattr(self, name)
             if related is not None and related.owner_id != self.owner_id:

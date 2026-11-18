@@ -17,4 +17,5 @@ urlpatterns = [
     path("materials/add/", views.MaterialCreateView.as_view(), name="material_create"),
     path("materials/<int:pk>/edit/", views.MaterialUpdateView.as_view(), name="material_update"),
     path("materials/<int:pk>/delete/", views.MaterialDeleteView.as_view(), name="material_delete"),
+    path("materials/<int:pk>/download/", views.MaterialDownloadView.as_view(), name="material_download"),
 ]

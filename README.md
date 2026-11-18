@@ -5,7 +5,7 @@ Web lập kế hoạch học tập cá nhân bằng Django/Python, giao diện t
 ## Tính năng hiện có
 
 - Đăng ký, đăng nhập, đổi mật khẩu và quản lý tài khoản.
-- Quản lý môn học, công việc, deadline, mức ưu tiên, tiến độ và tài liệu liên kết.
+- Quản lý môn học, công việc, deadline, mức ưu tiên, tiến độ và tài liệu liên kết hoặc tệp tải lên (tối đa 10 MB/tệp). Chủ sở hữu có thể tải xuống, thay hoặc gỡ tệp. Tệp nhỏ được lưu cùng database để giữ qua redeploy Render; dung lượng tệp tính vào dung lượng database.
 - Lịch tuần, lịch bận lặp lại, tùy chọn giờ học; tự xếp lịch theo deadline và thời gian rảnh, xem trước rồi áp dụng. Hỗ trợ bổ sung/xếp lại, chỉnh tay, khóa buổi, ghi nhận đã học hoặc hủy.
 - Tổng quan hôm nay, cảnh báo quá hạn/xung đột; Pomodoro, nhật ký và thống kê theo ngày/môn/nguồn.
 - Thông báo trong web và email nhắc; đồng bộ các buổi đã xác nhận lên Google Calendar.

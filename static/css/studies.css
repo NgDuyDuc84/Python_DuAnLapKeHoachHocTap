@@ -55,3 +55,6 @@
     .study-filters .form-field { flex-basis: 100%; }
     .study-filters .filter-actions { padding-top: 0; }
 }
+.study-form .form-field:has(input[type="file"]) { grid-column: 1 / -1; }
+.study-form .form-field input[type="file"] { height: auto; min-height: 50px; padding: 8px; }
+.study-form input[type="file"]::file-selector-button { margin-right: 12px; padding: 7px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--pine-soft); color: var(--pine-hover); font: inherit; cursor: pointer; }

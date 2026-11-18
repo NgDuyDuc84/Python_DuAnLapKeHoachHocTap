@@ -1,4 +1,5 @@
 from django import forms
+from django.core.validators import FileExtensionValidator
 
 from .models import Material, Subject, Task
 
@@ -57,11 +58,41 @@ class TaskForm(OwnedModelForm):
 
 
 class MaterialForm(OwnedModelForm):
+    attachment = forms.FileField(
+        label="Tải tệp lên", required=False, max_length=255,
+        validators=[FileExtensionValidator(["pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "txt", "csv", "png", "jpg", "jpeg"])],
+        help_text="PDF, Word, PowerPoint, Excel, TXT/CSV hoặc ảnh PNG/JPG; tối đa 10 MB.",
+        widget=forms.FileInput(attrs={"accept": ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg"}),
+    )
+    remove_attachment = forms.BooleanField(label="Gỡ tệp hiện tại", required=False)
+
     class Meta:
         model = Material
         fields = ("title", "url", "subject", "task", "description")
         widgets = {"description": forms.Textarea(attrs={"rows": 3})}
         help_texts = {"url": "Dùng đường dẫn HTTP hoặc HTTPS tới bài giảng, tài liệu hoặc tệp đã lưu."}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(("title", "url", "attachment", "remove_attachment", "subject", "task", "description"))
+        if not self.instance.file_name:
+            self.fields.pop("remove_attachment")
+
+    def clean_attachment(self):
+        uploaded = self.cleaned_data.get("attachment")
+        if uploaded and uploaded.size > 10 * 1024 * 1024:
+            raise forms.ValidationError("Tệp vượt quá giới hạn 10 MB.")
+        return uploaded
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("remove_attachment"):
+            self.instance.file_name, self.instance.file_data = "", None
+        uploaded = cleaned.get("attachment")
+        if uploaded:
+            self.instance.file_name = uploaded.name.replace("\\", "/").rsplit("/", 1)[-1]
+            self.instance.file_data = uploaded.read()
+        return cleaned
 
 
 class TaskProgressForm(OwnedModelForm):

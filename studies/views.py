@@ -1,9 +1,14 @@
+from io import BytesIO
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views import View
 
 from .forms import (
     MaterialFilterForm, MaterialForm, SubjectFilterForm, SubjectForm,
@@ -129,7 +134,7 @@ class MaterialListView(FilteredListMixin, ListView):
     page_title = "Tài liệu của bạn"
 
     def filter_queryset(self, queryset, data):
-        queryset = queryset.select_related("subject", "task")
+        queryset = queryset.select_related("subject", "task").defer("file_data")
         if data["q"]:
             queryset = queryset.filter(Q(title__icontains=data["q"]) | Q(description__icontains=data["q"]))
         for name in ("subject", "task"):
@@ -156,6 +161,18 @@ class MaterialDeleteView(SuccessMessageMixin, OwnedObjectMixin, DeleteView):
     model = Material
     template_name = "studies/confirm_delete.html"
     success_url = reverse_lazy("studies:material_list")
-    success_message = "Đã xóa liên kết tài liệu."
+    success_message = "Đã xóa tài liệu."
     page_title = "Xóa tài liệu"
-    delete_warning = "Chỉ xóa liên kết đã lưu trong Nhịp Học; tệp ở website gốc không bị xóa."
+    delete_warning = "Tài liệu và tệp tải lên sẽ bị xóa khỏi Nhịp Học. Nếu tài liệu có liên kết ngoài, tệp ở website gốc không bị xóa."
+
+
+class MaterialDownloadView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        material = get_object_or_404(Material, pk=pk, owner=request.user)
+        if material.file_data is None or not material.file_name:
+            raise Http404
+        response = FileResponse(BytesIO(bytes(material.file_data)), as_attachment=True,
+                                filename=material.file_name, content_type="application/octet-stream")
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
