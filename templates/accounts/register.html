@@ -1,5 +1,1 @@
-{% extends "accounts/form_page.html" %}
-
-{% block title %}Đăng ký — Nhịp Học{% endblock %}
-{% block account_form %}{% include "accounts/form_fields.html" with submit_label="Tạo tài khoản" %}{% endblock %}
-{% block form_footer %}Đã có tài khoản? <a href="{% url 'accounts:login' %}">Đăng nhập</a>{% endblock %}
+{% include "accounts/auth_split.html" with auth_mode="register" %}

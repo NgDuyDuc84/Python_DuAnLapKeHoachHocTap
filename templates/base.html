@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Nhịp Học — không gian lập kế hoạch học tập cá nhân, sắp xếp thời gian và theo dõi tiến độ.">
+    <meta name="description" content="{% block meta_description %}Nhịp Học — không gian lập kế hoạch học tập cá nhân, sắp xếp thời gian và theo dõi tiến độ.{% endblock %}">
     <title>{% block title %}Nhịp Học — Kế hoạch học tập cá nhân{% endblock %}</title>
     <link rel="preload" href="{% font_preload_url 'fonts/lora-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% font_preload_url 'fonts/inter-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="{% static 'css/layout.css' %}">
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
 </head>
-<body>
+<body{% block body_attributes %}{% endblock %}>
     <a class="skip-link" href="#noi-dung">Đến nội dung chính</a>
     {% block site_header %}
     <header class="site-header">
@@ -90,10 +90,13 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+    {% block site_footer %}{% endblock %}
+    {% block scripts %}
     {% if user.is_authenticated %}<script src="{% static 'js/header.js' %}" defer></script>{% endif %}
     <script src="{% static 'vendor/flatpickr/flatpickr.min.js' %}" defer></script>
     <script src="{% static 'vendor/flatpickr/vn.js' %}" defer></script>
     <script src="{% static 'js/datetime_inputs.js' %}" defer></script>
     <script src="{% static 'js/form_labels.js' %}" defer></script>
+    {% endblock %}
 </body>
 </html>

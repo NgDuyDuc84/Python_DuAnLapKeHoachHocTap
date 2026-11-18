@@ -71,7 +71,7 @@ class PageLayoutTests(TestCase):
         self.assertEqual(len(page.mains), 1)
         self.assertIn("page", page.mains[0])
         self.assertEqual([c for c in page.mains[0] if c.startswith("page--")], [kind] if kind else [])
-        self.assertEqual(page.headers, 0 if name == "planner:week" else 1)
+        self.assertEqual(page.headers, 0 if name == "planner:week" or kind == "page--auth-split" else 1)
         self.assertEqual(page.splits, int(split))
         if name == "planner:week":
             self.assertIn("calendar-container", page.mains[0])
@@ -108,7 +108,7 @@ class PageLayoutTests(TestCase):
         self.client.logout()
         for name in ("core:home", "accounts:login", "accounts:register"):
             with self.subTest(name=name):
-                response = self.assert_page(name, "" if name == "core:home" else "page--auth")
+                response = self.assert_page(name, "page--auth-split")
                 self.assertNotContains(response, 'aria-label="Điều hướng chính"')
 
     @override_settings(AUTH_PASSWORD_VALIDATORS=[])

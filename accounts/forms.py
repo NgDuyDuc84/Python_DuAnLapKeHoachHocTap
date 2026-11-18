@@ -13,5 +13,5 @@ class RegistrationForm(UserCreationForm):
         fields = ("username", "email")
         labels = {"username": "Tên đăng nhập"}
         widgets = {
-            "username": forms.TextInput(attrs={"autocomplete": "username"}),
+            "username": forms.TextInput(attrs={"autocomplete": "username", "autofocus": True}),
         }

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.forms import AuthenticationForm
 from django.db import DatabaseError, connection
 from django.http import JsonResponse
 from django.views.decorators.http import require_safe
@@ -11,7 +12,7 @@ def home(request):
         response = render(request, "core/dashboard.html", build_dashboard(request.user))
         response["Cache-Control"] = "no-store"
         return response
-    return render(request, "core/home.html")
+    return render(request, "accounts/login.html", {"form": AuthenticationForm(request)})
 
 
 @require_safe

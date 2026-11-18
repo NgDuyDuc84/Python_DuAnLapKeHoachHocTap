@@ -45,7 +45,7 @@ class DashboardTests(TestCase):
 
     def test_anonymous_landing_no_longer_has_usage_guide(self):
         response = self.client.get(reverse("core:home"))
-        self.assertTemplateUsed(response, "core/home.html")
+        self.assertTemplateUsed(response, "accounts/auth_split.html")
         self.assertNotContains(response, "Cách sử dụng")
         self.assertNotContains(response, "cach-su-dung")
         self.assertEqual(self.client.get("/huong-dan/").status_code, 404)

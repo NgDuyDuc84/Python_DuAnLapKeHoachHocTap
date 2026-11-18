@@ -110,7 +110,7 @@ class ReadinessTests(TestCase):
         self.assertEqual(self.client.post(reverse("core:health")).status_code, 405)
 
     def test_home_cta_matches_authentication_state(self):
-        self.assertContains(self.client.get(reverse("core:home")), "Bắt đầu lập kế hoạch")
+        self.assertContains(self.client.get(reverse("core:home")), 'action="/accounts/login/"')
         self.client.force_login(self.user)
         response = self.client.get(reverse("core:home"))
         self.assertContains(response, "Chuẩn bị kế hoạch đầu tiên")
