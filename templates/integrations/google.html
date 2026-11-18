@@ -23,7 +23,7 @@
                     <button class="button button-primary" type="submit">{% if connection.is_connected %}Cấp lại quyền Google{% else %}Kết nối Google{% endif %}</button>
                 </form>
             {% else %}
-                {% if navigation.show_technical_details %}<p class="sync-notice">Chưa cấu hình Google OAuth. Người quản trị cần thêm OAuth Client và khóa mã hóa theo hướng dẫn mốc 09 trong HD_Test.md.</p>{% else %}<p class="sync-notice">Kết nối Google hiện chưa khả dụng.</p>{% endif %}
+                {% if navigation.show_technical_details %}<p class="sync-notice">Chưa cấu hình Google OAuth. Người quản trị cần thêm OAuth Client và khóa mã hóa theo README.md và .env.example.</p>{% else %}<p class="sync-notice">Kết nối Google hiện chưa khả dụng.</p>{% endif %}
                 <button class="button" type="button" disabled>Kết nối Google</button>
             {% endif %}
             {% if connection.is_connected %}

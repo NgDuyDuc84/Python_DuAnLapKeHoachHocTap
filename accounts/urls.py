@@ -25,9 +25,7 @@ urlpatterns = [
     ),
     path(
         "password-change/done/",
-        views.PasswordChangeDoneRedirectView.as_view(
-            template_name="accounts/password_change_done.html"
-        ),
+        views.PasswordChangeDoneRedirectView.as_view(),
         name="password_change_done",
     ),
 ]

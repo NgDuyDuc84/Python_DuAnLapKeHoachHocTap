@@ -14,11 +14,11 @@ from django.urls import reverse
 from django.views.defaults import server_error
 from django.utils import timezone
 
-from focus.models import StudyLog
+from focus.models import FocusSession, StudyLog
 from insights.data import build_snapshot
 from insights.models import InsightReport
 from integrations.models import CalendarConnection
-from notifications.models import ReminderPreference
+from notifications.models import Reminder, ReminderPreference
 from planner.models import StudyPlan, StudySession
 from studies.models import Material, Subject, Task
 
@@ -37,19 +37,26 @@ class ReadinessTests(TestCase):
             output = self.seed()
         external.assert_not_called()
         self.assertIn("Demo created", output)
-        self.assertEqual(Subject.objects.filter(owner=self.user).count(), 2)
-        self.assertEqual(Task.objects.filter(owner=self.user).count(), 5)
-        self.assertEqual(Material.objects.filter(owner=self.user).count(), 2)
-        self.assertEqual(StudySession.objects.filter(owner=self.user).count(), 3)
-        self.assertEqual(sum(StudyLog.objects.filter(owner=self.user).values_list("minutes", flat=True)), 175)
+        self.assertEqual(Subject.objects.filter(owner=self.user).count(), 4)
+        self.assertEqual(Task.objects.filter(owner=self.user).count(), 12)
+        self.assertEqual(Material.objects.filter(owner=self.user).count(), 8)
+        self.assertEqual(StudySession.objects.filter(owner=self.user).count(), 10)
+        self.assertEqual(sum(StudyLog.objects.filter(owner=self.user).values_list("minutes", flat=True)), 560)
         self.assertFalse(ReminderPreference.objects.get(owner=self.user).email_enabled)
         self.assertEqual(CalendarConnection.objects.count(), 0)
         self.assertEqual(InsightReport.objects.count(), 0)
-        for model in (Task, StudySession, StudyLog):
+        for model in (Task, StudySession, StudyLog, FocusSession, Reminder):
             for obj in model.objects.all():
                 obj.full_clean()
         payload = build_snapshot(self.user)["payload"]
-        self.assertEqual(payload["facts"]["H01"]["minutes"], 175)
+        self.assertEqual(payload["facts"]["H01"]["minutes"], 560)
+        self.assertEqual(FocusSession.objects.filter(owner=self.user, status="finished").count(), 3)
+        self.assertEqual(Reminder.objects.filter(owner=self.user, status="sent", read_at__isnull=True).count(), 2)
+        self.assertEqual(set(StudyLog.objects.filter(owner=self.user).values_list("source", flat=True)), {"manual", "pomodoro"})
+        self.client.force_login(self.user)
+        for name in ("core:home", "planner:week", "focus:statistics", "notifications:inbox", "insights:home"):
+            with self.subTest(page=name):
+                self.assertEqual(self.client.get(reverse(name)).status_code, 200)
 
     def test_demo_is_idempotent_and_keeps_login_credentials(self):
         password_hash = self.user.password
@@ -93,10 +100,9 @@ class ReadinessTests(TestCase):
         day = timezone.make_aware(datetime(2027, 12, 31, 23))
         with patch("core.management.commands.seed_demo.timezone.localdate", return_value=day.date()):
             self.seed()
-        plan = StudyPlan.objects.get()
-        self.assertEqual(plan.week_start.weekday(), 0)
-        for session in StudySession.objects.all():
-            self.assertTrue(plan.week_start <= timezone.localdate(session.starts_at) <= plan.week_end)
+        for session in StudySession.objects.select_related("plan"):
+            self.assertEqual(session.plan.week_start.weekday(), 0)
+            self.assertTrue(session.plan.week_start <= timezone.localdate(session.starts_at) <= session.plan.week_end)
 
     def test_health_checks_database_without_exposing_details(self):
         response = self.client.get(reverse("core:health"))

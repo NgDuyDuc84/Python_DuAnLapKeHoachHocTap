@@ -171,7 +171,7 @@ def navigation_state(request):
         tabs = STUDIES_TABS
         current_tab = next(tab["key"] for tab in tabs if name.split(":")[1].startswith(tab["key"][:-1]))
     return {
-        "main_groups": MAIN_GROUPS,
+        "main_groups": MAIN_GROUPS, "settings_tabs": SETTINGS_TABS,
         "page_class": "page--narrow" if name in NARROW_ROUTES else "page--auth" if name in AUTH_ROUTES else "",
         "main_item": PLANNER_ROUTES.get(name, section), "section": section, "settings_item": settings_item,
         "tabs": tabs, "current_tab": current_tab,

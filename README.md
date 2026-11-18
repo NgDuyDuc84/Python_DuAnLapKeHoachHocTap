@@ -1,139 +1,64 @@
-# Python_DuAnLapKeHoachHocTap
+# Nhịp Học
 
-Ứng dụng lập kế hoạch học tập cá nhân có AI gợi ý lịch, định hướng Django với Python xử lý nghiệp vụ chính.
+Web lập kế hoạch học tập cá nhân bằng Django/Python, giao diện tiếng Việt và giờ Việt Nam. Dữ liệu được tách riêng theo tài khoản.
 
-- [Kế hoạch phát triển](docs/KE_HOACH_PHAT_TRIEN.md)
-- [Thiết kế ban đầu](docs/THIET_KE_BAN_DAU.md)
-- [Hướng dẫn kiểm thử từng bước](HD_Test.md)
-- [Cấu hình chạy và triển khai](docs/TRIEN_KHAI.md)
-- [Triển khai Render miễn phí để báo cáo](docs/RENDER_DEMO.md)
-- [Dữ liệu demo và kịch bản nghiệm thu](docs/NGHIEM_THU.md)
-- [Báo cáo kỹ thuật và đối chiếu yêu cầu](docs/BAO_CAO_DU_AN.md)
+## Tính năng hiện có
 
-Hiện tại: **đã hoàn thiện phạm vi mã nguồn của kế hoạch, trừ public website**. Đã có Tổng quan sau đăng nhập, thanh bên Học tập trong Lịch tuần, lịch chia Sáng/Chiều/Tối và công cụ kiểm thử hành trình HTTP qua web/worker. Thanh trên cùng dùng chuông thông báo bên trái và menu tài khoản/đăng xuất bên phải. Bản hiện tại qua **289 test SQLite** và kiểm thử HTTP trên Waitress tại máy. SMTP, Google Calendar và OpenAI thật chưa được xác minh vì chưa có khóa. CI mới bổ sung chạy Compose cần xác minh sau lần push tiếp theo; kết quả CI đã thành công của commit `cfcb3b5` vẫn được giữ làm lịch sử. Tên hiển thị của ứng dụng là **Nhịp Học**.
+- Đăng ký, đăng nhập, đổi mật khẩu và quản lý tài khoản.
+- Quản lý môn học, công việc, deadline, mức ưu tiên, tiến độ và tài liệu liên kết.
+- Lịch tuần, lịch bận lặp lại, tùy chọn giờ học; tự xếp lịch theo deadline và thời gian rảnh, xem trước rồi áp dụng. Hỗ trợ bổ sung/xếp lại, chỉnh tay, khóa buổi, ghi nhận đã học hoặc hủy.
+- Tổng quan hôm nay, cảnh báo quá hạn/xung đột; Pomodoro, nhật ký và thống kê theo ngày/môn/nguồn.
+- Thông báo trong web và email nhắc; đồng bộ các buổi đã xác nhận lên Google Calendar.
+- Phân tích học tập bằng Python; tùy chọn yêu cầu AI phân tích dữ liệu đã xem trước và đồng ý gửi.
 
-Cần Python 3.12–3.14. Từ PowerShell tại thư mục dự án:
+## Chạy tại máy
+
+Cần Python 3.12–3.14. Mở PowerShell tại thư mục dự án; bỏ qua bước tạo môi trường nếu đã có `.venv`:
 
 ```powershell
 python -m venv .venv
 & .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-if (-not (Test-Path -LiteralPath .env)) {
-    Copy-Item -LiteralPath .env.example -Destination .env
-}
+if (-not (Test-Path -LiteralPath .env)) { Copy-Item .env.example .env }
 & .\.venv\Scripts\python.exe manage.py migrate
 & .\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
 ```
 
-Mở [trang chủ local](http://127.0.0.1:8000/). Nếu `.venv` đã tồn tại, bỏ qua lệnh tạo môi trường. Không cần kích hoạt môi trường hoặc đổi Execution Policy. Nếu lệnh `python` lỗi WindowsApps, xem đường dẫn Python thay thế trong `HD_Test.md`.
+Mở [Nhịp Học tại máy](http://127.0.0.1:8000/). Mặc định dùng SQLite; đặt `DATABASE_URL` trong `.env` để dùng PostgreSQL. Nếu lệnh `python` mở Windows Store, dùng `py -3.14 -m venv .venv` hoặc đường dẫn Python đã cài. Không cần kích hoạt venv.
 
-Mặc định local dùng SQLite; đã có cấu hình PostgreSQL/production và Docker để kiểm thử tại máy. URL online vẫn cần triển khai và nghiệm thu sau này. Đã có tài khoản, quản lý học tập, lịch bận, tùy chọn thời gian học, lịch tuần và thuật toán Python tự xếp buổi học.
-
-Các trang chính:
-
-- [Tổng quan](http://127.0.0.1:8000/): sau đăng nhập, xem buổi hôm nay, phút học 7 ngày, việc quá hạn, thông báo chưa đọc, buổi sắp tới và Pomodoro đang hoạt động.
-- [Đăng ký](http://127.0.0.1:8000/accounts/register/): tên đăng nhập duy nhất, email và mật khẩu.
-- [Đăng nhập](http://127.0.0.1:8000/accounts/login/): dùng tên đăng nhập.
-- [Tài khoản của bạn](http://127.0.0.1:8000/accounts/profile/): yêu cầu đăng nhập, có liên kết đổi mật khẩu.
-- [Môn học trong thanh bên](http://127.0.0.1:8000/planner/?panel=subjects): thêm/sửa/xóa, màu, học kỳ và lưu trữ.
-- [Công việc trong thanh bên](http://127.0.0.1:8000/planner/?panel=tasks): deadline, ưu tiên, thời lượng, trạng thái và lọc quá hạn.
-- [Tài liệu trong thanh bên](http://127.0.0.1:8000/planner/?panel=materials): liên kết HTTP/HTTPS theo môn hoặc công việc.
-- [Lịch tuần](http://127.0.0.1:8000/planner/): lịch bận, buổi học đã áp dụng, deadline và khoảng trống từ hiện tại; mỗi ngày chia Sáng, Chiều, Tối. Thêm/sửa/xóa môn, việc và tài liệu ngay ở thanh bên, giữ tuần đang xem.
-- [Tạo kế hoạch](http://127.0.0.1:8000/planner/plans/new/): chọn tuần và chế độ Bổ sung/Xếp lại, xem trước rồi áp dụng vào lịch.
-- [Cảnh báo](http://127.0.0.1:8000/planner/alerts/): việc quá hạn, thiếu lịch trước hạn, buổi xung đột và buổi đã kết thúc chưa ghi nhận.
-- [Lịch bận](http://127.0.0.1:8000/planner/busy/): một lần/lặp hằng tuần, hỗ trợ qua đêm.
-- [Giờ học](http://127.0.0.1:8000/planner/preferences/): ngày được học, khung giờ chung, giới hạn phút/ngày, độ dài buổi và nghỉ.
-- [Tập trung](http://127.0.0.1:8000/focus/): Pomodoro 25 phút học/5 phút nghỉ, tạm dừng/tiếp tục, lưu sớm hoặc hủy.
-- [Nhật ký](http://127.0.0.1:8000/focus/logs/): phút học từ Pomodoro và nhập tay, lọc ngày, sửa/xóa.
-- [Thống kê](http://127.0.0.1:8000/focus/statistics/): tổng phút, ngày có học, trung bình và phân bổ theo ngày/môn/nguồn, xử lý bằng Python.
-- [Thông báo](http://127.0.0.1:8000/notifications/): nhắc deadline/buổi học, đọc/chưa đọc và lịch sử email. Bấm chuông bên trái để xem nhanh 5 thông báo gần nhất và số chưa đọc; bấm một thông báo để mở đúng bản ghi trong hộp thông báo.
-- [Tùy chọn nhắc](http://127.0.0.1:8000/notifications/preferences/): bật riêng từng kênh, chọn thời gian nhắc trước hạn/buổi.
-- [Đồng bộ](http://127.0.0.1:8000/integrations/google/): kết nối Google, xem trước theo tuần, xác nhận và xem kết quả đồng bộ.
-- [AI hỗ trợ](http://127.0.0.1:8000/insights/): số liệu 14 ngày, nhận xét Python, xem trước dữ liệu gửi AI và lịch sử phân tích riêng.
-- [Quản trị](http://127.0.0.1:8000/admin/): tài khoản quản trị có quyền phù hợp.
-
-Tạo quản trị viên bằng `& .\.venv\Scripts\python.exe manage.py createsuperuser`, nhập thông tin trực tiếp trong terminal. Đăng xuất qua nút trên giao diện dùng POST, không mở URL đăng xuất bằng GET.
-
-Chạy kiểm thử tự động:
+Để chạy nhắc việc và xử lý hàng đợi Google Calendar, mở riêng từng terminal:
 
 ```powershell
+& .\.venv\Scripts\python.exe -X utf8 manage.py process_reminders --watch
+& .\.venv\Scripts\python.exe -X utf8 manage.py process_calendar_sync --watch
+```
+
+Mỗi lệnh chạy ở một terminal; Ctrl+C để dừng. Email mặc định chỉ xuất ra terminal. Gửi email thật cần các biến `EMAIL_*`; Google cần `GOOGLE_*` và callback đúng địa chỉ web; AI cần `OPENAI_API_KEY` và `OPENAI_MODEL` khả dụng. Xem tên biến trong `.env.example`. Khi chưa cấu hình dịch vụ ngoài, chức năng học tập và phân tích Python vẫn hoạt động. Khóa và mật khẩu chỉ lưu trong môi trường, không đưa lên Git.
+
+## Demo cho giảng viên
+
+Dữ liệu mẫu mô phỏng một học kỳ: 4 môn, 12 công việc đủ trạng thái, 8 tài liệu, 3 lịch bận, 10 buổi học, 14 nhật ký trong hai tuần (560 phút), 3 thông báo và lịch sử Pomodoro. Ngày tháng được tính theo ngày chạy lệnh. Dữ liệu này là giả lập, không phải kết quả gửi email/Google/AI thật.
+
+Các tài khoản demo: `nguyen_van_a`, `tran_thi_b`, `le_van_c`; mật khẩu được trao riêng trong cuộc trò chuyện, không lưu trong repository. Trên Render, đặt biến bí mật `DEMO_ACCOUNT_PASSWORD` rồi deploy: launcher chạy `bootstrap_demo` sau migration để tạo ba tài khoản và nạp cùng bộ dữ liệu mẫu. Chạy lại giữ nguyên dữ liệu/tiến độ, không đặt lại mật khẩu. Có thể xóa biến này sau khi nạp thành công.
+
+Để nạp mẫu cho một tài khoản thường đã đăng ký và còn trống:
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py seed_demo --username nguyen_van_a
+```
+
+Lệnh không tạo tài khoản, không đổi mật khẩu, không ghi đè dữ liệu, chạy lại không tạo trùng và không gọi dịch vụ ngoài. Demo theo thứ tự: Tổng quan → Lịch tuần → công việc/deadline → tạo và áp dụng kế hoạch → Pomodoro/nhật ký → thống kê → thông báo. Đăng nhập tài khoản khác để kiểm tra dữ liệu được tách riêng.
+
+## Kiểm thử và triển khai
+
+```powershell
+& .\.venv\Scripts\python.exe manage.py check
 & .\.venv\Scripts\python.exe manage.py test --noinput
-```
-
-Các kiểm thử dùng database riêng trong bộ nhớ, không sửa tài khoản đang lưu ở `db.sqlite3`. Xem checklist đầy đủ và cách kiểm tra khóa/mở tài khoản trong `HD_Test.md`.
-
-Mốc 03 có migration mới: chạy `manage.py migrate` trước khi mở phần Học tập. Mỗi người chỉ xem/sửa/xóa dữ liệu mình sở hữu. Xóa môn/công việc gỡ liên kết nhưng giữ lại tài liệu; lưu trữ môn giữ nguyên các liên kết. Công việc mới có thời lượng còn lại bằng ước tính; chọn Hoàn thành đưa thời lượng còn lại về 0.
-
-Mốc 04 thêm migration `planner/0001_initial.py`; tiếp tục chạy `manage.py migrate` khi cập nhật. Lịch tuần dựng bằng Python/Django Templates, tuần bắt đầu thứ Hai và dùng giờ Việt Nam. Lịch bận chồng nhau được gộp khi tính khoảng trống; deadline chỉ là mốc hạn, không chiếm một khoảng thời gian.
-
-Mốc 05 thêm migration `planner/0002_studyplan_studysession.py`. Thuật toán tham lam xếp deadline gần trước, cùng hạn thì ưu tiên cao trước; tôn trọng lịch bận, khung học, phút/ngày, chia buổi và nghỉ. Bản xem trước chưa chiếm lịch; áp dụng kiểm tra lại dữ liệu/thời gian trong transaction. Giữ các buổi đã áp dụng và trừ phút tương lai đã dành cho công việc ở mọi tuần để tránh xếp lại. Xếp lịch không tự giảm thời lượng còn lại. Xóa công việc cũng xóa các buổi học của công việc, vẫn giữ liên kết tài liệu.
-
-Mốc 06 thêm migration `planner/0003_studyplan_mode_studyplan_replacement_ids_and_more.py`; chạy `manage.py migrate` và khởi động lại server. Từ chi tiết kế hoạch đã áp dụng, có thể chỉnh giờ/độ dài buổi tương lai, khóa/mở khóa, ghi nhận Đã học hoặc Hủy/bỏ qua. Chỉnh tay phải đúng khung học, deadline, quỹ ngày, không trùng và đủ nghỉ; không vượt thời lượng công việc còn lại. Nhập số phút thực tế còn cần khi ghi nhận; nhập 0 đánh dấu việc hoàn thành. Có form Cập nhật tiến độ riêng trên danh sách công việc.
-
-Chế độ Xếp lại chỉ thay buổi tự động chưa bắt đầu trong tuần được chọn, giữ buổi khóa, đã chỉnh tay, đang học, đã học và các tuần khác. Xem trước chỉ đọc các đặt chỗ cũ; khi áp dụng mới hủy buổi cũ và thêm buổi mới trong cùng transaction. Buổi bị hủy giữ dấu vết, không còn chiếm lịch/quỹ ngày. Bổ sung vẫn giữ mọi buổi đã áp dụng.
-
-Thay đổi đầu vào chưa tự chạy xếp lại; cần chọn Xếp lại và kiểm tra bản xem trước. Buổi khóa hoặc chỉnh tay có xung đột cần xử lý trực tiếp. Cảnh báo trong ứng dụng xét mọi việc quá hạn, việc đến hạn/buổi sắp diễn ra trong 7 ngày và tối đa 20 buổi chưa ghi nhận gần nhất. Chưa gửi email. Thuật toán chưa bảo đảm tối ưu toàn cục.
-
-Mốc 07 thêm app `focus` và migration `focus/0001_initial.py`. Mỗi tài khoản chỉ có một phiên học/nghỉ đang chạy hoặc tạm dừng. Thời gian tính ở Python, JavaScript chỉ hiển thị/đồng bộ đồng hồ. Tải lại hoặc đóng trang không làm mất phiên. Hết giờ vẫn cần bấm Lưu và kết thúc; phút học bị giới hạn tối đa 25, nghỉ/tạm dừng không cộng. Kết thúc sớm chỉ ghi phút tròn, dưới một phút không tạo nhật ký. Hủy không ghi nhật ký; gửi lặp thao tác kết thúc không ghi hai lần.
-
-Nhật ký không tự giảm thời lượng công việc hoặc đánh dấu buổi trên lịch đã học; tiếp tục dùng Cập nhật tiến độ/Ghi nhận buổi của mốc 06. Nhật ký nhập tay được sửa ngày/phút/việc/ghi chú; nhật ký Pomodoro chỉ sửa ghi chú. Xóa nhật ký giảm thống kê và không được tự tạo lại khi kết thúc lại cùng phiên. Xóa công việc giữ nhật ký/Pomodoro với tên việc và môn đã chụp lúc ghi nhận.
-
-Nhật ký/thống kê mặc định xem 7 ngày gần nhất, hỗ trợ khoảng 1–366 ngày đã qua. Pomodoro quy toàn bộ phút vào ngày bắt đầu phiên theo giờ Việt Nam, không chia ở nửa đêm. Môn nhóm theo nhãn trong nhật ký; đổi nhãn có thể tách nhóm lịch sử. Chưa có tự lặp chu kỳ, nghỉ dài, chuông/Pomodoro push hoặc tự xác nhận đã học.
-
-Mốc 08 thêm app `notifications` và migration `notifications/0001_initial.py`. Mặc định nhận thông báo trong web, email tắt; nhắc deadline trước 24 giờ, buổi học trước 15 phút. Chọn được deadline 1/3/24 giờ và buổi học 5/15/30 phút. Email lấy từ tài khoản, phải bật chủ động. Web chỉ xem/lưu tùy chọn/đánh dấu đã đọc hoặc yêu cầu gửi lại; tạo/gửi nhắc chạy trong worker Python riêng dùng hàng đợi database.
-
-Sau khi migrate và mở web, mở terminal thứ hai tại thư mục dự án:
-
-```powershell
-& .\.venv\Scripts\python.exe manage.py process_reminders --watch
-```
-
-Worker kiểm tra mỗi 60 giây, Ctrl+C để dừng. Muốn kiểm thử một lượt: `manage.py process_reminders` không có `--watch`. Không cần Redis/Celery ở mốc local này; có thể gọi lệnh một lượt bằng bộ lập lịch khi triển khai. Worker phải hoạt động để tạo/gửi nhắc, kể cả khi trình duyệt đã đóng.
-
-Email mặc định dùng console backend, nội dung xuất hiện trong terminal worker. SMTP thật cấu hình bằng các biến `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `SITE_URL` trong `.env` theo `.env.example`; chưa thử gửi qua nhà cung cấp thật trong mốc này. Không ghi đè `.env` đang dùng hoặc đưa thông tin đăng nhập SMTP lên GitHub.
-
-Mỗi đối tượng/thời điểm/kênh có một bản nhắc; đổi độ nhắc sớm không gửi lại bản đã xử lý. Đổi deadline/giờ buổi tạo nhắc cho thời điểm mới. Trước gửi kiểm tra lại tài khoản, kênh nhận, công việc, buổi và thời điểm; bỏ nhắc cũ/đã quá giờ. Email bị từ chối được tự thử tối đa 3 lần, cách ít nhất 1 phút; mất kết nối/kẹt khi gửi chuyển Chưa xác nhận và cần người dùng kiểm tra hộp thư trước khi yêu cầu gửi lại. Hệ thống SMTP không bảo đảm thư đã vào inbox hoặc tuyệt đối không trùng khi kết quả gửi không xác định. Xem checklist và cấu hình kiểm thử mốc 08 ở cuối `HD_Test.md`.
-
-Mốc 09 thêm app `integrations` và migration `integrations/0001_initial.py`. Cài lại `requirements.txt`, chạy `manage.py migrate` và khởi động lại server. Các biến `GOOGLE_*` trong `.env.example` là tùy chọn; thiếu cấu hình thì trang Đồng bộ hướng dẫn cấu hình, các phần học tập vẫn hoạt động. Xem phần mốc 09 trong `HD_Test.md` để tạo OAuth Client loại Web application, khai báo callback và tạo khóa Fernet. Không chép đè `.env`, không đưa client secret, khóa mã hóa hoặc database lên GitHub.
-
-Sau khi kết nối, chọn tuần → xem trước → xác nhận; mở terminal riêng chạy:
-
-```powershell
-& .\.venv\Scripts\python.exe manage.py process_calendar_sync --watch
-```
-
-Worker kiểm tra hàng đợi mỗi 60 giây, Ctrl+C để dừng; bỏ `--watch` để xử lý một lượt. Chỉ xử lý tuần đã được xác nhận, không tự đồng bộ mỗi khi sửa lịch. Không cần Redis/Celery ở mốc local. Worker nhắc việc và worker Calendar là hai tiến trình độc lập.
-
-Ứng dụng xin quyền `calendar.app.created` để tạo lịch Google riêng **Nhịp Học**, cùng quyền định danh/email để hiển thị tài khoản kết nối. Chỉ đẩy buổi học của kế hoạch đã áp dụng, gồm buổi đã học; không nhập lịch Google về web. Mỗi lần đồng bộ ghi lại giờ/nội dung theo web, gỡ sự kiện của buổi hủy/xóa, không sửa sự kiện thiếu dấu nhận diện của ứng dụng. Token được mã hóa trước khi lưu. Ngắt kết nối xóa token trong web và cố thu hồi quyền Google, giữ lịch/sự kiện đã có.
-
-Nếu mất phản hồi khi tạo lịch, hệ thống yêu cầu kiểm tra Google rồi xác nhận trước khi tạo lịch đích mới. Ánh xạ sự kiện được lưu trước khi gửi để có thể chạy lại sau mất mạng. Kiểm thử tự động và trình duyệt ở mốc này dùng API giả lập; OAuth và Calendar thật cần bạn cấu hình và kiểm thử theo `HD_Test.md`.
-
-Mốc 10 thêm app `insights` và migration `insights/0001_initial.py`. Chạy `manage.py migrate` và khởi động lại server. Trang AI hỗ trợ luôn hiển thị số liệu/nhận xét do Python tính: nhật ký 14 ngày gồm hôm nay, so sánh hai nhóm 7 ngày, việc chưa hoàn thành, phương án bổ sung tuần hiện tại và cảnh báo thực tế. Không có API key thì phần này vẫn dùng được và được ghi rõ là phân tích Python.
-
-Muốn dùng AI thật, thêm `OPENAI_API_KEY` vào `.env`; `OPENAI_MODEL` mặc định `gpt-5.6-terra`. API key chỉ dùng ở máy chủ, không nhập vào web hoặc commit lên GitHub. Sau khi restart server, mở AI hỗ trợ → xem dữ liệu gửi → chủ động đồng ý → Yêu cầu AI phân tích. Dùng OpenAI Responses API với Structured Outputs, `store=false`, giới hạn đầu ra và timeout; không cần cài thêm SDK hoặc chạy worker cho phần AI ở mốc này. Hạn mức sử dụng và phí API thuộc tài khoản OpenAI riêng.
-
-Dữ liệu gửi dùng mã việc/môn, số phút, deadline, tùy chọn học và cảnh báo; không gửi tên, email, ghi chú, tài liệu hoặc token Google. Mỗi nhận xét phải dẫn mã căn cứ hợp lệ, được kiểm tra trước khi hiển thị; điều này không bảo đảm diễn giải của AI luôn đúng. Kết quả chỉ để tham khảo, không tự sửa lịch/tiến độ. Lịch sử giữ bản dữ liệu và kết quả theo chủ sở hữu, phát hiện khi dữ liệu đã đổi. Tối đa 5 yêu cầu/ngày/user, cách nhau ít nhất 60 giây; không tự gọi lại khi lỗi. Chi tiết cấu hình, kiểm thử và giới hạn ở phần mốc 10 cuối `HD_Test.md`. Kiểm thử agent dùng API giả lập; chưa gửi dữ liệu hoặc tạo phí trên OpenAI thật.
-
-Mốc 11 thêm `config.production` yêu cầu PostgreSQL/HTTPS/secret riêng, `config.assets` đóng gói static bằng WhiteNoise, máy chủ WSGI Waitress, Dockerfile/Compose và CI kiểm thử SQLite/PostgreSQL. Đã có `/health/`, trang lỗi 403/404/500 tiếng Việt và nút bắt đầu trên trang chủ đổi theo trạng thái đăng nhập. Không có migration mới ở mốc này. Bổ sung ngày 15/11/2026: đã sửa lỗi quản lý kết nối trong test worker và chạy **260/260 test trên SQLite, 260/260 trên PostgreSQL 17.12 portable**. [GitHub Actions của bản sửa cfcb3b5](https://github.com/NgDuyDuc84/Python_DuAnLapKeHoachHocTap/actions/runs/43715304135) cũng thành công cho cả hai job, Docker build và Compose config. Chưa chạy toàn bộ ứng dụng bằng Compose hoặc triển khai URL online. Xem phần xác minh CI cuối `HD_Test.md`.
-
-Sau khi cài lại dependency, đóng gói static:
-
-```powershell
+& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
 & .\.venv\Scripts\python.exe manage.py collectstatic --noinput --settings=config.assets
 ```
 
-Để có dữ liệu trình bày, đăng ký một tài khoản riêng còn trống (không phải quản trị), sau đó:
+Test dùng database riêng. Docker local: `docker compose up --build -d` chạy PostgreSQL, web và hai worker; mở cổng 8000. Dừng bằng `docker compose down` (giữ volume dữ liệu).
 
-```powershell
-& .\.venv\Scripts\python.exe manage.py seed_demo --username demo
-```
+Render: tạo Blueprint từ nhánh `main`, dùng `render.yaml`; cấu hình lấy hostname, secret và PostgreSQL từ nền tảng, chạy migration rồi web cùng hai worker. Auto-deploy đang tắt; cập nhật bằng Manual Deploy của đúng nhánh. Web Free có thể ngủ và worker cũng dừng theo; database Free có thời hạn, xem [giới hạn Render](https://render.com/docs/free). Kiểm tra URL do Render cấp và `/health/` sau deploy. Production riêng dùng `config.production`, PostgreSQL, secret riêng, `SITE_URL` HTTPS, `DJANGO_ALLOWED_HOSTS` và reverse proxy; mẫu biến ở `deploy/production.env.example`.
 
-Lệnh không đổi mật khẩu, không ghi đè tài khoản có dữ liệu và chạy lại không tạo trùng. Tạo 2 môn, 5 việc, 2 tài liệu, lịch bận, 3 buổi (một khóa, một hủy) và 175 phút nhật ký; email tắt, không gọi Google/OpenAI. Thay `demo` bằng username tài khoản bạn vừa tạo. Thống kê mặc định chỉ cộng 7 ngày gần nhất nên có thể ít hơn 175 phút; mở rộng khoảng ngày để xem toàn bộ. Xem [kịch bản nghiệm thu](docs/NGHIEM_THU.md), [cách chạy Waitress/Docker và chuẩn bị production](docs/TRIEN_KHAI.md) cùng checklist hoàn thiện cuối `HD_Test.md`.
-
-Kiểm tra kỹ thuật thông thường:
-
-```powershell
-& .\.venv\Scripts\python.exe -X utf8 manage.py test --noinput
-& .\.venv\Scripts\python.exe manage.py makemigrations --check --dry-run
-```
-
-Đã có `python -m deploy.smoke` để kiểm tra health/static tại localhost. Chế độ `--allow-test-data` tạo hai tài khoản và dữ liệu thử, chỉ chạy trên database kiểm thử riêng theo [hướng dẫn HTTP/Compose](docs/TRIEN_KHAI.md#kiểm-thử-hành-trình-http-tại-máy). Không có migration mới cho Tổng quan. Sau cập nhật, khởi động lại server và chạy lại `collectstatic` nếu dùng Waitress/WhiteNoise.
+Tài nguyên cục bộ: Lora/Inter từ Google Fonts (giấy phép OFL và nguồn/hash trong `static/fonts/`); Flatpickr 4.6.13 từ npm (MIT trong `static/vendor/flatpickr/LICENSE.md`, bản gốc không chỉnh sửa). Ảnh lịch/sách được tạo bằng ImageGen, lưu trong `static/images/auth/`. Giữ các giấy phép đi kèm khi phân phối.

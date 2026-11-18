@@ -89,7 +89,7 @@ class UiCleanupTests(TestCase):
         for name in ("integrations:google", "notifications:preferences", "notifications:email_history"):
             with self.subTest(name=name):
                 response = self.client.get(reverse(name))
-                for technical in ("HD_Test.md", "OAuth Client", "terminal", "worker", "dịch vụ nền"):
+                for technical in ("README.md", "OAuth Client", "terminal", "worker", "dịch vụ nền"):
                     self.assertNotContains(response, technical)
                 self.assertContains(response, "chưa khả dụng")
         response = self.client.get(reverse("integrations:google"))
@@ -104,7 +104,7 @@ class UiCleanupTests(TestCase):
                 self.user.save(update_fields=["is_staff"])
                 google = self.client.get(reverse("integrations:google"))
                 reminders = self.client.get(reverse("notifications:preferences"))
-                self.assertEqual("HD_Test.md" in google.content.decode(), visible)
+                self.assertEqual("README.md" in google.content.decode(), visible)
                 self.assertEqual("terminal" in reminders.content.decode(), visible)
                 self.assertEqual("dịch vụ nền" in reminders.content.decode(), visible)
 

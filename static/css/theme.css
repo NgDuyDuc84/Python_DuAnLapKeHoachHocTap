@@ -8,6 +8,7 @@ time, table, input[type="number"] { font-variant-numeric: tabular-nums; }
 .header-navigation a:hover { background: var(--bg-sunk); text-decoration: none; }
 .header-navigation a[aria-current="page"] { color: var(--pine-hover); background: var(--pine-soft); font-weight: 650; text-decoration: none; }
 .header-dropdown, .header-nav-menu > .header-navigation { box-shadow: var(--sh-lg); }
+.header-menu-link[aria-current="page"] { color: var(--pine-hover); background: var(--pine-soft); font-weight: 650; }
 @media (min-width: 1280px) {
     .header-nav-menu > .header-navigation { box-shadow: none; }
     .header-nav-group + .header-nav-group { position: relative; border-left: 0; }

@@ -1,5 +1,6 @@
 from datetime import timedelta
 from html.parser import HTMLParser
+import re
 from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
@@ -94,6 +95,14 @@ class NavigationStateTests(SimpleTestCase):
                                    "focus": "focus:home", "statistics": "focus:statistics"}
                         expected = [reverse(targets[section])] if section in targets else []
                     self.assertEqual(active, expected)
+                    account_links = re.findall(r'<a class="header-menu-link" href="([^"]+)"([^>]*)>', markup)
+                    self.assertEqual([url for url, attrs in account_links], [reverse(target) for target in (
+                        "accounts:profile", "notifications:preferences", "integrations:google",
+                    )])
+                    self.assertEqual([url for url, attrs in account_links if 'aria-current="page"' in attrs],
+                                     [reverse(next(tab["url"] for tab in state["settings_tabs"]
+                                                   if tab["key"] == state["settings_item"]))]
+                                     if section == "settings" else [])
                     if section in ("settings", "notifications"):
                         icon = "account" if section == "settings" else "notifications"
                         self.assertIn(f"header-{icon} is-active", markup)

@@ -9,13 +9,19 @@
 
 {% block content %}
 <div class="auth-split auth-split--{{ auth_mode }}">
-    <section class="auth-info" aria-labelledby="auth-title">
-        <h1 id="auth-title">Học có kế hoạch.<br><span>Tiến bộ mỗi ngày.</span></h1>
-        <p>Nhịp Học tự xếp lịch học trong tuần theo deadline và thời gian rảnh của bạn. Bạn xem trước, hài lòng rồi mới áp dụng.</p>
-        <p class="auth-features">Có Pomodoro, nhắc việc và đồng bộ Google Calendar.</p>
-    </section>
+    <div class="auth-info">
+        <div class="auth-info-inner">
+        {% if auth_mode == "register" %}
+        <h2 class="auth-tagline">Kế hoạch học tập riêng.<br><span>Cho mục tiêu của bạn.</span></h2>
+        <img class="auth-illustration" src="{% static 'images/auth/book.png' %}" width="1280" height="1280" alt="">
+        {% else %}
+        <h2 class="auth-tagline">Lịch học rõ ràng.<br><span>Tiến bộ mỗi ngày.</span></h2>
+        <img class="auth-illustration" src="{% static 'images/auth/calendar.png' %}" width="1280" height="1280" alt="">
+        {% endif %}
+        </div>
+    </div>
     <section class="auth-panel" aria-labelledby="form-title">
-        <h2 id="form-title">{% if auth_mode == "register" %}Tạo tài khoản{% else %}Đăng nhập{% endif %}</h2>
+        <h1 id="form-title">{% if auth_mode == "register" %}Tạo tài khoản{% else %}Đăng nhập{% endif %}</h1>
         <p class="auth-subtitle">{% if auth_mode == "register" %}Chỉ mất một phút để bắt đầu.{% else %}Chào mừng bạn quay lại.{% endif %}</p>
         <form class="account-form" method="post" action="{% if auth_mode == 'register' %}{% url 'accounts:register' %}{% else %}{% url 'accounts:login' %}{% endif %}">
             {% csrf_token %}
@@ -26,7 +32,6 @@
                 {{ field.label_tag }}
                 {{ field }}
                 {{ field.errors }}
-                {% if field.help_text %}<div class="field-help" id="{{ field.auto_id }}_helptext">{{ field.help_text|safe }}</div>{% endif %}
             </div>
             {% endfor %}
             <button class="button" type="submit">{% if auth_mode == "register" %}Tạo tài khoản{% else %}Đăng nhập{% endif %}</button>

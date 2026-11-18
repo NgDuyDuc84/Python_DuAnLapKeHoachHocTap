@@ -16,6 +16,8 @@ def main():
     try:
         subprocess.run([sys.executable, "manage.py", "check", "--deploy", "--fail-level", "WARNING"], check=True)
         subprocess.run([sys.executable, "manage.py", "migrate", "--noinput"], check=True)
+        if os.getenv("DEMO_ACCOUNT_PASSWORD"):
+            subprocess.run([sys.executable, "manage.py", "bootstrap_demo"], check=True)
         for name, command in (
             ("web", ["-m", "deploy.serve"]),
             ("reminders", ["manage.py", "process_reminders", "--watch"]),

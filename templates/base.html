@@ -70,8 +70,9 @@
                 </summary>
                 <section class="header-dropdown account-dropdown" aria-label="Tùy chọn tài khoản">
                     <div class="header-dropdown-heading"><h2>{{ user.username }}</h2><p>Tài khoản của bạn</p></div>
-                    <a class="header-menu-link" href="{% url 'accounts:profile' %}">Tài khoản</a>
-                    <a class="header-menu-link" href="{% url 'accounts:profile' %}">Cài đặt</a>
+                    {% for tab in navigation.settings_tabs %}
+                    <a class="header-menu-link" href="{% url tab.url %}"{% if navigation.settings_item == tab.key %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+                    {% endfor %}
                     {% if user.is_staff %}<a class="header-menu-link" href="{% url 'admin:index' %}">Quản trị</a>{% endif %}
                     <form class="header-logout" method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit">Đăng xuất</button></form>
                 </section>
