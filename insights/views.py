@@ -46,7 +46,7 @@ def home_context(user, *, form=None):
         "as_of": parse_datetime(payload["as_of"]), "payload_json": json.dumps(payload, ensure_ascii=False, indent=2),
         "sections": sections(baseline_report(snapshot), snapshot["labels"]),
         "form": form if form is not None else AnalyzeForm(initial={"preview": token}),
-        "configured": configured(), "model_name": settings.OPENAI_MODEL,
+        "configured": configured(), "model_name": settings.GROQ_MODEL,
         "reports": InsightReport.objects.filter(owner=user)[:10],
     }
 

@@ -32,13 +32,13 @@ def ai_result(payload):
 
 
 def response_for(result, **fields):
-    return {"status": "completed", "output": [
-        {"type": "reasoning", "summary": []},
-        {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": json.dumps(result)}]},
-    ], **fields}
+    return {"choices": [{"finish_reason": "stop", "message": {
+        "role": "assistant", "content": json.dumps(result),
+        "reasoning": "Internal reasoning is not an answer",
+    }}], **fields}
 
 
-@override_settings(OPENAI_API_KEY="synthetic-test-key", OPENAI_MODEL="gpt-5.6-terra")
+@override_settings(GROQ_API_KEY="synthetic-test-key", GROQ_MODEL="openai/gpt-oss-20b")
 class InsightTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user("insight-a", email="PRIVATE-EMAIL@example.test", password="Test-synthetic-104")
@@ -85,7 +85,7 @@ class InsightTests(TestCase):
         client.force_login(self.user)
         self.assertEqual(client.post(reverse("insights:generate"), {}).status_code, 403)
 
-    @override_settings(OPENAI_API_KEY="")
+    @override_settings(GROQ_API_KEY="")
     @patch("insights.provider.requests.post")
     def test_get_and_missing_config_do_not_call_provider(self, post):
         response = self.preview()
@@ -306,18 +306,21 @@ class InsightTests(TestCase):
         result = analyze(snapshot["payload"])
         self.assertEqual(result, ai_result(snapshot["payload"]))
         args, kwargs = post.call_args
-        self.assertEqual(args, ("https://api.openai.com/v1/responses",))
+        self.assertEqual(args, ("https://api.groq.com/openai/v1/chat/completions",))
         self.assertEqual(kwargs["timeout"], (5, 40))
         self.assertFalse(kwargs["allow_redirects"])
-        self.assertFalse(kwargs["json"]["store"])
-        self.assertTrue(kwargs["json"]["text"]["format"]["strict"])
-        self.assertEqual(json.loads(kwargs["json"]["input"]), snapshot["payload"])
+        self.assertEqual(kwargs["headers"]["Authorization"], "Bearer synthetic-test-key")
+        self.assertNotIn("synthetic-test-key", args[0])
+        self.assertEqual(kwargs["json"]["model"], "openai/gpt-oss-20b")
+        self.assertEqual(kwargs["json"]["response_format"]["type"], "json_schema")
+        self.assertTrue(kwargs["json"]["response_format"]["json_schema"]["strict"])
+        self.assertEqual(json.loads(kwargs["json"]["messages"][1]["content"]), snapshot["payload"])
         self.assertNotIn("PRIVATE-", json.dumps(kwargs["json"]))
         self.assertNotIn("tools", kwargs["json"])
 
     @patch("insights.provider.requests.post")
     def test_api_http_errors_and_network_errors_are_sanitized(self, post):
-        for status, code in ((401, "authorization"), (403, "authorization"), (429, "quota"), (500, "provider"), (302, "provider")):
+        for status, code in ((400, "configuration"), (404, "configuration"), (401, "authorization"), (403, "authorization"), (429, "quota"), (500, "provider"), (302, "provider")):
             post.return_value.status_code = status
             with self.assertRaises(ProviderError) as error:
                 analyze(self.snapshot()["payload"])
@@ -332,10 +335,12 @@ class InsightTests(TestCase):
     def test_refusal_incomplete_non_json_and_malformed_output(self, post):
         response = self.mock_provider_response(post)
         cases = [
-            ({"status": "incomplete", "output": []}, "incomplete"),
-            ({"status": "failed"}, "provider"),
-            ({"status": "completed", "output": [{"type": "message", "role": "assistant", "content": [{"type": "refusal"}]}]}, "refused"),
-            ({"status": "completed", "output": []}, "invalid"),
+            ({"choices": [{"finish_reason": "length"}]}, "incomplete"),
+            ({"choices": [{"finish_reason": "tool_calls"}]}, "provider"),
+            ({"choices": [{"finish_reason": "content_filter"}]}, "refused"),
+            ({"choices": [{"finish_reason": "stop", "message": {"refusal": "Refused"}}]}, "refused"),
+            ({"choices": []}, "invalid"),
+            ({"choices": [{"finish_reason": "stop", "message": {"content": ""}}]}, "invalid"),
             ([], "invalid"),
         ]
         for value, code in cases:

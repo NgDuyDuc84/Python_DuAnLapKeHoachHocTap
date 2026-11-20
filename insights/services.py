@@ -31,7 +31,7 @@ def generate_report(user, snapshot, request_key):
             if InsightReport.objects.filter(owner=user, created_at__date=timezone.localdate(now)).count() >= 5:
                 raise InsightError("Bạn đã dùng 5 yêu cầu AI trong ngày. Có thể tiếp tục dùng phân tích Python.")
             report = InsightReport.objects.create(
-                owner=user, request_key=request_key, model_name=settings.OPENAI_MODEL,
+                owner=user, request_key=request_key, model_name=settings.GROQ_MODEL,
                 input_hash=fingerprint(snapshot), snapshot=snapshot,
             )
     except IntegrityError:
