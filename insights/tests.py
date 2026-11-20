@@ -314,9 +314,25 @@ class InsightTests(TestCase):
         self.assertEqual(kwargs["json"]["model"], "openai/gpt-oss-20b")
         self.assertEqual(kwargs["json"]["response_format"]["type"], "json_schema")
         self.assertTrue(kwargs["json"]["response_format"]["json_schema"]["strict"])
+        evidence = kwargs["json"]["response_format"]["json_schema"]["schema"]["properties"]["summary"]["properties"]["evidence"]
+        self.assertEqual(evidence["minItems"], 1)
+        self.assertEqual(set(evidence["items"]["enum"]), set(snapshot["payload"]["facts"]) | {row["ref"] for row in snapshot["payload"]["tasks"] + snapshot["payload"]["warnings"]})
         self.assertEqual(json.loads(kwargs["json"]["messages"][1]["content"]), snapshot["payload"])
         self.assertNotIn("PRIVATE-", json.dumps(kwargs["json"]))
         self.assertNotIn("tools", kwargs["json"])
+
+    @patch("insights.provider.requests.post")
+    def test_empty_data_request_requires_habit_and_evidence_and_forbids_invented_work(self, post):
+        self.task.delete()
+        snapshot = self.snapshot()
+        self.mock_provider_response(post, snapshot)
+        analyze(snapshot["payload"])
+        schema = post.call_args.kwargs["json"]["response_format"]["json_schema"]["schema"]["properties"]
+        self.assertEqual(schema["habits"]["minItems"], 1)
+        self.assertEqual(schema["summary"]["properties"]["evidence"]["minItems"], 1)
+        self.assertEqual(schema["allocation"]["maxItems"], 0)
+        self.assertEqual(schema["warnings"]["maxItems"], 0)
+        self.assertNotIn("V01", schema["summary"]["properties"]["evidence"]["items"]["enum"])
 
     @patch("insights.provider.requests.post")
     def test_api_http_errors_and_network_errors_are_sanitized(self, post):

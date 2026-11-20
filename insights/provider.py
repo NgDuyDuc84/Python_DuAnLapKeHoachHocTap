@@ -31,14 +31,19 @@ def configured():
     return bool(settings.GROQ_API_KEY.strip() and settings.GROQ_MODEL.strip())
 
 
-def output_schema():
+def output_schema(payload):
+    refs = sorted(set(payload["facts"]) | {row["ref"] for row in payload["tasks"] + payload["warnings"]})
     point = {"type": "object", "properties": {
-        "text": {"type": "string"},
-        "evidence": {"type": "array", "items": {"type": "string"}},
+        "text": {"type": "string", "minLength": 1, "maxLength": 1200},
+        "evidence": {"type": "array", "minItems": 1, "maxItems": 5,
+                     "items": {"type": "string", "enum": refs}},
     }, "required": ["text", "evidence"], "additionalProperties": False}
+    warnings_allowed = bool(payload["warnings"] or payload["facts"]["H05"]["unrecorded_sessions"])
     return {"type": "object", "properties": {
         "summary": point,
-        **{name: {"type": "array", "items": point} for name in ("habits", "allocation", "warnings")},
+        "habits": {"type": "array", "items": point, "minItems": 1, "maxItems": 5},
+        "allocation": {"type": "array", "items": point, "maxItems": 5 if payload["tasks"] else 0},
+        "warnings": {"type": "array", "items": point, "maxItems": 5 if warnings_allowed else 0},
     }, "required": ["summary", "habits", "allocation", "warnings"], "additionalProperties": False}
 
 
@@ -71,6 +76,8 @@ def analyze(payload):
         raise ProviderError("configuration")
     instructions = (
         "Bạn là trợ lý học tập. Trả lời tiếng Việt ngắn gọn trong schema đã cho. "
+        "summary là một object; habits, allocation và warnings luôn là các array. "
+        "habits phải có ít nhất một nhận xét, kể cả khi chỉ có thể nói chưa đủ nhật ký. "
         "Chỉ dùng số liệu và mã căn cứ trong JSON. Mỗi nhận xét phải có 1–5 evidence là mã H/L/V/C thực sự tồn tại. "
         "Tối đa 5 mục mỗi nhóm, mỗi text tối đa 1200 ký tự. Tóm tắt công việc; nhận xét thói quen từ nhật ký; "
         "gợi ý phân bổ dựa trên phương án Python; giải thích các cảnh báo đã có. Không tạo cảnh báo mới. "
@@ -92,7 +99,7 @@ def analyze(payload):
             "messages": [{"role": "system", "content": instructions},
                          {"role": "user", "content": json.dumps(payload, ensure_ascii=False)}],
             "response_format": {"type": "json_schema", "json_schema": {
-                "name": "study_insights", "strict": True, "schema": output_schema(),
+                "name": "study_insights", "strict": True, "schema": output_schema(payload),
             }},
         }, timeout=(5, 40), allow_redirects=False)
     except requests.RequestException:
