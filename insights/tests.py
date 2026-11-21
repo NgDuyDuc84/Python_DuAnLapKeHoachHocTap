@@ -369,11 +369,13 @@ class InsightTests(TestCase):
         self.assertEqual(kwargs["headers"]["Authorization"], "Bearer synthetic-test-key")
         self.assertNotIn("synthetic-test-key", args[0])
         self.assertEqual(kwargs["json"]["model"], "openai/gpt-oss-20b")
+        self.assertEqual(kwargs["json"]["temperature"], 0)
         self.assertEqual(kwargs["json"]["response_format"]["type"], "json_schema")
         self.assertTrue(kwargs["json"]["response_format"]["json_schema"]["strict"])
         evidence = kwargs["json"]["response_format"]["json_schema"]["schema"]["properties"]["summary"]["properties"]["evidence"]
         self.assertEqual(evidence["minItems"], 1)
         self.assertEqual(set(evidence["items"]["enum"]), set(snapshot["payload"]["facts"]) | {row["ref"] for row in snapshot["payload"]["tasks"] + snapshot["payload"]["warnings"]})
+        self.assertIn(", ".join(evidence["items"]["enum"]), kwargs["json"]["messages"][0]["content"])
         self.assertEqual(json.loads(kwargs["json"]["messages"][1]["content"]), snapshot["payload"])
         self.assertNotIn("PRIVATE-", json.dumps(kwargs["json"]))
         self.assertNotIn("tools", kwargs["json"])
