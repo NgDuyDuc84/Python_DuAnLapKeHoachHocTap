@@ -1,5 +1,8 @@
 import copy
 import json
+import os
+import subprocess
+import sys
 import uuid
 from datetime import datetime, timedelta, timezone as datetime_timezone
 from unittest.mock import patch
@@ -7,7 +10,7 @@ from unittest.mock import patch
 import requests
 from django.contrib.auth import get_user_model
 from django.core import signing
-from django.test import Client, TestCase, override_settings
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -36,6 +39,20 @@ def response_for(result, **fields):
         "role": "assistant", "content": json.dumps(result),
         "reasoning": "Internal reasoning is not an answer",
     }}], **fields}
+
+
+class GroqEnvironmentTests(SimpleTestCase):
+    def test_render_values_with_quotes_are_normalized(self):
+        for quote in ('"', "'"):
+            with self.subTest(quote=quote):
+                result = subprocess.run([sys.executable, "-c",
+                    "import json; from config import settings; "
+                    "print(json.dumps([settings.GROQ_API_KEY, settings.GROQ_MODEL]))"],
+                    env={**os.environ, "DJANGO_DEBUG": "true",
+                         "GROQ_API_KEY": f"  {quote}synthetic-test-key{quote}  ",
+                         "GROQ_MODEL": f"  {quote}openai/gpt-oss-20b{quote}  "},
+                    capture_output=True, text=True, check=True)
+                self.assertEqual(json.loads(result.stdout), ["synthetic-test-key", "openai/gpt-oss-20b"])
 
 
 @override_settings(GROQ_API_KEY="synthetic-test-key", GROQ_MODEL="openai/gpt-oss-20b")
@@ -253,11 +270,51 @@ class InsightTests(TestCase):
             generate_report(self.user, snapshot, uuid.uuid4())
         InsightReport.objects.filter(pk=report.pk).update(created_at=timezone.now() - timedelta(minutes=2))
         for i in range(4):
-            InsightReport.objects.create(owner=self.user, request_key=uuid.uuid4(), snapshot=snapshot, status="failed", model_name="test", input_hash="hash")
+            InsightReport.objects.create(owner=self.user, request_key=uuid.uuid4(), snapshot=snapshot, status="failed", error="network", model_name="test", input_hash="hash")
         InsightReport.objects.filter(owner=self.user).update(created_at=timezone.now() - timedelta(minutes=2))
         with self.assertRaisesMessage(InsightError, "5 yêu cầu"):
             generate_report(self.user, snapshot, uuid.uuid4())
         analyze_mock.assert_called_once()
+
+    @patch("insights.provider.analyze", side_effect=lambda payload: ai_result(payload))
+    def test_rejected_requests_do_not_use_daily_allowance_or_erase_history(self, analyze_mock):
+        snapshot = self.snapshot()
+        for code in ("configuration", "authorization", "request", "quota", "configuration"):
+            InsightReport.objects.create(owner=self.user, request_key=uuid.uuid4(), snapshot=snapshot,
+                status="failed", error=code, model_name="test", input_hash=fingerprint(snapshot))
+        InsightReport.objects.filter(owner=self.user).update(created_at=timezone.now() - timedelta(minutes=2))
+        response = self.post_analysis()
+        self.assertEqual(InsightReport.objects.filter(status="success").count(), 1)
+        self.assertEqual(InsightReport.objects.filter(status="failed").count(), 5)
+        self.assertEqual(response.status_code, 302)
+        analyze_mock.assert_called_once()
+
+    @patch("insights.provider.analyze", side_effect=ProviderError("configuration"))
+    def test_rejected_request_still_has_cooldown_and_explains_allowance(self, analyze_mock):
+        response = self.post_analysis()
+        self.assertContains(self.client.get(response.url), "không tính vào giới hạn 5 lần/ngày")
+        self.post_analysis()
+        analyze_mock.assert_called_once()
+
+    @patch("insights.provider.requests.post")
+    def test_bad_request_is_not_mislabeled_as_missing_credentials(self, post):
+        post.return_value.status_code = 400
+        post.return_value.json.return_value = {"error": {
+            "code": "invalid_request_error", "message": "PRIVATE_PROVIDER_BODY synthetic-test-key",
+        }}
+        with self.assertRaises(ProviderError) as error:
+            analyze(self.snapshot()["payload"])
+        self.assertEqual(error.exception.code, "request")
+        self.assertNotIn("PRIVATE_PROVIDER_BODY", str(error.exception))
+
+    @patch("insights.provider.requests.post")
+    def test_generation_failure_and_unavailable_model_have_distinct_errors(self, post):
+        post.return_value.status_code = 400
+        for code, expected in (("json_validate_failed", "invalid"), ("model_decommissioned", "configuration")):
+            post.return_value.json.return_value = {"error": {"code": code}}
+            with self.assertRaises(ProviderError) as error:
+                analyze(self.snapshot()["payload"])
+            self.assertEqual(error.exception.code, expected)
 
     @patch("insights.provider.analyze", side_effect=lambda payload: ai_result(payload))
     def test_running_request_blocks_then_stale_request_can_be_replaced(self, analyze_mock):
@@ -283,7 +340,7 @@ class InsightTests(TestCase):
         response = self.post_analysis()
         report = InsightReport.objects.get()
         self.assertEqual((report.status, report.error, report.result), ("failed", "network", {}))
-        self.client.get(response.url)
+        self.assertContains(self.client.get(response.url), "vẫn tính vào giới hạn 5 lần/ngày")
         self.preview()
         analyze_mock.assert_called_once()
 
@@ -336,7 +393,7 @@ class InsightTests(TestCase):
 
     @patch("insights.provider.requests.post")
     def test_api_http_errors_and_network_errors_are_sanitized(self, post):
-        for status, code in ((400, "configuration"), (404, "configuration"), (401, "authorization"), (403, "authorization"), (429, "quota"), (500, "provider"), (302, "provider")):
+        for status, code in ((400, "request"), (404, "configuration"), (401, "authorization"), (403, "authorization"), (429, "quota"), (500, "provider"), (302, "provider")):
             post.return_value.status_code = status
             with self.assertRaises(ProviderError) as error:
                 analyze(self.snapshot()["payload"])

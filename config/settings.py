@@ -141,5 +141,6 @@ GOOGLE_TOKEN_ENCRYPTION_KEY = os.getenv("GOOGLE_TOKEN_ENCRYPTION_KEY", "")
 GMAIL_REFRESH_TOKEN = os.getenv("GMAIL_REFRESH_TOKEN", "")
 
 # Optional AI analysis. All scheduling and statistics remain available without it.
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+# Render values pasted from dotenv files may retain surrounding quotes.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip().strip("\"'").strip()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b").strip().strip("\"'").strip()

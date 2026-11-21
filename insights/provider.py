@@ -1,12 +1,18 @@
 import json
+import logging
 
 import requests
 from django.conf import settings
 
 
+logger = logging.getLogger(__name__)
+NON_COUNTING_ERRORS = ("configuration", "authorization", "request", "quota")
+
+
 ERRORS = {
     "configuration": "Chưa cấu hình Groq API key hoặc model hợp lệ. Phân tích Python vẫn dùng được.",
     "authorization": "API key hoặc quyền truy cập model chưa hợp lệ. Người quản trị cần kiểm tra cấu hình.",
+    "request": "Groq từ chối định dạng yêu cầu phân tích. Người quản trị cần kiểm tra model và cấu hình AI.",
     "quota": "Nhà cung cấp đang giới hạn yêu cầu hoặc tài khoản API chưa đủ hạn mức.",
     "network": "Chưa nhận được phản hồi từ Groq. Không tự gọi lại; bạn có thể thử bằng bản xem trước mới.",
     "provider": "Groq chưa xử lý được yêu cầu. Hãy thử lại sau.",
@@ -106,7 +112,19 @@ def analyze(payload):
         raise ProviderError("network") from None
     if response.status_code in (401, 403):
         raise ProviderError("authorization")
-    if response.status_code in (400, 404):
+    if response.status_code == 400:
+        try:
+            code = response.json().get("error", {}).get("code")
+        except (ValueError, AttributeError, TypeError):
+            code = None
+        error = "request"
+        if code == "json_validate_failed":
+            error = "invalid"
+        elif code in ("model_not_found", "model_decommissioned"):
+            error = "configuration"
+        logger.warning("Groq insight request rejected: HTTP 400, category=%s", error)
+        raise ProviderError(error)
+    if response.status_code == 404:
         raise ProviderError("configuration")
     if response.status_code == 429:
         raise ProviderError("quota")

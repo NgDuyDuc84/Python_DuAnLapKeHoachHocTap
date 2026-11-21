@@ -11,7 +11,7 @@
     <span class="badge">Python tính số liệu · AI diễn giải</span>
     <h2>Thêm một góc nhìn từ AI</h2>
     <p>AI nhận xét thói quen, tóm tắt việc, gợi ý phân bổ và giải thích cảnh báo dựa trên bản dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }}. Dữ liệu gửi dùng mã việc/môn; không gửi tên, tài khoản, ghi chú hay liên kết tài liệu.</p>
-    <p>Chỉ gửi khi bạn xác nhận. Tối đa 5 yêu cầu/ngày, cách nhau ít nhất 60 giây. Kết quả chỉ để tham khảo; muốn đổi lịch, hãy xem trước phương án và áp dụng trong Lịch tuần.</p>
+    <p>Chỉ gửi khi bạn xác nhận. Tối đa 5 yêu cầu/ngày, cách nhau ít nhất 60 giây. Yêu cầu bị từ chối do cấu hình, xác thực hoặc giới hạn của nhà cung cấp không trừ lượt ngày. Kết quả chỉ để tham khảo; muốn đổi lịch, hãy xem trước phương án và áp dụng trong Lịch tuần.</p>
     <details class="insight-data"><summary>Xem chính xác dữ liệu sẽ gửi đến Groq</summary><pre>{{ payload_json }}</pre></details>
     {% if configured %}
         <form class="study-form" method="post" action="{% url 'insights:generate' %}">

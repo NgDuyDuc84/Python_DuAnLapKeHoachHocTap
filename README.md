@@ -48,6 +48,8 @@ Gom các khóa và tùy chọn tích hợp thực tế vào một file riêng `.
 
 Tất cả API key, OAuth secret, refresh token và khóa mã hóa phải nằm trong Render Environment hoặc file `.env.*` được Git bỏ qua. Không đưa vào mã nguồn, ảnh báo cáo hoặc log. Kiểm tra trạng thái Google Cloud trước khi chia sẻ bản demo cho tài khoản ngoài danh sách thử nghiệm.
 
+Nếu AI bị chặn sau các lần thử cấu hình: lỗi cấu hình/model, xác thực, yêu cầu bị từ chối và HTTP 429 không trừ giới hạn 5 lượt/ngày. Quy tắc này áp dụng cả lịch sử lỗi cũ ngay sau khi triển khai bản sửa, không cần xóa báo cáo hay dữ liệu học tập. Lỗi mạng hoặc lỗi sau khi sinh nội dung vẫn tính lượt vì nhà cung cấp có thể đã xử lý; mọi lần gửi vẫn cách nhau ít nhất 60 giây. Trên Render, ô Value của `GROQ_MODEL` là `openai/gpt-oss-20b`; chỉ đặt key thật trong Environment, không sửa `.env.example`. Đổi Environment cần khởi động/triển khai lại dịch vụ; sửa mã cần đẩy commit và Manual Deploy vì auto-deploy đang tắt.
+
 Tài liệu: [Groq Free Plan](https://console.groq.com/docs/rate-limits), [Groq Structured Outputs](https://console.groq.com/docs/structured-outputs), [Google Calendar OAuth](https://developers.google.com/workspace/calendar/api/auth), [Gmail gửi qua API](https://developers.google.com/workspace/gmail/api/guides/sending), [OAuth refresh token](https://developers.google.com/identity/protocols/oauth2#expiration), [giới hạn Render Free](https://render.com/docs/free).
 
 ## Demo cho giảng viên

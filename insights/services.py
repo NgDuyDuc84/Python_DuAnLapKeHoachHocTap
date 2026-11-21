@@ -8,7 +8,7 @@ from django.utils import timezone
 from . import provider
 from .data import fingerprint
 from .models import InsightReport
-from .provider import InsightError, ProviderError
+from .provider import NON_COUNTING_ERRORS, InsightError, ProviderError
 
 
 def generate_report(user, snapshot, request_key):
@@ -28,7 +28,9 @@ def generate_report(user, snapshot, request_key):
                 raise ProviderError("configuration")
             if InsightReport.objects.filter(owner=user, created_at__gte=now - timedelta(seconds=60)).exists():
                 raise InsightError("Vui lòng chờ đủ 60 giây giữa hai yêu cầu AI.")
-            if InsightReport.objects.filter(owner=user, created_at__date=timezone.localdate(now)).count() >= 5:
+            if InsightReport.objects.filter(owner=user, created_at__date=timezone.localdate(now)).exclude(
+                status="failed", error__in=NON_COUNTING_ERRORS,
+            ).count() >= 5:
                 raise InsightError("Bạn đã dùng 5 yêu cầu AI trong ngày. Có thể tiếp tục dùng phân tích Python.")
             report = InsightReport.objects.create(
                 owner=user, request_key=request_key, model_name=settings.GROQ_MODEL,

@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 from .data import baseline_report, build_snapshot, fingerprint
 from .forms import AnalyzeForm
 from .models import InsightReport
-from .provider import ERRORS, InsightError, configured
+from .provider import ERRORS, NON_COUNTING_ERRORS, InsightError, configured
 from .services import generate_report
 
 
@@ -97,6 +97,7 @@ def report_detail(request, pk):
     changed = fingerprint(build_snapshot(request.user, now=as_of)) != report.input_hash
     return render(request, "insights/report.html", {
         "report": report, "as_of": as_of, "changed": changed, "error": ERRORS.get(report.error, ""),
+        "counts_toward_limit": report.error not in NON_COUNTING_ERRORS,
         "sections": sections(report.result, report.snapshot["labels"]) if report.status == "success" else [],
         "payload_json": json.dumps(report.snapshot["payload"], ensure_ascii=False, indent=2),
     })
