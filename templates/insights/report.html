@@ -7,7 +7,7 @@
     {% if report.status == 'running' %}<p>Yêu cầu đang xử lý. Tải lại kết quả hoặc kiểm tra lịch sử sau. Nếu bị gián đoạn quá 5 phút, có thể tạo yêu cầu mới; API không được tự gọi lại.</p>{% endif %}
     {% if error %}<p class="insight-notice">{{ error }}</p>{% if counts_toward_limit %}<p>Yêu cầu này vẫn tính vào giới hạn 5 lần/ngày vì đã xử lý hoặc chưa xác nhận được trạng thái. Với lỗi mạng, hãy kiểm tra mức sử dụng API trước khi thử lại.</p>{% else %}<p>Yêu cầu bị từ chối này không tính vào giới hạn 5 lần/ngày. Sau khi khắc phục lỗi, hãy xem dữ liệu hiện tại và gửi yêu cầu mới; vẫn cần chờ đủ 60 giây giữa hai lần gửi.</p>{% endif %}{% endif %}
     {% if changed %}<p class="insight-notice">Dữ liệu đã thay đổi so với bản phân tích này. Xem dữ liệu hiện tại trước khi đưa ra quyết định.</p>{% endif %}
-    <p>AI có thể diễn giải sai dù mã căn cứ hợp lệ. Đối chiếu số liệu trong web; các gợi ý chưa được áp dụng vào lịch hoặc tiến độ.</p>
+    {% if report.status == 'success' %}<p class="insight-muted">Kết quả chỉ để tham khảo; muốn đổi lịch, hãy xem trước và áp dụng trong <a class="text-link" href="{% url 'planner:week' %}">Lịch tuần</a>.</p>{% endif %}
     <div class="form-actions"><a class="button" href="{% url 'insights:home' %}">Xem dữ liệu hiện tại</a><a class="text-link" href="{% url 'planner:plan_generate' %}">Xem trước kế hoạch</a>{% if report.status == 'running' %}<a class="text-link" href="{% url 'insights:report' report.pk %}">Tải lại kết quả</a>{% endif %}</div>
 </section>
 {% include 'insights/sections.html' %}

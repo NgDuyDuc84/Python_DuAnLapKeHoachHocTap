@@ -3,7 +3,6 @@ import uuid
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.conf import settings
 from django.core import signing
 from django.db import OperationalError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -41,13 +40,17 @@ def home_context(user, *, form=None):
         form.data = form.data.copy()
         form.data["preview"] = token
     tasks = [{**row, "title": snapshot["labels"][row["ref"]]} for row in payload["tasks"]]
+    reports = InsightReport.objects.filter(owner=user)
+    used_today = reports.filter(created_at__date=timezone.localdate()).exclude(
+        status="failed", error__in=NON_COUNTING_ERRORS,
+    ).count()
     return {
         "snapshot": snapshot, "totals": payload["facts"]["H01"], "tasks": tasks,
-        "as_of": parse_datetime(payload["as_of"]), "payload_json": json.dumps(payload, ensure_ascii=False, indent=2),
+        "payload_json": json.dumps(payload, ensure_ascii=False, indent=2),
         "sections": sections(baseline_report(snapshot), snapshot["labels"]),
         "form": form if form is not None else AnalyzeForm(initial={"preview": token}),
-        "configured": configured(), "model_name": settings.GROQ_MODEL,
-        "reports": InsightReport.objects.filter(owner=user)[:10],
+        "configured": configured(), "remaining_requests": max(0, 5 - used_today),
+        "reports": reports[:10],
     }
 
 

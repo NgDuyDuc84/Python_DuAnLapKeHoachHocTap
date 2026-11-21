@@ -10,14 +10,14 @@
 <section class="study-card insight-action">
     <span class="badge">Python tính số liệu · AI diễn giải</span>
     <h2>Thêm một góc nhìn từ AI</h2>
-    <p>AI nhận xét thói quen, tóm tắt việc, gợi ý phân bổ và giải thích cảnh báo dựa trên bản dữ liệu lúc {{ as_of|date:'d/m/Y H:i:s' }}. Dữ liệu gửi dùng mã việc/môn; không gửi tên, tài khoản, ghi chú hay liên kết tài liệu.</p>
-    <p>Chỉ gửi khi bạn xác nhận. Tối đa 5 yêu cầu/ngày, cách nhau ít nhất 60 giây. Yêu cầu bị từ chối do cấu hình, xác thực hoặc giới hạn của nhà cung cấp không trừ lượt ngày. Kết quả chỉ để tham khảo; muốn đổi lịch, hãy xem trước phương án và áp dụng trong Lịch tuần.</p>
-    <details class="insight-data"><summary>Xem chính xác dữ liệu sẽ gửi đến Groq</summary><pre>{{ payload_json }}</pre></details>
+    <p>AI nhận xét thói quen học và gợi ý phân bổ dựa trên dữ liệu hiện tại.</p>
+    <p class="insight-privacy">Chỉ gửi mã việc/môn, không gửi tên, tài khoản hay ghi chú.</p>
+    <details class="insight-data"><summary>Xem chính xác dữ liệu sẽ gửi</summary><pre>{{ payload_json }}</pre></details>
     {% if configured %}
         <form class="study-form" method="post" action="{% url 'insights:generate' %}">
             {% csrf_token %}{{ form.non_field_errors }}{{ form.preview }}{{ form.preview.errors }}
             <div>{{ form.consent.errors }}<label class="insight-consent">{{ form.consent }}<span>{{ form.consent.label }}</span></label></div>
-            <div class="form-actions"><button class="button" type="submit">Yêu cầu AI phân tích</button><span class="insight-muted">Model: {{ model_name }} · Có thể mất vài chục giây</span></div>
+            <div class="form-actions"><button class="button" type="submit">Yêu cầu AI phân tích</button><span class="insight-muted">Còn {{ remaining_requests }}/5 lượt hôm nay</span></div>
         </form>
     {% else %}
         {% if navigation.show_technical_details %}<p class="insight-notice">Chưa cấu hình Groq API key/model. Bạn vẫn xem được phân tích Python bên dưới. Người quản trị cấu hình theo README.md và .env.example.</p>{% else %}<p class="insight-notice">AI hỗ trợ hiện chưa khả dụng. Bạn vẫn có thể xem phân tích học tập bên dưới.</p>{% endif %}

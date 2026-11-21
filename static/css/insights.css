@@ -8,6 +8,9 @@
 .insight-metrics span, .insight-muted { color: var(--muted); font-size: 14px; }
 .insight-action { border-left: 4px solid var(--accent); }
 .insight-action h2 { margin-top: 14px; }
+.insight-action .insight-privacy { margin-bottom: 6px; }
+.insight-action .insight-data { margin-top: 0; }
+.page:not(.calendar-container) .insight-action .study-form { gap: 12px; }
 .insight-notice { padding: 16px; border-left: 3px solid var(--amber); border-radius: var(--r-sm); background: var(--amber-soft); }
 .insight-data { margin: 20px 0; }
 .insight-data summary { cursor: pointer; color: var(--accent); font-weight: 600; }

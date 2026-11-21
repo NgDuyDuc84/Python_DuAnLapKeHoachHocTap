@@ -122,6 +122,29 @@ class InsightTests(TestCase):
         self.assertEqual(signed["hash"], fingerprint(response.context["snapshot"]))
         post.assert_not_called()
 
+    def test_remaining_allowance_uses_local_day_owner_and_counting_errors(self):
+        now = timezone.make_aware(datetime(2026, 11, 17, 0, 30))
+        with patch("insights.views.timezone.now", return_value=now):
+            self.assertContains(self.preview(), "Còn 5/5 lượt hôm nay")
+            for status, error, owner, created_at in (
+                ("success", "", self.user, now),
+                ("failed", "network", self.user, now),
+                ("failed", "configuration", self.user, now),
+                ("failed", "authorization", self.user, now),
+                ("failed", "request", self.user, now),
+                ("failed", "quota", self.user, now),
+                ("success", "", self.other, now),
+                ("success", "", self.user, now - timedelta(hours=1)),
+            ):
+                report = InsightReport.objects.create(owner=owner, request_key=uuid.uuid4(),
+                    snapshot={}, status=status, error=error, model_name="test", input_hash="hash")
+                InsightReport.objects.filter(pk=report.pk).update(created_at=created_at)
+            self.assertContains(self.preview(), "Còn 3/5 lượt hôm nay")
+            for i in range(4):
+                InsightReport.objects.create(owner=self.user, request_key=uuid.uuid4(),
+                    snapshot={}, status="failed", error="network", model_name="test", input_hash="hash")
+            self.assertContains(self.preview(), "Còn 0/5 lượt hôm nay")
+
     def test_fourteen_day_window_and_seven_day_comparison_use_zeros(self):
         self.log(self.today - timedelta(days=14), 999)
         self.log(self.today - timedelta(days=13), 40)
@@ -255,7 +278,11 @@ class InsightTests(TestCase):
     def test_successful_analysis_does_not_apply_schedule_or_change_progress(self, analyze_mock):
         session = self.session()
         before = (StudyPlan.objects.count(), StudySession.objects.count())
-        generate_report(self.user, self.snapshot(), uuid.uuid4())
+        report = generate_report(self.user, self.snapshot(), uuid.uuid4())
+        response = self.client.get(reverse("insights:report", args=[report.pk]))
+        self.assertContains(response, "Kết quả chỉ để tham khảo")
+        self.assertContains(response, f'<a class="text-link" href="{reverse("planner:week")}">Lịch tuần</a>', html=True)
+        self.assertNotContains(self.preview(), "Kết quả chỉ để tham khảo")
         self.task.refresh_from_db()
         session.refresh_from_db()
         self.assertEqual(self.task.remaining_minutes, 150)
