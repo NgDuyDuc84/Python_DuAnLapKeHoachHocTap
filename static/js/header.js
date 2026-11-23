@@ -4,6 +4,13 @@
     const desktop = window.matchMedia("(min-width: 800px)");
     const collapsible = (menu) => menu !== navigation || !desktop.matches;
     const close = (menu) => { if (collapsible(menu)) menu.open = false; };
+    const backlog = document.querySelector(".week-backlog");
+    if (backlog) {
+        const wideCalendar = window.matchMedia("(min-width: 1100px)");
+        const resizeBacklog = () => { backlog.open = wideCalendar.matches; };
+        wideCalendar.addEventListener("change", resizeBacklog);
+        resizeBacklog();
+    }
     if (navigation) {
         const resize = () => { navigation.open = desktop.matches; };
         desktop.addEventListener("change", resize);

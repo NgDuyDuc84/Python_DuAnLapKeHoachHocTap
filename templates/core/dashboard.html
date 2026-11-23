@@ -56,24 +56,13 @@
         <a{% if overdue_count %} class="metric-overdue"{% endif %} href="{% url 'studies:task_list' %}?status=overdue"><span>Quá hạn</span><strong>{{ overdue_count }}</strong> việc</a>
     </nav>
         <section class="dashboard-panel" aria-labelledby="sessions-title">
-            <div class="panel-heading"><h2 id="sessions-title">Hôm nay & sắp tới</h2><a href="{% url 'planner:week' %}">Xem lịch →</a></div>
-            {% for group in session_groups %}
-            <section class="session-day" aria-label="{{ group.label }} {{ group.date|date:'d/m/Y' }}">
-                <h3>{{ group.label }} <time datetime="{{ group.date|date:'Y-m-d' }}">{{ group.date|date:"d/m" }}</time></h3>
-                <ul class="dashboard-session-list">
-                    {% for row in group.rows %}
-                    <li>
-                        <time class="session-time" datetime="{{ row.session.starts_at|date:'c' }}">{{ row.session.starts_at|date:"H:i" }}–{{ row.session.ends_at|date:"H:i" }}</time>
-                        <span class="subject-dot" style="--subject-color: {{ row.session.task.subject.color|default:'var(--muted)' }}" aria-hidden="true"></span>
-                        <div class="session-description"><strong>{{ row.session.task.title }}</strong><span>{{ row.session.task.subject.name|default:"Chưa gắn môn" }}</span></div>
-                        {% if row.action %}{% include "components/dashboard_button.html" with button=row.action secondary=True %}{% else %}<span class="recorded-badge">Đã ghi nhận</span>{% endif %}
-                    </li>
-                    {% empty %}
-                    <li class="session-empty"><span>Chưa có buổi học nào hôm nay.</span><a class="dashboard-button dashboard-button-secondary" href="{% url 'planner:plan_generate' %}">Xếp việc vào lịch</a></li>
-                    {% endfor %}
-                </ul>
-            </section>
-            {% endfor %}
+            <div class="panel-heading"><h2 id="sessions-title">Hôm nay · {{ today|date:"d/m" }}</h2><a href="{% url 'planner:week' %}">Xem lịch →</a></div>
+            {% include "core/dashboard_session_day.html" with group=session_groups.0 show_day=False %}
+            {% if session_groups|length > 1 %}
+            <details class="upcoming-days"><summary>Buổi học sắp tới</summary>
+                {% for group in session_groups|slice:"1:" %}{% include "core/dashboard_session_day.html" with show_day=True %}{% endfor %}
+            </details>
+            {% endif %}
         </section>
         <section class="dashboard-panel tasks-panel" aria-labelledby="tasks-title">
             <div class="panel-heading"><h2 id="tasks-title">Việc cần chú ý</h2><a href="{% url 'planner:alerts' %}">Xem tất cả →</a></div>

@@ -11,7 +11,7 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .page.page--auth .page-header h1 { font-size: 30px; }
 .page-header .heading-date { display: inline-block; margin-left: 8px; font: 600 20px/1.5 var(--font-ui); letter-spacing: -.3px; color: var(--muted); }
 .page:not(.calendar-container) .section-tabs { margin: 0 0 var(--section-gap); }
-.page:not(.calendar-container) :is(.study-card, .study-form-card, .auth-card, .dashboard-panel, .dashboard-week, .dashboard-onboarding) { padding: var(--card-pad); }
+.page:not(.calendar-container) :is(.study-card, .study-form-card, .auth-card, .dashboard-panel:not(.tasks-panel), .dashboard-week, .dashboard-onboarding) { padding: var(--card-pad); }
 .split { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--section-gap); align-items: start; }
 .split > * { min-width: 0; }
 .split > aside { position: sticky; top: calc(var(--header-h) + 16px); }
@@ -21,7 +21,7 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .content-stack > :last-child { margin-bottom: 0; }
 .split :is(.focus-heading, .calendar-note, .notification-note) { margin-top: 0; }
 .split .calendar-note { padding: 0; background: transparent; }
-.split aside h2 { margin: 0 0 16px; font-size: 22px; }
+.split aside h2 { margin: 0 0 16px; font-size: 15px; }
 .split aside :is(p, li) { font-size: 14px; }
 .split aside p:last-child { margin-bottom: 0; }
 .split aside .study-list { gap: 0; }
@@ -40,7 +40,7 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .page:not(.calendar-container) .split .focus-heading { margin-top: 0; }
 .page:not(.calendar-container) :is(.insight-sections, .insight-metrics, .stat-cards) { gap: var(--section-gap); align-items: stretch; }
 .record-list { display: grid; gap: 0; width: 100%; }
-.record-list > .study-card { border-radius: 0; box-shadow: none; border-bottom: 0; min-height: 104px; }
+.record-list > .study-card { border-radius: 0; box-shadow: none; border-bottom: 0; min-height: 0; }
 .record-list > .study-card:first-child { border-radius: var(--r-lg) var(--r-lg) 0 0; }
 .record-list > .study-card:last-child { border-radius: 0 0 var(--r-lg) var(--r-lg); border-bottom: 1px solid var(--line); }
 .record-list > .study-card:only-child { border-radius: var(--r-lg); }
@@ -53,16 +53,17 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .page:not(.calendar-container) .sync-history li { display: grid; grid-template-columns: minmax(0, 1fr) 180px 130px; align-items: center; gap: 16px; min-height: 64px; }
 .study-grid { align-items: stretch; gap: var(--section-gap); }
 .study-grid > .study-card { display: flex; flex-direction: column; }
-.study-grid .card-actions { margin-top: auto; padding-top: 20px; }
+.study-grid .card-actions { margin-top: auto; padding-top: 10px; }
 @media (min-width: 1024px) { .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1100px) { .subject-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (720px <= width < 1100px) { .subject-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (width < 1024px) {
+@media (width < 1100px) {
     .split { grid-template-columns: minmax(0, 1fr); }
     .split > aside { position: static; }
 }
 @media (width < 768px) {
-    .page:not(.calendar-container) { padding-block: 28px 40px; }
+    .page:not(.calendar-container) { padding-block: 18px 32px; }
+    .page:not(.calendar-container) .page-header { align-items: start; gap: 8px; }
     .record-list { gap: 12px; }
     .record-list > .study-card { border: 1px solid var(--line); border-radius: var(--r-lg); }
     .record-row { grid-template-columns: minmax(0, 1fr); gap: 12px; }

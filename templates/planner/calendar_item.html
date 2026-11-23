@@ -5,7 +5,7 @@
 <a class="timeline-event event-{{ item.kind }}" href="{{ target }}{% if item.kind == 'deadline' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=edit&amp;id={{ item.task.pk }}#hoc-tap{% endif %}"
    style="--minute: {{ item.minute }}; --duration: {{ item.duration }}; --lane: {{ item.lane }}; --lanes: {{ item.lanes }}; --subject-color: {{ item.session.task.subject.color|default:'#1F6B54' }}"
    title="{{ title }} · {{ item.start_label }}{% if item.end_label %}–{{ item.end_label }}{% endif %}">
-    <strong>{{ title }}</strong>
     <span>{{ item.start_label }}{% if item.end_label %}–{{ item.end_label }}{% endif %}</span>
+    <strong>{{ title }}</strong>
     <small>{% if item.kind == 'draft' %}Gợi ý xếp lịch{% elif item.kind == 'study' %}{{ item.session.get_status_display }}{% if item.session.is_locked %} · Đã khóa{% endif %}{% if item.session.is_manual %} · Chỉnh tay{% endif %}{% elif item.kind == 'busy' %}Lịch bận{% if item.event.repeat_weekly %} · lặp{% endif %}{% elif item.task.status == 'done' %}Đã hoàn thành{% else %}Hạn hoàn thành{% endif %}</small>
 </a>

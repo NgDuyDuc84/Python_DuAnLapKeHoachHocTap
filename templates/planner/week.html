@@ -26,7 +26,8 @@
         <a class="text-link editor-close" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}">← Đóng bảng học tập</a>
         {% include "planner/study_sidebar.html" %}
         {% else %}
-        <h2>Việc chưa xếp lịch <span>· {{ unscheduled_tasks|length }}</span></h2>
+        <details class="week-backlog" open>
+        <summary>Việc chưa xếp lịch <span>· {{ unscheduled_tasks|length }}</span></summary>
         <div class="backlog-list">
         {% for task in unscheduled_tasks %}
         <a class="backlog-task" href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=edit&amp;id={{ task.pk }}#hoc-tap">
@@ -36,6 +37,7 @@
         </a>
         {% empty %}<p class="backlog-empty">Không có việc nào chờ xếp lịch.</p>{% endfor %}
         </div>
+        </details>
         <details class="rail-tools"><summary>Quản lý lịch và học tập</summary>
             <a href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=new#hoc-tap">+ Thêm công việc</a>
             <a href="{% url 'planner:busy_create' %}">+ Thêm lịch bận</a>

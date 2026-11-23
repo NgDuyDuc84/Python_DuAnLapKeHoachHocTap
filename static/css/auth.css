@@ -3,7 +3,7 @@
 .auth-page { display: flex; flex-direction: column; min-height: 100svh; }
 .auth-page .header-inner { width: 100%; max-width: var(--page-w); padding-inline: var(--gutter); }
 .page.page--auth-split { display: flex; flex-direction: column; justify-content: center; flex: 1; padding-block: 48px; }
-.auth-split { display: grid; grid-template-columns: minmax(0, 1fr) var(--auth-w); align-items: center; gap: 96px; }
+.auth-split { display: grid; grid-template-columns: minmax(0, 1fr) var(--auth-w); align-items: center; gap: 48px; }
 .auth-split--register { grid-template-columns: var(--auth-w) minmax(0, 1fr); }
 .auth-info { position: relative; align-self: stretch; min-width: 0; view-transition-name: auth-info; }
 .auth-info-inner { position: absolute; inset: 24px 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
@@ -11,14 +11,14 @@
 .auth-tagline span { color: var(--pine); }
 .auth-illustration { display: block; flex: 1; min-height: 0; width: 100%; max-width: 340px; height: 0; max-height: 360px; object-fit: contain; transform: rotate(15deg); }
 .auth-split--register .auth-illustration { transform: rotate(-15deg); }
-.auth-panel { min-width: 0; padding: 38px; border: 1px solid var(--line); border-radius: 28px; background: var(--surface); box-shadow: var(--sh-lg); view-transition-name: auth-form; }
+.auth-panel { min-width: 0; padding: 28px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--sh-lg); view-transition-name: auth-form; }
 .auth-split--register .auth-info { grid-column: 2; grid-row: 1; }
 .auth-split--register .auth-panel { grid-column: 1; grid-row: 1; }
 .auth-panel h1 { margin: 0; font-size: 32px; line-height: 1.3; letter-spacing: -.8px; }
-.auth-subtitle { margin: 8px 0 28px; color: var(--muted); font-size: 14px; }
+.auth-subtitle { margin: 8px 0 18px; color: var(--muted); font-size: 14px; }
 .page.page--auth-split .account-form { gap: 18px; }
 .page.page--auth-split .form-field input { height: 50px; border-radius: 12px; }
-.page.page--auth-split .form-field input:focus { border-color: var(--pine); box-shadow: var(--ring); }
+.page.page--auth-split .form-field input:focus { border-color: var(--pine); outline: 2px solid var(--pine); }
 .page.page--auth-split .form-field input[aria-invalid="true"] { border-color: var(--coral-ink); }
 .page.page--auth-split .button { min-height: 50px; border-radius: 12px; }
 .auth-footer { padding: 18px var(--gutter); color: var(--muted); font-size: 13px; text-align: center; }

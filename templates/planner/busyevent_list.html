@@ -1,7 +1,7 @@
 {% extends "planner/base.html" %}
 
 {% block planner_content %}
-<div class="study-list">
+<div class="study-list record-list">
     {% for event in object_list %}
         <article class="study-card">
             <h2>{{ event.title }}</h2>

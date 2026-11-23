@@ -3,15 +3,14 @@
 .insight-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
 .insight-metrics .study-card { padding: 20px; }
 .insight-metrics p { margin-top: 0; font-size: 14px; color: var(--muted); }
-.insight-metrics strong { display: block; color: var(--accent); font-size: 34px; }
+.insight-metrics strong { display: block; color: var(--accent); font-size: 26px; }
 .insight-metrics small { font-size: 18px; color: var(--muted); }
 .insight-metrics span, .insight-muted { color: var(--muted); font-size: 14px; }
-.insight-action { border-left: 4px solid var(--accent); }
 .insight-action h2 { margin-top: 14px; }
 .insight-action .insight-privacy { margin-bottom: 6px; }
 .insight-action .insight-data { margin-top: 0; }
 .page:not(.calendar-container) .insight-action .study-form { gap: 12px; }
-.insight-notice { padding: 16px; border-left: 3px solid var(--amber); border-radius: var(--r-sm); background: var(--amber-soft); }
+.insight-notice { padding: 16px; border: 1px solid var(--amber-line); border-radius: var(--r-sm); background: var(--amber-soft); }
 .insight-data { margin: 20px 0; }
 .insight-data summary { cursor: pointer; color: var(--accent); font-weight: 600; }
 .insight-data pre { max-height: 420px; overflow: auto; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }

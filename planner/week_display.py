@@ -18,9 +18,7 @@ def position_items(days):
             start = item["starts_at"].hour * 60 + item["starts_at"].minute
             end = item.get("ends_at")
             duration = int((end - item["starts_at"]).total_seconds() / 60) if end else 30
-            # Reserve enough space for a short, selectable label at the edge of the day.
-            height = min(1440, max(25, duration))
-            start = min(start, 1440 - height)
+            height = min(1440 - start, max(1, duration))
             finish = start + height
             if lanes and start >= max(lanes):
                 for member in group:

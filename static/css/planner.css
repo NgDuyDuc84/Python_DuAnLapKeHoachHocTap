@@ -9,16 +9,16 @@
 .study-days > div { display: flex; flex-wrap: wrap; gap: 12px 20px; }
 .study-days label { display: flex; align-items: center; gap: 8px; font-weight: 400; }
 .study-days input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
-.plan-section-title { margin-top: 36px; font-size: 21px; }
+.plan-section-title { margin-top: 16px; font-size: 15px; }
 .plan-muted { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .plan-sessions, .plan-reports { display: grid; gap: 12px; }
 .plan-session { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 18px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); overflow-wrap: anywhere; }
 .plan-session-time { display: grid; gap: 4px; font-size: 13px; color: var(--accent); }
 .plan-session-time strong { font-size: 17px; }
-.plan-report { padding: 18px; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r-sm); background: var(--surface); overflow-wrap: anywhere; }
+.plan-report { padding: 18px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); overflow-wrap: anywhere; }
 .plan-report h3 { margin: 0 0 10px; font-size: 17px; }
 .plan-report p { margin: 6px 0; font-size: 13px; }
-.plan-shortfall { border-left-color: var(--amber); background: var(--surface); }
+.plan-shortfall { background: var(--surface); }
 .session-cancelled { background: var(--surface); color: var(--muted); }
 .session-link { border: 0; padding: 0; background: transparent; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
 .plan-report li { margin: 6px 0; font-size: 13px; }
@@ -57,10 +57,11 @@
 .sidebar-editor .form-actions { gap: 14px; }
 .sidebar-editor .button { padding: 10px 14px; gap: 10px; font-size: 13px; }
 .calendar-container .study-shell { margin: 0; }
-.calendar-workspace { display: grid; grid-template-columns: 280px minmax(0,1fr); height: calc(100dvh - var(--header-h)); }
+.calendar-workspace { display: grid; grid-template-columns: 280px minmax(0,1fr); flex: 1; min-height: 0; }
 .week-rail { display: flex; flex-direction: column; gap: 12px; min-width: 0; overflow: auto; padding: 18px 14px; background: var(--bg-sunk); border-right: 1px solid var(--line); }
-.week-rail h2 { margin: 0; font-size: 15px; }
-.week-rail h2 span, .backlog-task span, .backlog-task small, .backlog-empty { color: var(--muted); }
+.week-backlog summary { font-weight: 600; font-size: 15px; cursor: pointer; }
+.week-backlog[open] summary { margin-bottom: 12px; }
+.week-backlog summary span, .backlog-task span, .backlog-task small, .backlog-empty { color: var(--muted); }
 .backlog-list { display: grid; gap: 8px; }
 .backlog-task { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow-wrap: anywhere; }
 .backlog-task strong { font-size: 13px; line-height: 1.4; }
@@ -117,7 +118,22 @@
     .week-controls { gap: 4px; }
     .week-controls .button { padding-inline: 8px; }
     .week-picker { right: auto; left: 0; }
-    .calendar-workspace { height: calc(100dvh - 106px); }
-    .week-rail { max-height: 26%; }
+
+    .week-rail { max-height: 36%; }
 }
 @media (max-width: 640px) { .plan-session { grid-template-columns: 1fr; } }
+
+.workspace:has(.calendar-container) { height: 100dvh; min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+.workspace .calendar-container, .calendar-container .study-shell { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.week-rail > * { flex: none; }
+.timeline-event strong { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.timeline-event span { font-size: 10px; }
+.timeline-event:hover strong, .timeline-event:focus-visible strong { -webkit-line-clamp: unset; }
+@media (width < 800px) {
+    .workspace:has(.calendar-container) { display: grid; grid-template-columns: minmax(0, 1fr); }
+    .workspace:has(.calendar-container) > :is(.site-header,.page) { grid-column: 1; }
+    .week-backlog summary { min-height: 44px; align-content: center; }
+    .week-rail { gap: 3px; }
+    .week-rail .rail-tools { padding: 0; }
+    .rail-tools summary { align-content: center; }
+}

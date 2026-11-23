@@ -2,9 +2,9 @@ h1, h2, h3 { color: var(--ink); font-family: var(--font-display); }
 time, table, input[type="number"] { font-variant-numeric: tabular-nums; }
 .header-menu-link[aria-current="page"] { color: var(--pine-hover); background: var(--pine-soft); font-weight: 650; }
 .page:not(.calendar-container) .section-tabs { padding-bottom: 0; border: 0; gap: 8px; }
-.page:not(.calendar-container) .section-tabs a { border-radius: 12px; padding: 9px 16px; }
+.page:not(.calendar-container) .section-tabs a { border-radius: 8px; padding: 7px 12px; }
 .section-tabs a[aria-current="page"] { background: var(--pine-soft); color: var(--pine-hover); }
-.page:not(.calendar-container) :is(.button, .dashboard-button) { justify-content: center; gap: 10px; border: 1px solid var(--pine); border-radius: var(--r-md); background: var(--pine); color: var(--button-ink); box-shadow: var(--button-inset), var(--sh-md); font-family: var(--font-ui); font-weight: 600; cursor: pointer; transition: color 150ms, background-color 150ms, box-shadow 150ms, transform 150ms; }
+.page:not(.calendar-container) :is(.button, .dashboard-button) { justify-content: center; gap: 10px; border: 1px solid var(--pine); border-radius: var(--r-md); background: var(--pine); color: var(--button-ink); box-shadow: none; font-family: var(--font-ui); font-weight: 600; cursor: pointer; transition: color 150ms, background-color 150ms, box-shadow 150ms, transform 150ms; }
 .page:not(.calendar-container) :is(.button, .dashboard-button):hover { background: var(--pine-hover); border-color: var(--pine-hover); }
 .page:not(.calendar-container) :is(.button, .dashboard-button):active { transform: translateY(1px); }
 .page:not(.calendar-container) :is(.button-secondary, .dashboard-button-secondary) { color: var(--pine); background: var(--surface); border-color: var(--line-strong); box-shadow: var(--sh-sm); }
@@ -13,20 +13,19 @@ time, table, input[type="number"] { font-variant-numeric: tabular-nums; }
 .page:not(.calendar-container) .button-danger:hover { background: var(--coral-soft); border-color: var(--coral-ink); }
 .page:not(.calendar-container) :is(.button, .dashboard-button):disabled { opacity: .55; cursor: not-allowed; box-shadow: none; transform: none; }
 .button-small { padding: 7px 12px; font-size: 13px; }
-:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--pine); outline-offset: 3px; box-shadow: var(--ring); }
-.page:not(.calendar-container) :is(.study-card, .study-form-card, .auth-card, .dashboard-panel, .dashboard-week, .dashboard-onboarding, .timer-card, .plan-session, .plan-report) { background: var(--surface); border-color: var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-md); }
-.page:not(.calendar-container) .subject-card { border-left-color: var(--subject-color); }
-.page:not(.calendar-container) .plan-shortfall { border-left-color: var(--amber); background: var(--amber-soft); }
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible { outline: 2px solid var(--pine); outline-offset: 3px; }
+.page:not(.calendar-container) :is(.study-card, .study-form-card, .auth-card, .dashboard-panel, .dashboard-week, .dashboard-onboarding, .timer-card, .plan-session, .plan-report) { background: var(--surface); border-color: var(--line); border-radius: var(--r-lg); box-shadow: none; }
+.page:not(.calendar-container) .plan-shortfall { background: var(--amber-soft); }
 .study-grid .badge { align-self: flex-start; }
-.page:not(.calendar-container) :is(.form-field input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="color"]), .form-field select, .study-filters input, .study-filters select) { width: 100%; min-width: 0; height: 48px; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
-.page:not(.calendar-container) textarea { width: 100%; height: 48px; min-height: 48px; resize: vertical; border: 1.5px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
+.page:not(.calendar-container) :is(.form-field input:not([type="checkbox"], [type="radio"], [type="hidden"], [type="color"]), .form-field select, .study-filters input, .study-filters select) { width: 100%; min-width: 0; height: 38px; padding: 6px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
+.page:not(.calendar-container) textarea { width: 100%; height: 48px; min-height: 48px; resize: vertical; border: 1.5px solid var(--line-strong); border-radius: 8px; background: var(--surface); color: var(--text); font-family: var(--font-ui); }
 .page:not(.calendar-container) input[type="color"] { height: 48px; }
 .page:not(.calendar-container) :is(input, select, textarea):focus-visible { border-color: var(--pine); }
 .page:not(.calendar-container) :is(input, select, textarea) { transition: border-color 150ms, box-shadow 150ms, background-color 150ms; }
 .page:not(.calendar-container) .form-field label { color: var(--ink); font-size: 14px; font-weight: 650; }
 .page:not(.calendar-container) .field-help { color: var(--muted); font-size: 13px; line-height: 1.6; margin-top: 6px; }
 .page:not(.calendar-container) .field-help p { margin: 0; }
-.page:not(.calendar-container) :is(.study-filters, .calendar-note) { background: var(--pine-softer); border-radius: var(--r-md); }
+.page:not(.calendar-container) :is(.study-filters, .calendar-note) { background: var(--bg-sunk); border-radius: var(--r-md); }
 .page:not(.calendar-container) .split .calendar-note { background: transparent; }
 .badge, .recorded-badge { color: var(--pine-hover); background: var(--pine-soft); border-radius: var(--r-sm); }
 .priority-2, .schedule-badge { color: var(--amber-ink); background: var(--amber-soft); }
@@ -36,7 +35,7 @@ time, table, input[type="number"] { font-variant-numeric: tabular-nums; }
 .flash, .flash-success { color: var(--pine-hover); background: var(--pine-soft); border-color: var(--pine-soft); border-radius: var(--r-md); }
 .flash-error, .form-errors { color: var(--coral-ink); background: var(--coral-soft); border-color: var(--coral-soft); }
 .flash-warning, .notification-warning, .sync-notice, .insight-notice { color: var(--amber-ink); background: var(--amber-soft); border-color: var(--amber-line); }
-.page:not(.calendar-container) .study-shell .empty-state { display: grid; place-content: center; text-align: center; min-height: 128px; border-color: var(--line-strong); background: var(--surface); }
+.page:not(.calendar-container) .study-shell .empty-state { padding: 14px 16px; text-align: left; border-color: var(--line-strong); background: var(--surface); }
 .stat-cards strong, .insight-metrics strong, .timer-clock { font-family: var(--font-display); }
 .page.calendar-container, .page.calendar-container :is(h1, h2, h3, input, select, textarea, button) { font-family: var(--font-calendar); }
 .flatpickr-calendar { background: var(--surface); color: var(--text); border-radius: var(--r-md); box-shadow: var(--sh-lg); font-family: var(--font-ui); }
