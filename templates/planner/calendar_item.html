@@ -1,19 +1,11 @@
-{% if item.kind == 'busy' %}
-<div class="calendar-item calendar-busy">
-    <span class="item-time">{{ item.start_label }}–{{ item.end_label }}</span>
-    <a title="{% if item.kind == 'busy' %}{{ item.event.title }}{% elif item.kind == 'study' %}{{ item.session.task.title }}{% else %}{{ item.task.title }}{% endif %}" href="{% url 'planner:busy_update' item.event.pk %}">{{ item.event.title }}</a>
-    <small>{% if item.event.repeat_weekly %}Bận · lặp{% else %}Lịch bận{% endif %}</small>
-</div>
-{% elif item.kind == 'study' %}
-<div class="calendar-item calendar-study">
-    <span class="item-time">{{ item.start_label }}–{{ item.end_label }}</span>
-    <a title="{% if item.kind == 'busy' %}{{ item.event.title }}{% elif item.kind == 'study' %}{{ item.session.task.title }}{% else %}{{ item.task.title }}{% endif %}" href="{% url 'planner:plan_detail' item.session.plan_id %}">{{ item.session.task.title }}</a>
-    <small>{{ item.session.get_status_display }}{% if item.session.is_locked %} · Đã khóa{% endif %}{% if item.session.is_manual %} · Chỉnh tay{% endif %}</small>
-</div>
-{% else %}
-<div class="calendar-item calendar-deadline{% if item.task.status == 'done' %} deadline-done{% endif %}">
-    <span class="item-time">{{ item.start_label }}</span>
-    <a title="{% if item.kind == 'busy' %}{{ item.event.title }}{% elif item.kind == 'study' %}{{ item.session.task.title }}{% else %}{{ item.task.title }}{% endif %}" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=edit&amp;id={{ item.task.pk }}#hoc-tap">{{ item.task.title }}</a>
-    <small>{% if item.task.status == 'done' %}Đã hoàn thành{% else %}Hạn hoàn thành{% endif %}</small>
-</div>
-{% endif %}
+{% if item.kind == 'busy' %}{% url 'planner:busy_update' item.event.pk as target %}
+{% elif item.kind == 'deadline' %}{% url 'planner:week' as target %}
+{% else %}{% url 'planner:plan_detail' item.session.plan_id as target %}{% endif %}
+{% firstof item.event.title item.session.task.title item.task.title as title %}
+<a class="timeline-event event-{{ item.kind }}" href="{{ target }}{% if item.kind == 'deadline' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=edit&amp;id={{ item.task.pk }}#hoc-tap{% endif %}"
+   style="--minute: {{ item.minute }}; --duration: {{ item.duration }}; --lane: {{ item.lane }}; --lanes: {{ item.lanes }}; --subject-color: {{ item.session.task.subject.color|default:'#1F6B54' }}"
+   title="{{ title }} · {{ item.start_label }}{% if item.end_label %}–{{ item.end_label }}{% endif %}">
+    <strong>{{ title }}</strong>
+    <span>{{ item.start_label }}{% if item.end_label %}–{{ item.end_label }}{% endif %}</span>
+    <small>{% if item.kind == 'draft' %}Gợi ý xếp lịch{% elif item.kind == 'study' %}{{ item.session.get_status_display }}{% if item.session.is_locked %} · Đã khóa{% endif %}{% if item.session.is_manual %} · Chỉnh tay{% endif %}{% elif item.kind == 'busy' %}Lịch bận{% if item.event.repeat_weekly %} · lặp{% endif %}{% elif item.task.status == 'done' %}Đã hoàn thành{% else %}Hạn hoàn thành{% endif %}</small>
+</a>

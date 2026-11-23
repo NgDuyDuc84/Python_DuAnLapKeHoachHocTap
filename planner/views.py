@@ -22,6 +22,7 @@ from .models import BusyEvent, StudyPlan, StudyPreference, StudySession
 from .services.alerts import build_alerts
 from .services.availability import build_week, get_preferences
 from .services.scheduling import PlanError, apply_plan, create_draft
+from .week_display import week_display
 from .services.sessions import move_session, record_session, set_session_lock
 
 
@@ -74,12 +75,14 @@ class WeekView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             monday = form.cleaned_data["week"]
             preferences = get_preferences(self.request.user)
+            days = build_week(self.request.user, monday, preferences)
             context.update({
+                **week_display(self.request.user, monday, days),
                 "week_start": monday, "week_end": monday + timedelta(days=6),
                 "previous_week": (monday - timedelta(days=7)).isoformat(),
                 "next_week": (monday + timedelta(days=7)).isoformat(),
                 "preferences": preferences,
-                "days": build_week(self.request.user, monday, preferences),
+                "days": days,
                 "sidebar_url": self.sidebar_url(monday, panel),
             })
         return context

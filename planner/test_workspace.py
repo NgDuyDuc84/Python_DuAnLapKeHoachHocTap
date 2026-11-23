@@ -27,6 +27,23 @@ class CalendarPeriodTests(TestCase):
     def week(self):
         return build_week(self.owner, MONDAY, StudyPreference(owner=self.owner), now=clock(0))
 
+    def test_timeline_places_overlapping_draft_and_busy_event_in_separate_lanes(self):
+        self.client.force_login(self.owner)
+        task = Task.objects.create(owner=self.owner, title="Buổi học sớm", deadline=clock(20),
+                                   estimated_minutes=60, remaining_minutes=60)
+        draft = StudyPlan.objects.create(owner=self.owner, week_start=MONDAY)
+        StudySession.objects.create(owner=self.owner, task=task, plan=draft, starts_at=clock(5), ends_at=clock(6))
+        BusyEvent.objects.create(owner=self.owner, title="Bận đầu ngày", starts_at=clock(5, 30), ends_at=clock(7))
+        response = self.client.get(reverse("planner:week"), {"week": MONDAY})
+        items = {item["kind"]: item for item in response.context["days"][0]["items"]}
+        self.assertEqual(response.context["first_minute"], 300)
+        self.assertEqual(response.context["suggestion_count"], 1)
+        self.assertEqual(items["draft"]["duration"], 60)
+        self.assertEqual(items["draft"]["lanes"], 2)
+        self.assertNotEqual(items["busy"]["lane"], items["draft"]["lane"])
+        self.assertContains(response, reverse("planner:plan_detail", args=[draft.pk]))
+        self.assertIn(task, response.context["unscheduled_tasks"])
+
     def test_events_crossing_periods_are_clipped_without_changing_availability(self):
         BusyEvent.objects.create(owner=self.owner, title="Noon class", starts_at=clock(11), ends_at=clock(13))
         BusyEvent.objects.create(owner=self.owner, title="Evening class", starts_at=clock(17), ends_at=clock(19))

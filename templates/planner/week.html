@@ -1,32 +1,66 @@
 {% extends "planner/base.html" %}
 {% block main_class %}container calendar-container{% endblock %}
 {% block planner_heading %}{% endblock %}
-{% block planner_content %}
-<div class="calendar-commandbar" aria-label="Thao tác học tập">
-    <a class="button" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=new#hoc-tap">+ Thêm công việc</a>
-    <a class="calendar-tool" href="{% url 'planner:busy_create' %}">+ Thêm lịch bận</a>
-    <a class="calendar-tool" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=subjects#hoc-tap">Môn học</a>
-    <a class="calendar-tool" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}&amp;panel=materials#hoc-tap">Tài liệu</a>
-    <a class="calendar-tool command-plan" href="{% url 'planner:plan_generate' %}?week={{ week_start|date:'Y-m-d' }}">Xếp lịch tuần này</a>
+{% block topbar_actions %}
+<div class="week-controls">
+    <nav class="week-navigation" aria-label="Chuyển tuần">
+        {% if days %}<a class="calendar-tool" href="?week={{ previous_week }}" aria-label="Tuần trước">‹</a>{% endif %}
+        <a class="calendar-tool" href="{% url 'planner:week' %}">Hôm nay</a>
+        {% if days %}<a class="calendar-tool" href="?week={{ next_week }}" aria-label="Tuần sau">›</a>{% endif %}
+    </nav>
+    <details class="week-date-picker">
+        <summary class="calendar-tool" aria-label="Chọn tuần">{% if days %}{{ week_start|date:"d/m" }} – {{ week_end|date:"d/m/Y" }}{% else %}Chọn tuần{% endif %}</summary>
+        <form class="week-picker" method="get">{{ week_form.week.label_tag }}{{ week_form.week }}<button class="button" type="submit">Xem tuần</button></form>
+    </details>
+    {% if draft and suggestion_count or draft.replacement_ids %}<a class="button" href="{% url 'planner:plan_detail' draft.pk %}">Xem gợi ý ({{ suggestion_count }})</a>
+    {% else %}<a class="button" href="{% url 'planner:plan_generate' %}{% if days %}?week={{ week_start|date:'Y-m-d' }}{% endif %}">Xếp lịch tuần này</a>{% endif %}
 </div>
-<div class="calendar-workspace{% if request.GET.panel or sidebar_mode %} has-editor{% endif %}">
-    {% if days %}{% if request.GET.panel or sidebar_mode %}<div class="calendar-editor"><a class="calendar-tool editor-close" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>Đóng bảng học tập</a>{% include "planner/study_sidebar.html" %}</div>{% endif %}{% endif %}
-    <div class="calendar-main">
-        <div class="calendar-board-toolbar">
-            {% if days %}<h1>{{ week_start|date:"d/m" }} – {{ week_end|date:"d/m/Y" }}</h1>{% endif %}
-            <div class="calendar-legend" aria-label="Chú giải lịch"><span class="legend-busy">Lịch bận</span><span class="legend-study">Buổi học</span><span class="legend-deadline">Deadline</span></div>
-            <nav class="week-navigation" aria-label="Chuyển tuần"><a class="calendar-tool" href="?week={{ previous_week }}">← Trước</a><a class="calendar-tool" href="{% url 'planner:week' %}">Tuần này</a><a class="calendar-tool" href="?week={{ next_week }}">Sau →</a></nav>
-            <details class="week-date-picker"><summary class="calendar-tool" aria-label="Chọn tuần">▦</summary><form class="week-picker" method="get"><div class="form-field">{{ week_form.week.label_tag }}{{ week_form.week }}{{ week_form.week.errors }}</div><button class="button" type="submit">Xem tuần</button></form></details>
+{% endblock %}
+{% block planner_content %}
+<h1 class="sr-only" id="planner-title">Lịch tuần của bạn</h1>
+{% if week_form.errors %}<div class="form-errors">{{ week_form.week.errors }}</div>{% endif %}
+{% if days %}
+<div class="calendar-workspace">
+    <aside class="week-rail" aria-label="Công việc và thao tác">
+        {% if request.GET.panel or sidebar_mode %}
+        <a class="text-link editor-close" href="{% url 'planner:week' %}?week={{ week_start|date:'Y-m-d' }}">← Đóng bảng học tập</a>
+        {% include "planner/study_sidebar.html" %}
+        {% else %}
+        <h2>Việc chưa xếp lịch <span>· {{ unscheduled_tasks|length }}</span></h2>
+        <div class="backlog-list">
+        {% for task in unscheduled_tasks %}
+        <a class="backlog-task" href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=edit&amp;id={{ task.pk }}#hoc-tap">
+            <strong>{{ task.title }}</strong>
+            <span>{{ task.subject.name|default:"Chưa gắn môn" }} · {{ task.remaining_minutes }} phút</span>
+            <small{% if task.is_overdue %} class="overdue-text"{% endif %}>Hạn {{ task.deadline|date:"d/m · H:i" }}{% if task.is_overdue %} · Quá hạn{% endif %}</small>
+        </a>
+        {% empty %}<p class="backlog-empty">Không có việc nào chờ xếp lịch.</p>{% endfor %}
         </div>
-        {% if week_form.errors %}<div class="form-errors">{{ week_form.week.errors }}</div>{% endif %}
-        {% if days %}
-        <div class="week-scroll" role="region" aria-label="Lịch bảy ngày, chia sáng chiều tối" tabindex="0">
-            <table class="calendar-matrix">
-                <thead><tr><td></td>{% for day in days %}<th scope="col"{% if day.is_today %} class="matrix-today"{% endif %}><span>{{ day.label }}</span><time datetime="{{ day.date|date:'Y-m-d' }}">{{ day.date|date:"d/m" }}</time>{% if day.is_today %}<small>Hôm nay</small>{% endif %}</th>{% endfor %}</tr></thead>
-                <tbody>{% for row in days.0.periods %}<tr><th scope="row" class="matrix-period period-{{ forloop.counter }}"><h4>{{ row.label }}</h4></th>{% for day in days %}<td class="matrix-cell{% if day.is_today %} matrix-today{% endif %}">{% for period in day.periods %}{% if period.label == row.label %}<section aria-label="{{ period.label }} {{ day.label }} {{ day.date|date:'d/m' }}">{% for item in period.items %}{% include "planner/calendar_item.html" %}{% empty %}<span class="sr-only">Chưa có lịch</span>{% endfor %}</section>{% endif %}{% endfor %}</td>{% endfor %}</tr>{% endfor %}</tbody>
-            </table>
-        </div>
+        <details class="rail-tools"><summary>Quản lý lịch và học tập</summary>
+            <a href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=tasks&amp;action=new#hoc-tap">+ Thêm công việc</a>
+            <a href="{% url 'planner:busy_create' %}">+ Thêm lịch bận</a>
+            <a href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=subjects#hoc-tap">Môn học</a>
+            <a href="?week={{ week_start|date:'Y-m-d' }}&amp;panel=materials#hoc-tap">Tài liệu</a>
+        </details>
+        <div class="timeline-legend"><span><i class="sample-study"></i>Buổi học</span><span><i class="sample-busy"></i>Lịch bận</span><span><i class="sample-draft"></i>Gợi ý xếp lịch</span><span><i class="sample-deadline"></i>Hạn chót</span></div>
         {% endif %}
+    </aside>
+    <div class="calendar-main">
+        <div class="week-scroll" role="region" aria-label="Lịch bảy ngày theo giờ" tabindex="0">
+            <div class="timeline" style="--first-minute: {{ first_minute }}">
+                <div class="timeline-head"><span></span>{% for day in days %}<div><span>{{ day.label }}</span><time datetime="{{ day.date|date:'Y-m-d' }}"{% if day.is_today %} aria-current="date"{% endif %}>{{ day.date|date:"d" }}</time></div>{% endfor %}</div>
+                <div class="timeline-body">
+                    <div class="time-axis">{% for hour in calendar_hours %}<div>{{ hour|stringformat:"02d" }}:00</div>{% endfor %}</div>
+                    {% for day in days %}
+                    <section class="timeline-day" aria-label="{{ day.label }} {{ day.date|date:'d/m' }}">
+                        {% for hour in calendar_hours %}<div class="hour-slot" aria-hidden="true"></div>{% endfor %}
+                        {% for item in day.items %}{% include "planner/calendar_item.html" %}{% endfor %}
+                    </section>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
