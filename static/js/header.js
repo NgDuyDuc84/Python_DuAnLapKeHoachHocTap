@@ -1,7 +1,7 @@
 (() => {
     const menus = [...document.querySelectorAll(".header-menu")];
     const navigation = document.querySelector(".header-nav-menu");
-    const desktop = window.matchMedia("(min-width: 1280px)");
+    const desktop = window.matchMedia("(min-width: 800px)");
     const collapsible = (menu) => menu !== navigation || !desktop.matches;
     const close = (menu) => { if (collapsible(menu)) menu.open = false; };
     if (navigation) {

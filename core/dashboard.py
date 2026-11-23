@@ -146,7 +146,8 @@ def build_dashboard(user, *, now=None):
         "today_count": len(today_sessions), "today_done": sum(s.status == StudySession.Status.DONE for s in today_sessions),
         "weekly_minutes": StudyLog.objects.filter(owner=user, studied_on__range=(today - timedelta(days=6), today)).aggregate(
             minutes=Sum("minutes", default=0))["minutes"],
-        "overdue_count": sum(row["overdue"] for row in task_alerts), "due_soon_count": due_soon,
+        "shell_overdue_count": (overdue_count := sum(row["overdue"] for row in task_alerts)),
+        "overdue_count": overdue_count, "due_soon_count": due_soon,
         "upcoming_sessions": [s for s in sessions if s.status == StudySession.Status.PLANNED and s.ends_at > now][:6],
         "urgent_tasks": urgent_tasks[:6], "task_rows": task_rows, "session_groups": list(groups.values()),
         "active_focus": focus, "has_subjects": has_subjects, "has_tasks": has_tasks, "has_plan": has_plan,

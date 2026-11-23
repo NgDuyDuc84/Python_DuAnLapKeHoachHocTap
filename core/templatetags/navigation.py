@@ -22,7 +22,6 @@ NOTIFICATION_TABS = (
 PLANNER_LINKS = (
     {"key": "week", "url": "planner:week", "label": "Lịch tuần"},
     {"key": "plans", "url": "planner:plan_generate", "label": "Tạo kế hoạch"},
-    {"key": "alerts", "url": "planner:alerts", "label": "Cảnh báo"},
     {"key": "busy", "url": "planner:busy_list", "label": "Lịch bận"},
     {"key": "preferences", "url": "planner:preferences", "label": "Giờ học"},
 )
@@ -30,11 +29,14 @@ MAIN_GROUPS = (
     {"label": "Trang chính", "tabs": (
         {"key": "overview", "url": "core:home", "label": "Tổng quan"},
     )},
-    {"label": "Xếp lịch", "tabs": PLANNER_LINKS},
-    {"label": "Quản lý", "tabs": (
+    {"label": "Lập kế hoạch", "tabs": PLANNER_LINKS},
+    {"label": "Học tập", "tabs": (
         {"key": "studies", "url": "studies:task_list", "label": "Môn & Việc"},
         {"key": "focus", "url": "focus:home", "label": "Tập trung"},
+    )},
+    {"label": "Phân tích", "tabs": (
         {"key": "statistics", "url": "focus:statistics", "label": "Thống kê"},
+        {"key": "alerts", "url": "planner:alerts", "label": "Cảnh báo"},
     )},
 )
 PLANNER_ROUTES = {
@@ -170,10 +172,18 @@ def navigation_state(request):
     elif section == "studies":
         tabs = STUDIES_TABS
         current_tab = next(tab["key"] for tab in tabs if name.split(":")[1].startswith(tab["key"][:-1]))
+    main_item = PLANNER_ROUTES.get(name, section)
+    parent, current = next(((g["label"], t["label"]) for g in MAIN_GROUPS
+                            for t in g["tabs"] if t["key"] == main_item), ("Nhịp Học", ""))
+    if section in ("settings", "notifications"):
+        parent = "Cài đặt" if section == "settings" else "Thông báo"
+        current = next((t["label"] for t in tabs if t["key"] == current_tab), "")
     return {
+        "breadcrumb_parent": "Nhịp Học" if section == "overview" else parent,
+        "breadcrumb_current": current,
         "main_groups": MAIN_GROUPS, "settings_tabs": SETTINGS_TABS,
         "page_class": "page--narrow" if name in NARROW_ROUTES else "page--auth" if name in AUTH_ROUTES else "",
-        "main_item": PLANNER_ROUTES.get(name, section), "section": section, "settings_item": settings_item,
+        "main_item": main_item, "section": section, "settings_item": settings_item,
         "tabs": tabs, "current_tab": current_tab,
         "tabs_label": {"statistics": "Thống kê", "notifications": "Thông báo",
                        "settings": "Cài đặt", "studies": "Nội dung học tập"}.get(section, ""),

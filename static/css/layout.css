@@ -1,13 +1,13 @@
 html { scrollbar-gutter: stable; }
 html:has(.calendar-container) { scrollbar-gutter: auto; }
-.page:not(.calendar-container) { width: 100%; max-width: var(--page-w); margin-inline: auto; padding: 40px var(--gutter) 64px; }
-.page.page--narrow { max-width: var(--narrow-w); }
+.page:not(.calendar-container) { width: 100%; max-width: var(--page-w); margin-inline: auto; padding: 24px var(--gutter) 40px; }
+.workspace > .page { width: 100%; max-width: none; margin: 0; }
 .page.page--auth { max-width: var(--auth-w); }
 .page:not(.calendar-container) > section { width: 100%; max-width: none; margin: 0; padding-block: 0; }
 .page:not(.calendar-container) :is(.settings-content, .sync-shell, .profile-shell, .study-form-card, .auth-card) { width: 100%; max-width: none; }
 .page:not(.calendar-container) :is(.study-shell, .auth-shell, .sync-shell) { margin: 0; }
 .page:not(.calendar-container) .page-header { margin: 0 0 var(--section-gap); align-items: center; }
-.page:not(.calendar-container) .page-header h1 { font-size: clamp(30px, 3vw, 40px); }
+.page:not(.calendar-container) .page-header h1 { font-size: 24px; font-weight: 600; letter-spacing: -.6px; }
 .page.page--auth .page-header h1 { font-size: 30px; }
 .page-header .heading-date { display: inline-block; margin-left: 8px; font: 600 20px/1.5 var(--font-ui); letter-spacing: -.3px; color: var(--muted); }
 .page:not(.calendar-container) .section-tabs { margin: 0 0 var(--section-gap); }
@@ -52,7 +52,7 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .record-list .card-actions { margin-top: 12px; }
 .page:not(.calendar-container) .sync-history li { display: grid; grid-template-columns: minmax(0, 1fr) 180px 130px; align-items: center; gap: 16px; min-height: 64px; }
 .dashboard-welcome .page-header { display: block; }
-.page .dashboard-welcome h1 { font-size: clamp(32px, 3.4vw, 48px); }
+.page .dashboard-welcome h1 { font-size: 24px; }
 .dashboard-panels { align-items: stretch; gap: var(--section-gap); }
 .dashboard-panel { display: flex; flex-direction: column; }
 .dashboard-panel > .session-day:only-of-type { flex: 1; display: flex; flex-direction: column; }

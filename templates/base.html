@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="{% block meta_description %}Nhịp Học — không gian lập kế hoạch học tập cá nhân, sắp xếp thời gian và theo dõi tiến độ.{% endblock %}">
     <title>{% block title %}Nhịp Học — Kế hoạch học tập cá nhân{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/nhiphoc-logo.png' %}">
     <link rel="preload" href="{% font_preload_url 'fonts/lora-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="{% font_preload_url 'fonts/inter-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
@@ -18,32 +19,41 @@
     <link rel="stylesheet" href="{% static 'css/layout.css' %}">
     <link rel="stylesheet" href="{% static 'css/theme.css' %}">
 </head>
-<body{% block body_attributes %}{% endblock %}>
+<body{% block body_attributes %}{% if user.is_authenticated %} class="workspace"{% endif %}{% endblock %}>
     <a class="skip-link" href="#noi-dung">Đến nội dung chính</a>
     {% block site_header %}
     <header class="site-header">
         <div class="container header-inner{% if user.is_authenticated %} header-auth{% endif %}">
-            <a class="brand" href="{% url 'core:home' %}" aria-label="Nhịp Học — Trang chủ">
-                <span class="brand-mark" aria-hidden="true">n.</span> Nhịp Học
-            </a>
             {% if user.is_authenticated %}
+            {% firstof user.get_full_name user.username as account_name %}
             <details class="header-menu header-nav-menu" open>
-                <summary class="header-nav-toggle" aria-label="Menu điều hướng" aria-controls="main-navigation" aria-expanded="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Menu
-                </summary>
-                <nav id="main-navigation" class="header-navigation" aria-label="Điều hướng chính">
-                    {% for group in navigation.main_groups %}
-                    <div class="header-nav-group" role="group" aria-labelledby="nav-group-{{ forloop.counter }}">
-                        <h2 id="nav-group-{{ forloop.counter }}">{{ group.label }}</h2>
-                        {% for tab in group.tabs %}
-                        <a href="{% url tab.url %}"{% if navigation.main_item == tab.key %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+                <summary class="header-nav-toggle" aria-label="Menu điều hướng" aria-controls="main-navigation" aria-expanded="true">{% include "components/icon.html" with icon="menu" %}</summary>
+                <div class="side-panel">
+                    {% include "components/brand.html" %}
+                    <nav id="main-navigation" class="header-navigation" aria-label="Điều hướng chính">
+                        {% for group in navigation.main_groups %}
+                        <div class="header-nav-group" role="group" aria-label="{{ group.label }}">
+                            {% if not forloop.first %}<h2>{{ group.label }}</h2>{% endif %}
+                            {% for tab in group.tabs %}
+                            <a href="{% url tab.url %}"{% if navigation.main_item == tab.key %} aria-current="page"{% endif %}>
+                                {% include "components/icon.html" with icon=tab.key %}{{ tab.label }}
+                                {% if tab.key == 'alerts' %}{% with count=shell_overdue_count %}{% if count %}<span class="nav-count" aria-label="{{ count }} việc quá hạn" title="{{ count }} việc quá hạn">{{ count }}</span>{% endif %}{% endwith %}{% endif %}
+                            </a>
+                            {% endfor %}
+                        </div>
                         {% endfor %}
-                    </div>
-                    {% endfor %}
-                </nav>
+                    </nav>
+                    <a class="sidebar-account" href="{% url 'accounts:profile' %}"><span class="avatar">{{ account_name|first|upper }}</span>{{ account_name }}</a>
+                </div>
             </details>
-            {% endif %}
-            {% if user.is_authenticated %}
+            <div class="breadcrumb"><span>{{ navigation.breadcrumb_parent }}</span><span aria-hidden="true">/</span><strong>{{ navigation.breadcrumb_current|default:"Nhịp Học" }}</strong></div>
+            {% block topbar_actions %}
+            <form class="header-search" role="search" action="{% url 'studies:task_list' %}">
+                {% include "components/icon.html" with icon="search" %}
+                <input type="search" name="q" maxlength="200" aria-label="Tìm công việc" placeholder="Tìm công việc…">
+            </form>
+            <a class="button create-plan" href="{% url 'planner:plan_generate' %}">+ Tạo kế hoạch</a>
+            {% endblock %}
             <details class="header-menu header-notifications{% if navigation.section == 'notifications' %} is-active{% endif %}" name="header-menu">
                 <summary class="header-icon" aria-label="Thông báo{% if header_unread_count %}, {{ header_unread_count }} chưa đọc{% endif %}" title="Thông báo"{% if navigation.section == 'notifications' %} aria-current="page"{% endif %}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
@@ -59,14 +69,14 @@
                         </a></li>
                         {% empty %}<li class="header-notification-empty">Bạn chưa có thông báo.</li>{% endfor %}
                     </ul>
-                    <div class="header-dropdown-footer"><a href="{% url 'notifications:inbox' %}">Xem tất cả thông báo</a><a href="{% url 'notifications:preferences' %}" aria-label="Cài đặt nhắc việc">⚙ Tùy chọn nhắc</a></div>
+                    <div class="header-dropdown-footer"><a href="{% url 'notifications:inbox' %}">Xem tất cả thông báo</a><a href="{% url 'notifications:preferences' %}" aria-label="Cài đặt nhắc việc">Tùy chọn nhắc</a></div>
                 </section>
             </details>
             {% endif %}
             {% if user.is_authenticated %}
             <details class="header-menu header-account{% if navigation.section == 'settings' %} is-active{% endif %}" name="header-menu">
                 <summary class="header-icon account-icon" aria-label="Menu tài khoản" title="{{ user.username }}"{% if navigation.section == 'settings' %} aria-current="page"{% endif %}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/></svg>
+                    {{ account_name|first|upper }}
                 </summary>
                 <section class="header-dropdown account-dropdown" aria-label="Tùy chọn tài khoản">
                     <div class="header-dropdown-heading"><h2>{{ user.username }}</h2><p>Tài khoản của bạn</p></div>
@@ -77,7 +87,7 @@
                     <form class="header-logout" method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit">Đăng xuất</button></form>
                 </section>
             </details>
-            {% endif %}
+            {% else %}{% include "components/brand.html" %}{% endif %}
         </div>
     </header>
     {% endblock %}

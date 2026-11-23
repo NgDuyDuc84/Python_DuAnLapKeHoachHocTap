@@ -3,9 +3,7 @@
 {% block site_header %}
 <header class="site-header">
     <div class="container header-inner">
-        <a class="brand" href="{% url 'core:home' %}" aria-label="Nhịp Học — Trang chủ">
-            <span class="brand-mark" aria-hidden="true">n.</span> Nhịp Học
-        </a>
+        {% include "components/brand.html" %}
     </div>
 </header>
 {% endblock %}

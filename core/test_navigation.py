@@ -78,8 +78,8 @@ class NavigationStateTests(SimpleTestCase):
                     })
                     links = NavigationParser(markup, "Điều hướng chính").links
                     self.assertEqual([link["href"] for link in links], [reverse(target) for target in (
-                        "core:home", "planner:week", "planner:plan_generate", "planner:alerts",
-                        "planner:busy_list", "planner:preferences", "studies:task_list", "focus:home", "focus:statistics",
+                        "core:home", "planner:week", "planner:plan_generate",
+                        "planner:busy_list", "planner:preferences", "studies:task_list", "focus:home", "focus:statistics", "planner:alerts",
                     )])
                     active = [link["href"] for link in links if link.get("aria-current") == "page"]
                     if section == "planner":
