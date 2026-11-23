@@ -51,15 +51,6 @@ html:has(.calendar-container) { scrollbar-gutter: auto; }
 .record-list .card-heading h2 { margin: 0; }
 .record-list .card-actions { margin-top: 12px; }
 .page:not(.calendar-container) .sync-history li { display: grid; grid-template-columns: minmax(0, 1fr) 180px 130px; align-items: center; gap: 16px; min-height: 64px; }
-.dashboard-welcome .page-header { display: block; }
-.page .dashboard-welcome h1 { font-size: 24px; }
-.dashboard-panels { align-items: stretch; gap: var(--section-gap); }
-.dashboard-panel { display: flex; flex-direction: column; }
-.dashboard-panel > .session-day:only-of-type { flex: 1; display: flex; flex-direction: column; }
-.dashboard-session-list:has(.session-empty), .dashboard-task-list:has(.task-empty) { flex: 1; display: flex; flex-direction: column; }
-.dashboard-session-list .session-empty, .dashboard-task-list .task-empty { flex: 1; min-height: 160px; flex-direction: column; justify-content: center; text-align: center; }
-.dashboard-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-block: var(--section-gap); }
-.dashboard-week { margin-top: var(--section-gap); }
 .study-grid { align-items: stretch; gap: var(--section-gap); }
 .study-grid > .study-card { display: flex; flex-direction: column; }
 .study-grid .card-actions { margin-top: auto; padding-top: 20px; }

@@ -1,11 +1,13 @@
 from datetime import datetime, time, timedelta
 
-from django.db.models import Q, Sum
+from django.contrib.auth import get_user_model
+from django.db.models import Exists, Q, Sum
 from django.utils import timezone
 
 from focus.forms import FocusStartForm
 from focus.models import StudyLog
 from focus.services import active_session
+from insights.models import InsightReport
 from planner.models import StudyPlan, StudySession
 from planner.services.alerts import build_task_alerts
 from studies.models import Subject, Task
@@ -104,9 +106,10 @@ def build_dashboard(user, *, now=None):
     alerts_by_task = {row["task"].pk: row for row in task_alerts}
     today_sessions = [s for s in sessions if day_start <= s.starts_at < day_end]
     focus = active_session(user)
-    has_subjects = Subject.objects.filter(owner=user).exists()
-    has_tasks = Task.objects.filter(owner=user).exists()
-    has_plan = StudyPlan.objects.filter(owner=user).exists()
+    has_subjects, has_tasks, has_plan = get_user_model().objects.filter(pk=user.pk).values_list(
+        Exists(Subject.objects.filter(owner=user)), Exists(Task.objects.filter(owner=user)),
+        Exists(StudyPlan.objects.filter(owner=user)),
+    ).get()
     action = select_dashboard_action(now=now, active_focus=focus, sessions=sessions, unrecorded=unrecorded,
                                      task_alerts=task_alerts, has_subjects=has_subjects,
                                      has_tasks=has_tasks, has_plan=has_plan)
@@ -146,6 +149,9 @@ def build_dashboard(user, *, now=None):
         "today_count": len(today_sessions), "today_done": sum(s.status == StudySession.Status.DONE for s in today_sessions),
         "weekly_minutes": StudyLog.objects.filter(owner=user, studied_on__range=(today - timedelta(days=6), today)).aggregate(
             minutes=Sum("minutes", default=0))["minutes"],
+        "latest_insight": InsightReport.objects.filter(owner=user, status=InsightReport.Status.SUCCESS).only(
+            "result", "created_at",
+        ).first(),
         "shell_overdue_count": (overdue_count := sum(row["overdue"] for row in task_alerts)),
         "overdue_count": overdue_count, "due_soon_count": due_soon,
         "upcoming_sessions": [s for s in sessions if s.status == StudySession.Status.PLANNED and s.ends_at > now][:6],

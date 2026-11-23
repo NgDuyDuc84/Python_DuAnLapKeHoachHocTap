@@ -1,7 +1,7 @@
 <header class="page-header">
     <div>
-        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}{% if day %}<span class="heading-date">· {{ weekday }}, {{ day|date:"d/m" }}</span>{% endif %}</h1>
-        <p>{{ description }}</p>
+        <h1{% if title_id %} id="{{ title_id }}"{% endif %}>{{ title }}</h1>
+        <p>{% if day %}{{ weekday }}, {{ day|date:"d/m" }} · {% endif %}{{ description }}</p>
     </div>
     {% firstof action.url action_name as primary_name %}
     {% firstof action.label action_label as primary_label %}

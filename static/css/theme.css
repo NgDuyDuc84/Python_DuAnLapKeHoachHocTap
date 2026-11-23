@@ -37,53 +37,11 @@ time, table, input[type="number"] { font-variant-numeric: tabular-nums; }
 .flash-error, .form-errors { color: var(--coral-ink); background: var(--coral-soft); border-color: var(--coral-soft); }
 .flash-warning, .notification-warning, .sync-notice, .insight-notice { color: var(--amber-ink); background: var(--amber-soft); border-color: var(--amber-line); }
 .page:not(.calendar-container) .study-shell .empty-state { display: grid; place-content: center; text-align: center; min-height: 128px; border-color: var(--line-strong); background: var(--surface); }
-.dashboard-next-action { position: relative; overflow: hidden; padding: 28px; border: 1px solid var(--amber-line); border-radius: var(--r-lg); background: linear-gradient(120deg, var(--action-start), var(--action-mid), var(--surface)); box-shadow: var(--sh-lg); }
-.dashboard-next-action.action-attention { border-left-color: var(--amber-line); }
-.dashboard-next-action[data-action="upcoming"], .dashboard-next-action[data-action="ready"] { background: linear-gradient(120deg, var(--pine-softer), var(--surface)); border-color: var(--pine-soft); }
-.dashboard .next-action-label { font: 650 13px/1.5 var(--font-ui); color: var(--amber-ink); }
-.dashboard-next-action[data-action="upcoming"] .next-action-label, .dashboard-next-action[data-action="ready"] .next-action-label { color: var(--pine-hover); }
-.next-action-content h3 { font-size: clamp(24px, 2.2vw, 32px); }
-.next-action-content p { font-size: 13px; }
-.next-action-content .dashboard-button { padding: 11px 18px; font-size: 14px; }
-.action-deadline { color: var(--amber-ink); border-color: var(--amber-line); background: var(--surface); border-radius: var(--r-lg); }
-.action-deadline strong { font: 600 40px/1.3 var(--font-display); }
-.deadline-overdue { color: var(--coral-ink); border-color: var(--coral-soft); background: var(--surface); }
-.dashboard-metrics { background: transparent; border: 0; gap: 16px; }
-.dashboard-metrics a { padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--sh-md); }
-.dashboard-metrics a + a { border-left: 1px solid var(--line); }
-.dashboard-metrics strong { font: 600 28px/1.3 var(--font-display); }
-.dashboard-metrics .metric-overdue, .dashboard-metrics .metric-overdue strong { color: var(--coral-ink); }
-.dashboard h2 { font-size: 22px; }
-.dashboard-task { border-radius: var(--r-md); background: var(--surface); }
-.dashboard-task h3 { font-size: 19px; }
-.task-attention { border-color: var(--amber-line); background: var(--amber-soft); }
-.dashboard-task .overdue-text { color: var(--coral-ink); }
-.dashboard-task .priority-3 { color: var(--coral-ink); background: var(--coral-soft); }
-.dashboard-task .priority-2 { color: var(--amber-ink); background: var(--amber-soft); }
-.week-day { background: var(--surface); border-color: var(--line); border-radius: var(--r-md); transition: box-shadow 150ms, transform 150ms; }
-.week-day > strong { font: 600 24px/1.4 var(--font-display); }
-.week-today { background: var(--pine); border-color: var(--pine); color: var(--button-ink); box-shadow: var(--sh-md); }
-.week-today > span:first-child, .week-today small { color: var(--button-ink); }
-.week-today .session-marker { background: var(--pine-soft); }
-.dashboard :is(.week-day, .dashboard-metrics a):hover { transform: translateY(-1px); box-shadow: var(--sh-lg); }
 .stat-cards strong, .insight-metrics strong, .timer-clock { font-family: var(--font-display); }
 .page.calendar-container, .page.calendar-container :is(h1, h2, h3, input, select, textarea, button) { font-family: var(--font-calendar); }
 .flatpickr-calendar { background: var(--surface); color: var(--text); border-radius: var(--r-md); box-shadow: var(--sh-lg); font-family: var(--font-ui); }
 .flatpickr-day.selected, .flatpickr-day.selected:hover { background: var(--pine); border-color: var(--pine); }
 .sync-policy { background: var(--pine-softer); }
-@media (width < 1280px) { .header-navigation a { border-radius: var(--r-sm); } }
-@media (width < 768px) {
-    .action-deadline { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; text-align: left; }
-    .action-deadline strong { grid-column: 2; grid-row: 1 / span 2; font-size: 28px; white-space: nowrap; }
-    .action-deadline time { grid-column: 1; }
-    .dashboard-metrics { gap: 8px; }
-    .dashboard-metrics a { padding: 12px; }
-    .dashboard-metrics strong { display: block; font-size: 24px; }
-    .dashboard .panel-heading { gap: 8px; }
-    .dashboard h2 { font-size: 19px; }
-    .dashboard-next-action { padding: 24px; }
-    .week-day > strong { font-size: 20px; }
-}
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
     .page :is(.button, .dashboard-button, .week-day, .dashboard-metrics a) { transform: none !important; }
