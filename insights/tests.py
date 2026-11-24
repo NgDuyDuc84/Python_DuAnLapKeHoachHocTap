@@ -145,6 +145,39 @@ class InsightTests(TestCase):
                     snapshot={}, status="failed", error="network", model_name="test", input_hash="hash")
             self.assertContains(self.preview(), "Còn 0/5 lượt hôm nay")
 
+    @patch("insights.provider.requests.post")
+    def test_dashboard_request_uses_the_same_signed_preview_and_requires_consent(self, provider):
+        with patch("insights.views.build_snapshot", side_effect=AssertionError("Unexpected preview")):
+            dashboard = self.client.get(reverse("core:home"))
+        self.assertContains(dashboard, 'data-preview-url=')
+        self.assertContains(dashboard, "Chưa phân tích")
+        fragment = self.client.get(reverse("insights:home"), {"panel": "request"})
+        token = fragment.context["form"]["preview"].value()
+        signed = signing.loads(token, salt=SALT)
+        self.assertEqual(signed["owner"], self.user.pk)
+        self.assertEqual(signed["hash"], fingerprint(fragment.context["snapshot"]))
+        self.assertNotIn("PRIVATE-", fragment.context["preview_display"])
+        self.assertEqual(self.client.post(reverse("insights:generate"), {"preview": token}).status_code, 400)
+        provider.assert_not_called()
+
+    def test_saved_period_labels_and_freshness_are_scoped_to_the_report_owner(self):
+        snapshot = self.snapshot()
+        result = ai_result(snapshot["payload"])
+        result["summary"] = {"text": "H01 và V01", "evidence": ["H01", "V01"]}
+        report = InsightReport.objects.create(owner=self.user, request_key=uuid.uuid4(), snapshot=snapshot,
+            status="success", input_hash=fingerprint(snapshot), result=result, model_name="test")
+        self.log(self.today, 15, user=self.other)
+        response = self.client.get(reverse("core:home"))
+        self.assertFalse(response.context["report_stale"])
+        self.assertEqual(response.context["report_summary"]["text"], "Nhật ký 14 ngày và PRIVATE-TASK")
+        log = self.log(self.today, 20)
+        StudyLog.objects.filter(pk=log.pk).update(created_at=self.now + timedelta(seconds=1))
+        for route in ("core:home", "insights:home"):
+            response = self.client.get(reverse(route))
+            self.assertContains(response, "Cần cập nhật")
+            self.assertContains(response, self.today.strftime("%d/%m/%Y"))
+            self.assertEqual(response.context["latest_insight"].pk, report.pk)
+
     def test_fourteen_day_window_and_seven_day_comparison_use_zeros(self):
         self.log(self.today - timedelta(days=14), 999)
         self.log(self.today - timedelta(days=13), 40)

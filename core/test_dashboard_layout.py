@@ -150,11 +150,11 @@ class DashboardLayoutTests(TestCase):
         self.assertEqual(context["action"]["kind"], "unrecorded")
         self.assertEqual(context["action"]["primary"]["pk"], past.pk)
 
-    def test_complete_dashboard_stays_within_eleven_queries(self):
+    def test_complete_dashboard_stays_within_twelve_queries(self):
         for user in (self.new_user, self.user):
             self.client.force_login(user)
-            with self.assertNumQueries(11):
+            with self.assertNumQueries(12):
                 self.assertEqual(self.client.get(reverse("core:home")).status_code, 200)
         FocusSession.objects.create(owner=self.user, task=self.task, task_title=self.task.title, resumed_at=self.now)
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             self.assertEqual(self.client.get(reverse("core:home")).status_code, 200)

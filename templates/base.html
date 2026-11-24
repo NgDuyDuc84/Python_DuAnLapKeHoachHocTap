@@ -47,6 +47,7 @@
                 </div>
             </details>
             <div class="breadcrumb"><span>{{ navigation.breadcrumb_parent }}</span><span aria-hidden="true">/</span><strong>{{ navigation.breadcrumb_current|default:"Nhịp Học" }}</strong></div>
+            <a class="mobile-ai-link" href="{% url 'insights:home' %}" aria-label="Phân tích AI" title="Phân tích AI">{% include "components/icon.html" with icon="spark" %}<span>AI</span></a>
             {% block topbar_actions %}
             <form class="header-search" role="search" action="{% url 'studies:task_list' %}">
                 {% include "components/icon.html" with icon="search" %}

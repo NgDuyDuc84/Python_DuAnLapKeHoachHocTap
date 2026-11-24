@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from django import template
 from django.conf import settings
 from django.templatetags.static import static
@@ -25,7 +27,12 @@ PLANNER_LINKS = (
     {"key": "busy", "url": "planner:busy_list", "label": "Lịch bận"},
     {"key": "preferences", "url": "planner:preferences", "label": "Giờ học"},
 )
-MAIN_GROUPS = (
+class NavigationGroup(TypedDict):
+    label: str
+    tabs: tuple[dict[str, str], ...]
+
+
+MAIN_GROUPS: tuple[NavigationGroup, ...] = (
     {"label": "Trang chính", "tabs": (
         {"key": "overview", "url": "core:home", "label": "Tổng quan"},
     )},
@@ -35,6 +42,7 @@ MAIN_GROUPS = (
         {"key": "focus", "url": "focus:home", "label": "Tập trung"},
     )},
     {"label": "Phân tích", "tabs": (
+        {"key": "ai", "url": "insights:home", "label": "Phân tích AI"},
         {"key": "statistics", "url": "focus:statistics", "label": "Thống kê"},
         {"key": "alerts", "url": "planner:alerts", "label": "Cảnh báo"},
     )},
@@ -160,7 +168,8 @@ def navigation_state(request):
     match = getattr(request, "resolver_match", None)
     name = match.view_name if match else ""
     section = next((key for key, names in SECTION_ROUTES.items() if name in names), "")
-    tabs, current_tab = (), ""
+    tabs: tuple[dict[str, str], ...] = ()
+    current_tab = ""
     settings_item = SETTINGS_ROUTES.get(name, "")
     if section == "statistics":
         tabs, current_tab = STATISTICS_TABS, STATISTICS_ROUTES[name]
@@ -172,7 +181,7 @@ def navigation_state(request):
     elif section == "studies":
         tabs = STUDIES_TABS
         current_tab = next(tab["key"] for tab in tabs if name.split(":")[1].startswith(tab["key"][:-1]))
-    main_item = PLANNER_ROUTES.get(name, section)
+    main_item = "ai" if section == "statistics" and current_tab == "ai" else PLANNER_ROUTES.get(name, section)
     parent, current = next(((g["label"], t["label"]) for g in MAIN_GROUPS
                             for t in g["tabs"] if t["key"] == main_item), ("Nhịp Học", ""))
     if section in ("settings", "notifications"):

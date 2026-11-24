@@ -61,7 +61,7 @@ class UiCleanupTests(TestCase):
                 main = NavigationParser(markup, "Điều hướng chính").links
                 self.assertEqual([link["href"] for link in main], [reverse(target) for target in (
                     "core:home", "planner:week", "planner:plan_generate", "planner:busy_list",
-                    "planner:preferences", "studies:task_list", "focus:home", "focus:statistics", "planner:alerts",
+                    "planner:preferences", "studies:task_list", "focus:home", "insights:home", "focus:statistics", "planner:alerts",
                 )])
                 self.assertEqual([link["href"] for link in main if link.get("aria-current") == "page"],
                                  [reverse("planner:" + active)])

@@ -1,4 +1,3 @@
-import json
 import uuid
 
 from django.contrib import messages
@@ -13,24 +12,15 @@ from django.views.decorators.http import require_POST
 from .data import baseline_report, build_snapshot, fingerprint
 from .forms import AnalyzeForm
 from .models import InsightReport
-from .provider import ERRORS, NON_COUNTING_ERRORS, InsightError, configured
+from .presentation import latest_context, period_text, preview_context, request_context, sections, snapshot_time
+from .provider import ERRORS, NON_COUNTING_ERRORS, InsightError
 from .services import generate_report
 
 
 SALT = "insight-data-preview"
 
 
-def sections(result, labels):
-    return [{"title": title, "points": [{
-        "text": point["text"],
-        "evidence": [{"ref": ref, "label": labels[ref]} for ref in point["evidence"]],
-    } for point in points]} for title, points in (
-        ("Tóm tắt", [result["summary"]]), ("Thói quen học", result["habits"]),
-        ("Gợi ý phân bổ", result["allocation"]), ("Giải thích cảnh báo", result["warnings"]),
-    )]
-
-
-def home_context(user, *, form=None):
+def signed_request_context(user, *, form=None):
     snapshot = build_snapshot(user)
     payload = snapshot["payload"]
     token = signing.dumps({
@@ -39,23 +29,34 @@ def home_context(user, *, form=None):
     if form is not None:
         form.data = form.data.copy()
         form.data["preview"] = token
-    tasks = [{**row, "title": snapshot["labels"][row["ref"]]} for row in payload["tasks"]]
+    else:
+        form = AnalyzeForm(initial={"preview": token})
+    return {**request_context(user, form), **preview_context(snapshot), "snapshot": snapshot}
+
+
+def home_context(user, *, form=None):
+    context = signed_request_context(user, form=form)
+    snapshot = context["snapshot"]
+    payload = snapshot["payload"]
+    latest = latest_context(user)
     reports = InsightReport.objects.filter(owner=user)
-    used_today = reports.filter(created_at__date=timezone.localdate()).exclude(
-        status="failed", error__in=NON_COUNTING_ERRORS,
-    ).count()
+    if latest["latest_insight"]:
+        reports = reports.exclude(pk=latest["latest_insight"].pk)
     return {
-        "snapshot": snapshot, "totals": payload["facts"]["H01"], "tasks": tasks,
-        "payload_json": json.dumps(payload, ensure_ascii=False, indent=2),
-        "sections": sections(baseline_report(snapshot), snapshot["labels"]),
-        "form": form if form is not None else AnalyzeForm(initial={"preview": token}),
-        "configured": configured(), "remaining_requests": max(0, 5 - used_today),
-        "reports": reports[:10],
+        **context, **latest, "totals": payload["facts"]["H01"], "current_period": period_text(payload),
+        "tasks": [{**row, "title": snapshot["labels"][row["ref"]]} for row in payload["tasks"]],
+        "sections": sections(baseline_report(snapshot), snapshot),
+        "reports": [{"report": report, "period": period_text(report.snapshot.get("payload", {}))}
+                    for report in reports.only("created_at", "status", "snapshot")[:10]],
     }
 
 
 @login_required
 def home(request):
+    if request.GET.get("panel") == "request":
+        response = render(request, "insights/request_controls.html", signed_request_context(request.user))
+        response["Cache-Control"] = "private, no-store"
+        return response
     return render(request, "insights/home.html", home_context(request.user))
 
 
@@ -96,11 +97,13 @@ def generate(request):
 @login_required
 def report_detail(request, pk):
     report = get_object_or_404(InsightReport, pk=pk, owner=request.user)
-    as_of = parse_datetime(report.snapshot["payload"]["as_of"])
-    changed = fingerprint(build_snapshot(request.user, now=as_of)) != report.input_hash
+    payload = report.snapshot.get("payload", {})
+    as_of = snapshot_time(payload)
+    changed = as_of and timezone.is_aware(as_of) and fingerprint(build_snapshot(request.user, now=as_of)) != report.input_hash
     return render(request, "insights/report.html", {
         "report": report, "as_of": as_of, "changed": changed, "error": ERRORS.get(report.error, ""),
         "counts_toward_limit": report.error not in NON_COUNTING_ERRORS,
-        "sections": sections(report.result, report.snapshot["labels"]) if report.status == "success" else [],
-        "payload_json": json.dumps(report.snapshot["payload"], ensure_ascii=False, indent=2),
+        "sections": sections(report.result, report.snapshot) if report.status == "success" else [],
+        "report_period": period_text(payload),
+        **(preview_context(report.snapshot) if payload else {}),
     })

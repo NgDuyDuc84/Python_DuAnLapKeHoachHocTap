@@ -1,11 +1,11 @@
 <div class="insight-sections">
 {% for section in sections %}
     <section class="study-card">
-        <h2>{{ section.title }}</h2>
+        <div class="insight-section-head"><h2>{{ section.title }}</h2><span class="source-chip">{{ source }}</span></div>
         {% for point in section.points %}
             <div class="insight-point">
                 <p>{{ point.text }}</p>
-                <p class="insight-evidence">Căn cứ: {% for item in point.evidence %}<span class="badge">{{ item.ref }} · {{ item.label }}</span> {% endfor %}</p>
+                {% include "insights/evidence.html" with evidence=point.evidence period=period only %}
             </div>
         {% empty %}<p class="insight-muted">Chưa có nội dung cần nhận xét trong phần này.</p>{% endfor %}
     </section>

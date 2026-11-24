@@ -1,0 +1,25 @@
+<div class="ai-request"{% if lazy_preview %} data-preview-url="{% url 'insights:home' %}?panel=request"{% endif %}>
+    <form method="post" action="{% url 'insights:generate' %}" data-ai-form>
+        {% csrf_token %}{{ form.preview }}{{ form.preview.errors }}{{ form.non_field_errors }}
+        <div class="ai-permission">
+            {{ form.consent.errors }}
+            <fieldset{% if not configured or not remaining_requests %} disabled{% endif %}>
+                <label class="insight-consent">{{ form.consent }}<span>{{ form.consent.label }}</span></label>
+            </fieldset>
+            <div class="ai-disclosure">
+                <button class="ai-text-action" type="button" aria-haspopup="dialog" data-dialog-open>Xem dữ liệu sẽ gửi</button>
+                <dialog aria-label="Dữ liệu sẽ gửi" class="ai-dialog">
+                    <div class="ai-dialog-head"><h2>Dữ liệu sẽ gửi</h2><button type="button" class="ai-text-action" data-dialog-close>Đóng</button></div>
+                    <div data-preview-body>{% if lazy_preview %}<p role="status">Đang tải bản xem trước…</p>{% else %}{% include "insights/payload.html" %}{% endif %}</div>
+                </dialog>
+            </div>
+        </div>
+        <div class="ai-submit"><button class="button" type="submit" data-ai-submit disabled>Yêu cầu AI phân tích</button>
+            <span class="ai-quota" data-remaining="{{ remaining_requests }}">Còn {{ remaining_requests }}/5 lượt hôm nay</span>
+        </div>
+        {% if configured and remaining_requests %}<noscript>{% if lazy_preview %}<a class="text-link" href="{% url 'insights:home' %}">Mở biểu mẫu phân tích AI</a>{% else %}<button type="submit" class="button">Gửi sau khi xác nhận đồng ý</button>{% endif %}</noscript>{% endif %}
+    </form>
+    <p class="ai-privacy">Chỉ gửi mã việc/môn, không gửi tên, tài khoản hay ghi chú.</p>
+    {% if not configured %}<p class="ai-notice">AI hỗ trợ hiện chưa khả dụng.</p>{% endif %}
+    <p class="ai-notice" data-preview-error role="status" hidden>Tải bản xem trước chưa thành công. <a class="text-link" href="{% url 'insights:home' %}">Mở tab AI hỗ trợ</a></p>
+</div>

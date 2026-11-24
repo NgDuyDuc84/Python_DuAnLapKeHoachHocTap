@@ -1,0 +1,39 @@
+<section class="ai-result-card" aria-labelledby="ai-title">
+    <div class="ai-card-head">
+        <h2 id="ai-title">{% include "components/icon.html" with icon="spark" %}{% if dashboard_card %}Phân tích AI{% else %}Kết quả phân tích AI{% endif %}</h2>
+        {% if report_stale %}<span class="ai-status ai-status-stale">Cần cập nhật</span>
+        {% elif latest_insight %}<span class="ai-status ai-status-ready">Đã phân tích · {{ latest_insight.created_at|date:"d/m/Y" }}</span>
+        {% else %}<span class="ai-status">Chưa phân tích</span>{% endif %}
+    </div>
+    {% if latest_insight %}
+        <p class="ai-period">{% if report_period %}Dữ liệu {{ report_period }}{% else %}Báo cáo chưa lưu kỳ dữ liệu{% endif %}{% if report_stale %} · Phân tích ngày {{ latest_insight.created_at|date:"d/m/Y" }}{% endif %}</p>
+        {% if not dashboard_card %}<span class="source-chip">AI diễn giải</span>{% endif %}
+        {% if dashboard_card and highlights %}
+            <ul class="ai-highlights">
+                {% for point in highlights %}
+                <li><p class="ai-highlight-text">{% if point.overdue %}<span class="ai-overdue">Quá hạn</span> · {% endif %}{{ point.text }}</p>
+                    {% include "insights/evidence.html" with evidence=point.evidence period=report_period only %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% elif report_summary %}
+            <p class="ai-summary{% if dashboard_card %} ai-clamp{% endif %}">{{ report_summary.text }}</p>
+            {% include "insights/evidence.html" with evidence=report_summary.evidence period=report_period only %}
+        {% endif %}
+        <a class="ai-text-action" href="{% url 'insights:report' latest_insight.pk %}">Xem đầy đủ</a>
+    {% else %}
+        <p>Phân tích nhật ký học để nhận ra thói quen và chọn việc nên ưu tiên.</p>
+    {% endif %}
+    {% if latest_insight and not dashboard_card %}
+        <details class="ai-more-results"><summary>Thói quen, phân bổ và cảnh báo</summary>
+            {% include "insights/sections.html" with sections=report_sections|slice:"1:" source="AI diễn giải" period=report_period %}
+        </details>
+    {% endif %}
+    {% if dashboard_card %}
+        {% include "insights/request_controls.html" with lazy_preview=True %}
+        <div class="ai-card-links">
+            {% if latest_insight %}<a class="dashboard-button dashboard-button-secondary" href="{% url 'planner:plan_generate' %}">Xem trước kế hoạch</a>{% endif %}
+            <a class="text-link" href="{% url 'insights:home' %}">Xem phân tích chi tiết →</a>
+        </div>
+    {% endif %}
+</section>

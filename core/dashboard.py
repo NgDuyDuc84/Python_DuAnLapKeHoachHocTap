@@ -7,7 +7,6 @@ from django.utils import timezone
 from focus.forms import FocusStartForm
 from focus.models import StudyLog
 from focus.services import active_session
-from insights.models import InsightReport
 from planner.models import StudyPlan, StudySession
 from planner.services.alerts import build_task_alerts
 from studies.models import Subject, Task
@@ -149,9 +148,6 @@ def build_dashboard(user, *, now=None):
         "today_count": len(today_sessions), "today_done": sum(s.status == StudySession.Status.DONE for s in today_sessions),
         "weekly_minutes": StudyLog.objects.filter(owner=user, studied_on__range=(today - timedelta(days=6), today)).aggregate(
             minutes=Sum("minutes", default=0))["minutes"],
-        "latest_insight": InsightReport.objects.filter(owner=user, status=InsightReport.Status.SUCCESS).only(
-            "result", "created_at",
-        ).first(),
         "shell_overdue_count": (overdue_count := sum(row["overdue"] for row in task_alerts)),
         "overdue_count": overdue_count, "due_soon_count": due_soon,
         "upcoming_sessions": [s for s in sessions if s.status == StudySession.Status.PLANNED and s.ends_at > now][:6],

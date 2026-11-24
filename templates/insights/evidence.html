@@ -1,0 +1,21 @@
+{% if evidence %}
+<div class="ai-evidence">
+    <div class="ai-disclosure">
+        <button class="evidence-chip" type="button" aria-haspopup="dialog" data-dialog-open>
+            <span>Căn cứ</span> {{ evidence.0.label }}{% if evidence|length > 1 %} · +{{ evidence|length|add:"-1" }}{% endif %}
+        </button>
+        <dialog class="ai-dialog" aria-label="Căn cứ cho nhận xét">
+            <div class="ai-dialog-head"><h2>Căn cứ cho nhận xét</h2><button type="button" class="ai-text-action" data-dialog-close>Đóng</button></div>
+            {% if period %}<p>Kỳ nhật ký {{ period }}</p>{% endif %}
+            {% for item in evidence %}
+                <h3>{{ item.label }}</h3>
+                {% for row in item.rows %}
+                <dl class="ai-source-values">
+                    {% for field, value in row.items %}<div><dt>{{ field }}</dt><dd>{{ value }}</dd></div>{% endfor %}
+                </dl>
+                {% empty %}<p>Chưa có bản ghi cho căn cứ này.</p>{% endfor %}
+            {% endfor %}
+        </dialog>
+    </div>
+</div>
+{% endif %}
